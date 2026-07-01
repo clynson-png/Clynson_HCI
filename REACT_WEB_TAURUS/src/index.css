@@ -2159,6 +2159,10 @@ body {
   text-transform: uppercase;
 }
 
+.hci-pistol-range-shell {
+  width: 100%;
+}
+
 .hci-pistol-range {
   position: relative;
   min-height: 470px;
@@ -6926,6 +6930,38 @@ table {
     padding: 12px;
   }
 
+  .hci-pistol-range-shell {
+    --hci-range-scale: 0.53;
+    position: relative;
+    height: calc(470px * var(--hci-range-scale));
+    margin: 12px auto;
+    overflow: hidden;
+  }
+
+  .hci-pistol-range {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 640px;
+    height: 470px;
+    min-height: 0;
+    margin: 0;
+    transform: scale(var(--hci-range-scale));
+    transform-origin: top left;
+  }
+
+  .hci-pistol-range .hci-black-target,
+  .hci-pistol-range .hci-score-rings,
+  .hci-pistol-range .hci-shot-dot,
+  .hci-pistol-range .hci-sight-picture,
+  .hci-pistol-range .hci-rear-sight,
+  .hci-pistol-range .hci-front-sight {
+    flex-shrink: 0;
+  }
+
+  .hci-click-label {
+    font-size: 22px;
+  }
+
   .report-events-grid,
   .report-premium-hero-badges,
   .taurus-smart-hero,
@@ -6969,5 +7005,11 @@ table {
 
   .taurus-smart-history-table {
     min-width: 560px;
+  }
+}
+
+@media (min-width: 391px) and (max-width: 430px) {
+  .hci-pistol-range-shell {
+    --hci-range-scale: 0.59;
   }
 }

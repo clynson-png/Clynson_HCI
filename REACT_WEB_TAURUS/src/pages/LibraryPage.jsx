@@ -1621,60 +1621,59 @@ function Hci109Trainer({ lang, training, mode = 'RHYTHM', athleteName = '', onSe
   </div>
 )}
 
-          <div
-            className="hci-pistol-range"
-            ref={rangeRef}
-            aria-label="Alvo hci 10.9 Pistola"
-            role="img"
-            onPointerMove={(event) => {
-              const bounds = event.currentTarget.getBoundingClientRect()
-              gazeRef.current = {
-                x: event.clientX - bounds.left,
-                y: event.clientY - bounds.top,
-                timestamp: performance.now(),
-              }
-            }}
-            onPointerLeave={() => {
-              gazeRef.current = null
-            }}
-          >
-            <div className="hci-black-target" ref={blackTargetRef}>
-              <div className="hci-score-rings" />
-              {shots.map((shot) => (
-                <div
-                  key={shot.index}
-                  className="hci-shot-dot"
-                 
-                    style={{
-                   left: `calc(50% + ${shot.x + 12}px)`,
-                  top: `calc(50% + ${shot.y + 12}px)`, 
-}}
-
-
-                  title={`${shot.index}: ${shot.decimalScore.toFixed(1)}`}
-                >
-                  {shot.index}
-                </div>
-              ))}
-            </div>
-
+          <div className="hci-pistol-range-shell">
             <div
-              className="hci-sight-picture"
-              ref={sightGroupRef}
-              aria-hidden="true"
-            >           
-	<div className="hci-rear-sight hci-rear-left" />
-              <div
-                className="hci-front-sight"
-                ref={frontSightRef}
-              >
-                <span className="hci-fixed-pointer-marker" aria-hidden="true" />
+              className="hci-pistol-range"
+              ref={rangeRef}
+              aria-label="Alvo hci 10.9 Pistola"
+              role="img"
+              onPointerMove={(event) => {
+                const bounds = event.currentTarget.getBoundingClientRect()
+                gazeRef.current = {
+                  x: event.clientX - bounds.left,
+                  y: event.clientY - bounds.top,
+                  timestamp: performance.now(),
+                }
+              }}
+              onPointerLeave={() => {
+                gazeRef.current = null
+              }}
+            >
+              <div className="hci-black-target" ref={blackTargetRef}>
+                <div className="hci-score-rings" />
+                {shots.map((shot) => (
+                  <div
+                    key={shot.index}
+                    className="hci-shot-dot"
+                    style={{
+                      left: `calc(50% + ${shot.x + 12}px)`,
+                      top: `calc(50% + ${shot.y + 12}px)`,
+                    }}
+                    title={`${shot.index}: ${shot.decimalScore.toFixed(1)}`}
+                  >
+                    {shot.index}
+                  </div>
+                ))}
               </div>
-              <div className="hci-rear-sight hci-rear-right" />
-            </div>
 
-            <div className="hci-click-label">
-              {seriesComplete ? 'SERIE COMPLETA' : 'DISPARE PELO GATILHO'}
+              <div
+                className="hci-sight-picture"
+                ref={sightGroupRef}
+                aria-hidden="true"
+              >
+                <div className="hci-rear-sight hci-rear-left" />
+                <div
+                  className="hci-front-sight"
+                  ref={frontSightRef}
+                >
+                  <span className="hci-fixed-pointer-marker" aria-hidden="true" />
+                </div>
+                <div className="hci-rear-sight hci-rear-right" />
+              </div>
+
+              <div className="hci-click-label">
+                {seriesComplete ? 'SERIE COMPLETA' : 'DISPARE PELO GATILHO'}
+              </div>
             </div>
           </div>
 
