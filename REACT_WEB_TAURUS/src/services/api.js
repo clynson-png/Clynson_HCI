@@ -19,8 +19,11 @@ async function readSnapshotFrom(url) {
 }
 
 export async function getSnapshot() {
+  const baseUrl = import.meta.env.BASE_URL || '/'
+  const staticSnapshotUrl = `${baseUrl.replace(/\/$/, '')}/hci_active_snapshot_v1.json`
+
   try {
-    return await readSnapshotFrom('/hci_active_snapshot_v1.json')
+    return await readSnapshotFrom(staticSnapshotUrl)
   } catch {
     // Legacy backend remains as temporary fallback during the transition.
   }
