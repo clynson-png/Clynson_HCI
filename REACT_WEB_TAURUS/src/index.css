@@ -51,6 +51,18 @@ body {
   letter-spacing: 0;
 }
 
+.taurus-login-orientation-alert {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(251, 191, 36, 0.36);
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.08);
+  color: #fde68a;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .taurus-login-form {
   display: grid;
   gap: 14px;
@@ -6573,7 +6585,7 @@ table {
 
   .taurus-login-page {
     min-height: 100dvh;
-    align-items: start;
+    place-items: center;
     padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
   }
 

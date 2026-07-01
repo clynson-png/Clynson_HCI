@@ -129,7 +129,7 @@ function App() {
   ).sort((a, b) => a.localeCompare(b))
 
   if (!authSession) {
-    return <AthleteLoginPage onLogin={handleLogin} leadOptions={allAthletes} />
+    return <AthleteLoginPage onLogin={handleLogin} />
   }
 
   const isAdminSession = !!authSession.access?.canViewLibrary
@@ -147,7 +147,6 @@ function App() {
     : null
   const navigationItems = isMobilePortal
     ? [
-        { id: 'Resumo', label: 'Entrada' },
         { id: 'Taurus', label: translations[lang].sidebar.taurusTarget },
         { id: 'SmartChart', label: translations[lang].sidebar.smartChart },
         { id: 'Library', label: translations[lang].sidebar.library },

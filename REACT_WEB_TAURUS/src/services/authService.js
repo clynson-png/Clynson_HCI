@@ -1,6 +1,26 @@
 import { SUBSCRIPTION_TIERS, buildSubscriptionAccess } from './subscriptionAccess'
 
 const AUTH_SESSION_KEY = 'TAURUS_AUTH_SESSION_V1'
+const FIXED_MOBILE_USERS = {
+  OLIVEIRA: {
+    password: 'Am@zonas',
+    subscriptionTier: SUBSCRIPTION_TIERS.PREMIUM,
+  },
+  CLYNSON: {
+    password: 'Am@zonas',
+    subscriptionTier: SUBSCRIPTION_TIERS.PREMIUM,
+  },
+  FREE: {
+    password: 'usuariopremium',
+    subscriptionTier: SUBSCRIPTION_TIERS.FREE,
+  },
+  PREMIUM: {
+    password: 'usuariopremium',
+    subscriptionTier: SUBSCRIPTION_TIERS.PREMIUM,
+  },
+}
+
+export const MOBILE_LOGIN_NAMES = Object.keys(FIXED_MOBILE_USERS)
 
 export function getStoredAuthSession() {
   if (typeof localStorage === 'undefined') return null
@@ -21,11 +41,21 @@ export function getStoredAuthSession() {
   }
 }
 
-export function loginWithLeadName({ athleteName, snapshot }) {
+export function loginWithLeadName({ athleteName, password = '', snapshot }) {
   const normalizedAthleteName = normalizeName(athleteName)
 
   if (!normalizedAthleteName) {
     throw new Error('Informe o nome do atleta.')
+  }
+
+  const fixedUser = FIXED_MOBILE_USERS[normalizedAthleteName]
+
+  if (!fixedUser) {
+    throw new Error('Usuario nao autorizado neste portal.')
+  }
+
+  if (password !== fixedUser.password) {
+    throw new Error('Senha incorreta.')
   }
 
   const leads = snapshot?.leads || []
@@ -37,17 +67,13 @@ export function loginWithLeadName({ athleteName, snapshot }) {
     (item) => normalizeName(item.athleteName) === normalizedAthleteName
   )
 
-  if (!lead && !athlete) {
-    throw new Error('Atleta nao encontrado na base de leads.')
-  }
-
   const session = {
-    athleteId: lead?.leadId || athlete?.athleteId || athleteName,
-    athleteName: lead?.athleteName || athlete?.athleteName || athleteName,
+    athleteId: lead?.leadId || athlete?.athleteId || normalizedAthleteName,
+    athleteName: lead?.athleteName || athlete?.athleteName || normalizedAthleteName,
     athleteEmail: lead?.athleteEmail || athlete?.athleteEmail || null,
-    displayName: lead?.athleteName || athlete?.athleteName || athleteName,
+    displayName: lead?.athleteName || athlete?.athleteName || normalizedAthleteName,
     role: lead?.role || athlete?.role || 'ATHLETE',
-    subscriptionTier: lead?.subscriptionTier || athlete?.subscriptionTier || SUBSCRIPTION_TIERS.FREE,
+    subscriptionTier: fixedUser.subscriptionTier,
     createdAt: new Date().toISOString(),
   }
 
