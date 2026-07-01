@@ -33,7 +33,7 @@ O app mobile TAURUS fica em `REACT_WEB_TAURUS`.
 
 Link previsto apos GitHub Pages:
 
-`https://clynson-png.github.io/Clynson_HCI/?mobile=1`
+`https://clynson-png.github.io/Clynson_HCI/taurus-mobile/?mobile=1`
 
 Fluxo inicial:
 
@@ -49,3 +49,4 @@ Publicacao:
 - O workflow `.github/workflows/deploy-taurus-mobile.yml` compila `REACT_WEB_TAURUS`.
 - O comando usado no Pages e `npm run build:pages`.
 - O bundle publicado usa base `/Clynson_HCI/`.
+- Enquanto o GitHub Pages estiver servindo a raiz do branch `main`, o pacote estatico fica em `taurus-mobile/`.

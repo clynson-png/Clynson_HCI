@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:pages": "vite build --base=/Clynson_HCI/",
+    "build:mobile-static": "vite build --base=/Clynson_HCI/taurus-mobile/ --outDir ../taurus-mobile --emptyOutDir",
     "lint": "eslint .",
     "preview": "vite preview"
   },
