@@ -1,4 +1,4 @@
-import { ATHLETE_VIEW_JSON_V4_1 } from '../contracts/ATHLETE_VIEW_JSON_V4_1'
+import { ATHLETE_VIEW_JSON_V4_1 } from '../contracts/ATHLETE_VIEW_JSON_v4_1'
 import { materializeSnapshotDerivedMetrics } from './hciDerivedMetricsEngine'
 
 export function mapSnapshotToAthleteView(snapshot, athleteName) {
