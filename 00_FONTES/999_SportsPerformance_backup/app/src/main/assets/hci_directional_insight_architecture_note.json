@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "1.0.0",
+  "assetName": "hci_directional_insight_architecture_note",
+  "createdAt": "2026-06-04",
+  "updatedAt": "2026-06-05",
+  "language": "pt-BR",
+  "purpose": "Registrar a regra arquitetural aprovada para separar insights técnicos direcionais e prescrição de treinos no HCI/TAURUS.",
+  "coreRule": {
+    "summary": "A maior parte dos novos insights do Coach deve sair da planilha/matriz direcional e do motor target_intelligence_direction_matrix.json. A prescrição de treinamento deve sair da training_library_canonical.json.",
+    "doNotMixSources": true
+  },
+  "sourceSeparation": {
+    "directionalInsightSource": {
+      "primaryAsset": "target_intelligence_direction_matrix.json",
+      "origin": "planilha/matriz direcional de pistola e carabina",
+      "role": [
+        "Gerar diagnóstico técnico direcional",
+        "Explicar o que o padrão de impacto sugere",
+        "Indicar parâmetro técnico dominante e secundário",
+        "Gerar insights adicionais para o Coach",
+        "Complementar os insights de ritmo, resultado e consistência"
+      ]
+    },
+    "trainingPrescriptionSource": {
+      "primaryAsset": "training_library_canonical.json",
+      "role": [
+        "Selecionar o treino recomendado",
+        "Prescrever exercício compatível com parâmetro, nível, fase e arma/modalidade",
+        "Evitar prescrição hardcoded na tela",
+        "Manter rastreabilidade entre diagnóstico e treino"
+      ]
+    }
+  },
+  "coachInsightLayer": {
+    "description": "O Coach terá uma camada de leitura técnica adicional, diferente dos insights que saem apenas de ritmo, resultado dos disparos e séries.",
+    "logic": [
+      "Pontuação e ritmo indicam queda, quebra, variação e estabilidade.",
+      "A matriz direcional indica para onde o erro foi e qual causa técnica provável representa.",
+      "A JSON de treinos define o treino a aplicar para o parâmetro detectado."
+    ],
+    "outputExamples": [
+      "Dominante direcional",
+      "Secundário direcional",
+      "Parâmetro técnico provável",
+      "Insight técnico do Coach",
+      "Causa provável",
+      "Training lookup parameter"
+    ]
+  },
+  "futurePipeline": {
+    "input": [
+      "Dados de disparo",
+      "Direção do impacto",
+      "Arma/modalidade",
+      "Nível do atleta",
+      "Contexto/fase quando disponível"
+    ],
+    "diagnosisFlow": [
+      "Ler direção e recorrência do padrão",
+      "Consultar target_intelligence_direction_matrix.json",
+      "Extrair parâmetro dominante e secundário",
+      "Gerar insight técnico direcional",
+      "Cruzar com ritmo e resultado sem substituir as métricas existentes"
+    ],
+    "prescriptionFlow": [
+      "Usar parâmetro detectado",
+      "Consultar training_library_canonical.json",
+      "Aplicar filtros de arma/modalidade, nível e fase",
+      "Retornar treino recomendado"
+    ]
+  },
+  "applicationScope": [
+    {
+      "module": "Duelo 20",
+      "use": "Usar matriz direcional de pistola com 8 setores para diagnóstico e insights; usar training_library_canonical.json para prescrição."
+    },
+    {
+      "module": "ISSF Pistola",
+      "use": "Quando os direcionais forem inseridos nas tabelas ISSF, usar matriz de pistola para análise direcional dos impactos."
+    },
+    {
+      "module": "ISSF Carabina",
+      "use": "Quando os direcionais/quadrantes forem inseridos nas tabelas ISSF, usar matriz de rifle/carabina com 4 quadrantes para diagnóstico e insights."
+    },
+    {
+      "module": "Relatório do Coach",
+      "use": "Exibir camada adicional de insight direcional, sem substituir os insights de ritmo, resultado, consistência e HCI."
+    }
+  ],
+  "implementationPrinciples": [
+    "A matriz explica.",
+    "A JSON de treinos prescreve.",
+    "A tela apenas exibe.",
+    "O motor decide.",
+    "Não criar treino hardcoded em Composable.",
+    "Não misturar diagnóstico técnico com prescrição de treino.",
+    "Usar MEDIANA, não média, quando houver consolidação estatística."
+  ],
+  "currentImplementationStatus": {
+    "verifiedAt": "2026-06-05",
+    "implemented": [
+      "HeaderSection fecha corretamente e DashboardContent permanece como funcao top-level.",
+      "Logout no dashboard chama logout real no ViewModel, nao apenas navigateTo(LOGIN).",
+      "Login atual exige nome e email valido; nao cria email local mockado.",
+      "Apos login, o app direciona para ENTRY para registro real de dados.",
+      "DUEL_20 converte parametros TARGET_* para PROCESS/TRANSFER no lookup de treino.",
+      "DUEL_20 usa apenas insights direcionais quando ha matriz direcional, sem insight generico antigo.",
+      "TargetSession preserva atleta, evento, sessao, targetType, totalShots, zoneLabels, zoneCounts, recommendedTraining e submittedAt.",
+      "Humanoide, Duelo 20 e Cartoes Coloridos salvam direto como TargetSession e nao passam por aprovacao Admin.",
+      "Geracao de PDF/relatorio nas areas Target fica restrita a Coach/Admin ou usuario GOLD.",
+      "Admin desktop local roda sob demanda em http://127.0.0.1:8766, sem polling continuo, internet ou servidor externo.",
+      "Admin desktop v3.3 restaurou Leads, entradas dos atletas, resultados ISSF, HCI Target Sessions, Plan/prescricoes, envio de treino extra, delecao confirmada de sessao ISSF e Visao do atleta.",
+      "Rhythm chart do Admin agora usa serie real e rhythmPath P1/P2/P3, alem do comparativo dos ultimos N treinos/sessoes selecionados pelo Admin."
+    ],
+    "pending": [
+      "CoachReportScreen ainda precisa observar targetSessions e exibir secao propria de Relatorios Target.",
+      "Cadastro de atletas ainda precisa de tabela Room dedicada.",
+      "Relatorio Tecnico Posse/Porte GOLD permanece pipeline futura, sem implementacao atual.",
+      "Visao do atleta no Admin ainda precisa evoluir para equivalencia visual pixel a pixel com o app movel."
+    ],
+    "restartPipeline": [
+      "1. Validar inicializacao do app em emulador estavel/cold boot.",
+      "2. Testar login real, entrada em ENTRY e logout de volta ao login.",
+      "3. Testar gravacao real de Duelo 20, Humanoide e Cartoes Coloridos em TargetSession.",
+      "4. Integrar TargetSession em CoachReportScreen.",
+      "5. Criar persistencia de atletas em Room.",
+      "6. Validar Rhythm chart do Admin contra HCI_RHYTHM_TIMELINE do Excel VBA.",
+      "7. Planejar Relatorio Tecnico Posse/Porte GOLD sem implementar antes da validacao dos relatorios Target."
+    ]
+  },
+  "recommendedAssetFilename": "hci_directional_insight_architecture_note.json"
+}

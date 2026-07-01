@@ -1,0 +1,212 @@
+export const HCI_SQL_SCHEMA_V1 = {
+  tables: {
+    hci_session: {
+      purpose: 'Canonical session header',
+      fields: [
+        'session_id',
+        'athlete',
+        'date',
+        'event',
+        'session_type',
+        'modality',
+        'source_type',
+        'status',
+        'raw_import_json',
+        'created_at',
+        'updated_at',
+      ],
+    },
+
+    hci_session_series: {
+      purpose: 'Canonical SR1-SR6 series data',
+      fields: [
+        'series_id',
+        'session_id',
+        'serie',
+        'status_evento',
+        'total',
+        'raw_series_json',
+      ],
+    },
+
+    hci_session_shot: {
+      purpose: 'Canonical shot-by-shot score and direction data',
+      fields: [
+        'shot_id',
+        'session_id',
+        'series_id',
+        'shot_number',
+        'serie',
+        'score',
+        'direction',
+        'x_value',
+        'raw_shot_json',
+      ],
+    },
+
+    hci_report: {
+      purpose: 'Exportable coach/admin report product',
+      fields: [
+        'report_id',
+        'session_id',
+        'report_type',
+        'athlete',
+        'modality',
+        'event',
+        'source_set',
+        'method_note',
+        'total_score',
+        'decimal_total',
+        'inner_tens',
+        'mpi_x',
+        'mpi_y',
+        'group_size',
+        'interpretation_text',
+        'main_exercise',
+        'key_phrase',
+        'payload_json',
+        'pdf_path',
+        'created_at',
+        'exported_at',
+      ],
+    },
+
+    hci_report_directional_sector: {
+      purpose: 'Lovelesh / Target Intelligence directional sector analysis',
+      fields: [
+        'sector_id',
+        'report_id',
+        'angle',
+        'direction',
+        'shots',
+        'shots_percent',
+        'distance_avg_mm',
+        'idd',
+        'idd_percent',
+        'rank',
+        'hci_reading',
+      ],
+    },
+
+    hci_report_evidence: {
+      purpose: 'Visual evidence, screenshots, charts and report assets',
+      fields: [
+        'evidence_id',
+        'report_id',
+        'evidence_type',
+        'title',
+        'file_path',
+        'image_base64_or_url',
+        'notes',
+      ],
+    },
+
+    hci_training_library: {
+      purpose: 'Technical and physical training canonical library',
+      fields: [
+        'training_id',
+        'parameter',
+        'phase',
+        'training_type',
+        'category',
+        'weapon_class',
+        'target_type',
+        'level',
+        'active',
+        'default_time',
+        'default_shots',
+        'payload_json',
+      ],
+    },
+
+    hci_direction_matrix: {
+      purpose: 'Directional diagnosis matrix for pistol/rifle/target intelligence',
+      fields: [
+        'matrix_id',
+        'weapon_class',
+        'model',
+        'direction_code',
+        'angle',
+        'primary_parameter',
+        'secondary_parameter',
+        'training_lookup_codes',
+        'payload_json',
+      ],
+    },
+
+    hci_export_package: {
+      purpose: 'Export/import JSON package registry',
+      fields: [
+        'export_id',
+        'export_type',
+        'schema_version',
+        'report_id',
+        'session_id',
+        'payload_json',
+        'pdf_file_path',
+        'created_at',
+        'imported_at',
+      ],
+    },
+
+    athlete_metrics_current: {
+      purpose: 'Materialized current athlete metrics derived from canonical SQL',
+      fields: [
+        'athlete_name',
+        'discipline',
+        'overall_hci',
+        'level',
+        'latest_total',
+        'median_total',
+        'sessions_count',
+        'updated_at',
+      ],
+    },
+
+    athlete_indices_current: {
+      purpose: 'Materialized HCI indices payload derived by the motors',
+      fields: [
+        'athlete_name',
+        'parameter_code',
+        'score',
+        'level',
+        'report_profile',
+        'reading',
+        'display_order',
+        'updated_at',
+      ],
+    },
+
+    athlete_session_metrics: {
+      purpose: 'Derived per-session metrics used for fast charts and summary reads',
+      fields: [
+        'session_id',
+        'athlete_name',
+        'event_code',
+        'session_type',
+        'discipline',
+        'total_score',
+        'median_shot',
+        'rhythm_std',
+        'series_count',
+        'updated_at',
+      ],
+    },
+
+    shot_series: {
+      purpose: 'Compatibility table for current engines',
+      fields: [
+        'chaveSerie',
+        'dataColeta',
+        'prova',
+        'atleta',
+        'evento',
+        'sessao',
+        'idBloco',
+        'statusEvento',
+        'serie',
+        'tiros',
+      ],
+    },
+  },
+}

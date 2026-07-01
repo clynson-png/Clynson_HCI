@@ -1,0 +1,890 @@
+  MEM‡RIA TêCNICA ? SISTEMA HCI V18 VBA ESTµVEL
+  1. Vis∆o geral do sistema
+  O sistema HCI Ç uma aplicaá∆o anal°tica em Excel/VBA/Power Query para avaliaá∆o de performance em tiro esportivo, baseada no conceito:
+  Happy Consistency Index ? HCI
+  A arquitetura atual deixou de ser apenas uma planilha e passou a funcionar como uma aplicaá∆o BI em Excel, com:
+  INPUT
+? TB_HCI
+? motores anal°ticos
+? motores de decis∆o
+? OUTPUT
+? RELAT‡RIO
+? APP_DASHBOARD_VBA
+  O arquivo est†vel atual possui:
+  37 abas
+46 tabelas estruturadas
+32 conex‰es Power Query
+VBA embutida ativa
+dashboard executivo em APP_DASHBOARD_VBA
+  Principais †reas do sistema:
+  INPUT
+TB_HCI
+HCI_ENGINE_V6
+HCI_KNOWLEDGE_PLAN
+TB_HCI_OUTPUT_DECISION_ENGINE
+TB_HCI_TRAINING_ENGINE_FINAL
+TB_HCI_TRAINING_CONSULTATION
+TB_HCI_PHYSICAL_TRAINING_ENGINE
+HCI_PERF_TARGETS
+HCI_PERF_STRUCTURE
+HCI_RHYTHM_TIMELINE
+HCI_RHYTHM_PATH
+OUTPUT
+RELATORIO
+APP_DASHBOARD_VBA
+  
+  2. Arquitetura macro do fluxo de dados
+  Fluxo mestre
+  INPUT
+? TB_HCI
+? HCI_ENGINE_V6
+? HCI_KNOWLEDGE_PLAN
+? TB_HCI_OUTPUT_DECISION_ENGINE
+? TB_HCI_TRAINING_ENGINE_FINAL
+? TB_HCI_TRAINING_CONSULTATION
+? TB_HCI_PHYSICAL_TRAINING_ENGINE / BI / PACKAGE
+? OUTPUT
+? APP_DASHBOARD_VBA
+? RELATORIO
+  Fluxo executivo simplificado
+  INPUT
+? TB_HCI
+? ENGINES
+? OUTPUT
+? DASHBOARD VBA
+  Regra arquitetural aprovada
+  Power Query = motor
+OUTPUT = leitura/exibiá∆o
+VBA = orquestraá∆o visual e atualizaá∆o
+Dashboard = apresentaá∆o executiva
+  A OUTPUT n∆o deve decidir, recalcular ou criar l¢gica pesada. Ela deve exibir dados j† consolidados pelos motores.
+  
+  3. Entrada de dados
+  Aba/tabela principal
+  INPUT
+  A INPUT Ç a origem bruta dos dados de tiro.
+  Colunas principais:
+  DATA_COLETA
+PROVA
+ATLETA
+EVENTO
+SESSAO
+ID_BLOCO
+STATUS_EVENTO
+TEMPO_MIN
+SERIE
+T1
+T2
+T3
+T4
+T5
+T6
+T7
+T8
+T9
+T10
+  Significado das principais colunas
+  ATLETA = nome do atleta
+PROVA = modalidade/arma, ex. PISTOL / RIFLE
+EVENTO = identificador do evento, ex. EV5
+SESSAO = tipo macro informado na entrada, ex. TREINO, SIMULADO, COMPETIÄ«O
+HCI_EVENT_KIND = classificaá∆o interna gerada pela TB_HCI a partir de SESSAO/EVENTO/STATUS_EVENTO
+STATUS_EVENTO = PARCIAL ou FINAL
+SERIE = SR1, SR2, SR3...
+T1?T10 = tiros da sÇrie
+  Regras de agrupamento
+  Cada linha da INPUT representa uma sÇrie de 10 tiros.
+  Exemplo:
+  SR1 = tiros 1?10
+SR2 = tiros 11?20
+SR3 = tiros 21?30
+SR4 = tiros 31?40
+SR5 = tiros 41?50
+SR6 = tiros 51?60
+  Para eventos oficiais de 60 tiros, SR6 normalmente deve ser o FINAL.
+  
+  4. Contexto selecionado
+  Tabela
+  TB_HCI_SELECTED_CONTEXT
+  Essa tabela define o contexto ativo exibido no dashboard.
+  Campos principais:
+  ATLETA
+EVENTO
+PROVA
+ENVIRONMENT
+  A relaá∆o correta Ç:
+  TB_HCI_SELECTED_CONTEXT[ENVIRONMENT]
+? TB_HCI[HCI_EVENT_KIND]
+  Essa equivalància foi importante para corrigir TARGETS, STRUCTURE, RHYTHM_TIMELINE e RHYTHM_PATH.
+  
+  5. Motor principal ? TB_HCI
+  Funá∆o
+  A TB_HCI Ç o motor central do sistema. Ela transforma a INPUT em dados anal°ticos calculados.
+  Ela calcula:
+  TOTAL_SERIE
+RESULTADO_EVENTO
+MED_RESULTADO
+sequàncias 9/10
+sequàncias 10
+mÇdias por atleta/prova
+mÇdias por tipo de evento
+scores HCI
+scores de targets
+scores de structure
+mÇtricas emocionais
+mÇtricas f°sicas
+mÇtricas de ritmo
+overall score
+overall level
+  
+  6. Correá∆o estrutural cr°tica ? trava FINAL na TB_HCI
+  Foi identificada uma falha estrutural:
+  Quando havia SR7/SR8 ap¢s uma linha FINAL, a TB_HCI continuava permitindo que essas sÇries contaminassem c†lculos do evento.
+  A correá∆o aprovada foi criar uma trava real por evento.
+  Chave interna reforáada
+  A chave antiga usava apenas:
+  ATLETA + EVENTO
+  Isso era fraco e podia misturar treino, simulado, competiá∆o, prova e blocos.
+  A chave correta passou a ser:
+  ATLETA
++ PROVA
++ EVENTO
++ SESSAO
++ ID_BLOCO
+  Nome da coluna:
+  CHAVE_BLOCO_INTERNA
+  Novas colunas de controle
+  HCI_SERIE_ORDER
+HCI_FINAL_SERIE_ORDER
+HCI_EVENT_ROW_VALID
+  L¢gica
+  HCI_SERIE_ORDER = n£mero da sÇrie extra°do de SR1, SR2, SR3...
+HCI_FINAL_SERIE_ORDER = primeira sÇrie onde STATUS_EVENTO = FINAL
+HCI_EVENT_ROW_VALID = TRUE se sÇrie <= sÇrie FINAL
+HCI_EVENT_ROW_VALID = FALSE se sÇrie posterior ao FINAL
+  Exemplo:
+  SR1  PARCIAL ? TRUE
+SR2  PARCIAL ? TRUE
+SR3  PARCIAL ? TRUE
+SR4  PARCIAL ? TRUE
+SR5  PARCIAL ? TRUE
+SR6  FINAL   ? TRUE
+SR7  EXTRA   ? FALSE
+SR8  EXTRA   ? FALSE
+  Blocos da TB_HCI corrigidos
+  A trava HCI_EVENT_ROW_VALID foi aplicada em:
+  ResultadoPorEvento
+EventoHCI
+EmotionalPorEvento
+  Isso substituiu filtros fixos do tipo:
+  SR1?SR6
+  por:
+  HCI_EVENT_ROW_VALID = TRUE
+  Resultado:
+  SR7/SR8 deixam de contaminar os c†lculos principais
+TB_HCI carregou mais r†pido
+c†lculo ficou mais l¢gico e robusto
+  
+  7. MÇtricas calculadas pela TB_HCI
+  Resultado e mÇdias
+  A TB_HCI calcula:
+  TOTAL_SERIE
+RESULTADO_EVENTO
+MED_RESULTADO
+HCI_MED_COMPETICOES_ATLETA_PROVA
+HCI_MED_SIMULADOS_ATLETA_PROVA
+HCI_MED_TREINOS_ATLETA_PROVA
+HCI_MED_SIM_TREINO_ATLETA_PROVA
+HCI_MED_TIRO_SIM_TREINO_ATLETA_PROVA
+  Sequàncias
+  Calcula sequàncias por sÇrie e por evento:
+  HCI_SEQ_9_10_QTD
+HCI_SEQ_9_10_MAX
+HCI_SEQ_9_QTD
+HCI_SEQ_9_MAX
+HCI_SEQ_10_QTD
+HCI_SEQ_10_MAX
+
+HCI_EVENT_SEQ_9_10_QTD
+HCI_EVENT_SEQ_9_10_MAX
+HCI_EVENT_SEQ_10_QTD
+HCI_EVENT_SEQ_10_MAX
+  Scores principais
+  HCI_OUTCOME_HCI_SCORE
+HCI_PROCESS_SCORE_BASE
+HCI_DEEPENING_SCORE_BASE
+HCI_CONSISTENCY_SCORE_BASE
+HCI_TRANSFER_SCORE_BASE
+HCI_RESILIENCE_SCORE_BASE
+HCI_PRESSURE_SCORE_BASE
+HCI_EMOTIONAL_SCORE_BASE
+HCI_PHYSICAL_SCORE_BASE
+HCI_OVERALL_SCORE
+HCI_OVERALL_LEVEL
+  
+  8. Motor TARGETS ? HCI_PERF_TARGETS
+  Funá∆o
+  A HCI_PERF_TARGETS alimenta o gr†fico radial de targets.
+  Ela gera 5 linhas:
+  OUTCOME
+PROCESS
+RHYTHM
+DEEPENING
+CONSISTENCY
+  Colunas de sa°da obrigat¢rias
+  DISPLAY_ORDER
+PARAMETER
+SCORE
+CURRENT_LEVEL
+REPORT_PROFILE
+  Essa estrutura precisa ser preservada porque outras queries dependem de CURRENT_LEVEL.
+  Estado est†vel
+  A vers∆o est†vel da TARGETS voltou a carregar rapidamente ap¢s reconstruá∆o incremental.
+  A query:
+  là contexto selecionado
+filtra atleta/evento/environment/prova
+seleciona linha FINAL
+monta as 5 linhas do gr†fico
+gera CURRENT_LEVEL
+converte RHYTHM para base 10
+  RHYTHM
+  O RHYTHM n∆o deve mandar o desvio bruto ao gr†fico.
+  O campo bruto Ç:
+  HCI_STD_AJUSTADO_RHYTHM
+  Ele Ç convertido para base 10 por regra validada:
+  std <= 0.42 ? 10
+std <= 0.50 ? interpolaá∆o de 10 atÇ 8.5
+std <= 0.90 ? interpolaá∆o de 8.5 atÇ 5
+std > 0.90  ? reduz progressivamente abaixo de 5
+  N°vel do RHYTHM
+  O n°vel de RHYTHM Ç baseado no STD, n∆o no score convertido:
+  std <= 0.42 ? ELITE
+std <= 0.50 ? ALTO RENDIMENTO
+std <= 0.90 ? INTERMEDIµRIO
+std > 0.90  ? INICIANTE
+  
+  9. Motor STRUCTURE ? HCI_PERF_STRUCTURE
+  Funá∆o
+  A HCI_PERF_STRUCTURE alimenta o gr†fico radial de estrutura/performance.
+  Ela gera 5 linhas:
+  TRANSFER
+RESILIENCE
+PRESSURE
+EMOTIONAL
+PHYSICAL
+  Colunas de sa°da
+  DISPLAY_ORDER
+PARAMETER
+SCORE
+CURRENT_LEVEL
+REPORT_PROFILE
+  Estado est†vel
+  A STRUCTURE foi reconstru°da para seguir o mesmo padr∆o da TARGETS, abandonando a dependància da buffer em favor da TB_HCI.
+  Fluxo:
+  TB_HCI
++ TB_HCI_SELECTED_CONTEXT
+? HCI_PERF_STRUCTURE
+  Scores
+  A query là os scores j† calculados pela TB_HCI:
+  HCI_TRANSFER_SCORE_BASE
+HCI_RESILIENCE_SCORE_BASE
+HCI_PRESSURE_SCORE_BASE
+HCI_EMOTIONAL_SCORE_BASE
+HCI_PHYSICAL_SCORE_BASE
+  Regras de n°vel
+  Regra geral:
+  score >= 8.5 ? ELITE
+score >= 6   ? ALTO RENDIMENTO
+score >= 3   ? INTERMEDIµRIO
+sen∆o        ? INICIANTE
+  Regra especial de TRANSFER:
+  RIFLE/CARABINA:
+>= 9.95 ? ELITE
+>= 8.7  ? ALTO RENDIMENTO
+>= 4.9  ? INTERMEDIµRIO
+sen∆o   ? INICIANTE
+
+PISTOL:
+>= 9   ? ELITE
+>= 7.4 ? ALTO RENDIMENTO
+>= 3.4 ? INTERMEDIµRIO
+sen∆o  ? INICIANTE
+  Regra de EMOTIONAL pode permanecer especial, pois para fins do programa atual:
+  INICIANTE e INTERMEDIµRIO s∆o equivalentes operacionalmente.
+  
+  10. Motor RHYTHM TIMELINE ? HCI_RHYTHM_TIMELINE
+  Funá∆o
+  A HCI_RHYTHM_TIMELINE gera a linha temporal por sÇrie.
+  Ela calcula:
+  MEDIA_SERIE
+STD_SERIE
+BREAK_COUNT
+MAIN_DROP_DEPTH
+MAIN_DROP_MARKER
+MAIN_BREAKING_POINT
+MAIN_TO_DO
+DISPLAY_ORDER
+  Entrada atual
+  Foi reconstru°da para ler direto da:
+  TB_HCI
+  e n∆o mais apenas da TB_HCI_CHARTS_BUFFER.
+  Filtro correto
+  ATLETA
+EVENTO
+HCI_EVENT_KIND
+PROVA
+SERIE SR1?SR6
+  Observaá∆o
+  A timeline foi estabilizada e voltou a carregar corretamente. Ela limita SR1?SR6, mas agora a correá∆o estrutural mais importante est† na pr¢pria TB_HCI, com HCI_EVENT_ROW_VALID.
+  
+  11. Motor RHYTHM PATH ? HCI_RHYTHM_PATH
+  Funá∆o
+  A HCI_RHYTHM_PATH quebra cada sÇrie em partes internas:
+  P1 = T1?T3
+P2 = T4?T7
+P3 = T8?T10
+  Ela gera 18 pontos para uma prova de 6 sÇries:
+  SR1_P1
+SR1_P2
+SR1_P3
+...
+SR6_P1
+SR6_P2
+SR6_P3
+  Colunas de sa°da
+  DISPLAY_ORDER
+SERIE
+PART_ORDER
+PART_NAME
+PART_LABEL
+PART_MEDIA
+MEDIA_SERIE
+STD_SERIE
+BREAK_COUNT
+MAIN_DROP_DEPTH
+MAIN_DROP_MARKER
+  Estado est†vel
+  A query foi reconstru°da para:
+  ler direto da TB_HCI
+usar HCI_RHYTHM_TIMELINE como apoio
+filtrar ATLETA + EVENTO + HCI_EVENT_KIND + PROVA
+limitar SR1?SR6
+  Resultado validado:
+  HCI_RHYTHM_PATH carregou corretamente
+gr†fico de ritmo voltou a ter base
+  
+  12. Motor de diagn¢stico ? HCI_KNOWLEDGE_PLAN
+  Funá∆o
+  O HCI_KNOWLEDGE_PLAN Ç o motor mestre de diagn¢stico qualitativo.
+  Ele produz:
+  diagn¢stico
+prioridade
+insight
+aá∆o recomendada
+to-do
+interpretaá∆o por parÉmetro
+  Regra arquitetural aprovada:
+  HCI_KNOWLEDGE_PLAN define o diagn¢stico.
+OUTPUT n∆o decide.
+  
+  13. Motor de decis∆o ? TB_HCI_OUTPUT_DECISION_ENGINE
+  Funá∆o
+  O TB_HCI_OUTPUT_DECISION_ENGINE consolida as sa°das do Knowledge Plan e define o que ser† exibido na OUTPUT.
+  Ele Ç a fonte £nica depurada para:
+  prioridade cr°tica
+insights
+recomendaá‰es
+aá‰es
+diagn¢stico final
+  Regra
+  A OUTPUT n∆o deve buscar diagn¢stico diretamente de m£ltiplos motores.
+  Pipeline correto:
+  HCI_KNOWLEDGE_PLAN
+? TB_HCI_OUTPUT_DECISION_ENGINE
+? OUTPUT
+  
+  14. Motor de treino tÇcnico ? TB_HCI_TRAINING_ENGINE_FINAL
+  Funá∆o
+  O motor de treino tÇcnico relaciona diagn¢stico HCI com treinos recomendados.
+  Fontes principais:
+  TB_HCI_OUTPUT_DECISION_ENGINE
+TB_HCI_TRAINING_BI
+HCI_SELECTED_PERIODIZATION_PHASE
+TB_HCI_SELECTED_CONTEXT
+  L¢gicas principais
+  mapeia PARAMETER_1 / PARAMETER_2
+busca treinos por HCI_PARAMETER
+aplica fase de periodizaá∆o
+aplica trava de arma/modalidade
+aplica prioridade
+escolhe melhor treino por diagn¢stico
+  Trava de arma/modalidade
+  Regra aprovada:
+  PROVA = RIFLE
+? s¢ pode receber treino RIFLE ou PISTOL/RIFLE
+
+PROVA = PISTOL
+? s¢ pode receber treino PISTOL ou PISTOL/RIFLE
+  Essa trava deve permanecer no motor Power Query, n∆o na OUTPUT.
+  
+  15. Consulta de treino ? TB_HCI_TRAINING_CONSULTATION
+  Funá∆o
+  A TB_HCI_TRAINING_CONSULTATION Ç a tabela de consulta final dos treinos tÇcnicos/estratÇgicos.
+  Ela foi corrigida para n∆o depender de novo join desnecess†rio com TB_HCI_TRAINING_BI.
+  Arquitetura correta:
+  TB_HCI_TRAINING_ENGINE_FINAL
+? TB_HCI_TRAINING_CONSULTATION
+  Regras
+  A Consultation:
+  mantÇm treinos tÇcnicos e estratÇgicos
+remove f°sico puro
+remove mental puro
+consolida treinos £nicos
+gera EXECUTION_SUMMARY
+mantÇm 6 linhas ou mais para relat¢rio
+  Dashboard
+  O dashboard deve puxar apenas a primeira linha:
+  =SEERRO(÷NDICE(TB_HCI_TRAINING_CONSULTATION[TRAINING_NAME];1);"")
+  E equivalentes para:
+  TRAINING_OBJECTIVE
+TRAINING_DESCRIPTION
+TOTAL_TIME_MIN
+TOTAL_SHOTS_EXTRACTED
+  
+  16. Motor f°sico ? Physical Training
+  Arquitetura
+  Pipeline aprovado:
+  TB_HCI_ATHLETE_PROFILE
+? TB_HCI_ATHLETE_PROFILE_ENGINE
+? TB_HCI_PHYSICAL_TRAINING_LIBRARY / PACKAGES
+? TB_HCI_PHYSICAL_TRAINING_ENGINE
+? TB_HCI_PHYSICAL_TRAINING_BI
+? TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT
+? OUTPUT / RELATORIO
+  Funá∆o
+  Prescrever pacote f°sico com:
+  CORE
+membros superiores
+membros inferiores
+cardiopulmonar 1
+cardiopulmonar 2
+  Regras
+  A carga depende da fase de periodizaá∆o:
+  GENERAL_PREPARATION = 70%
+SPECIFIC_PREPARATION = 70%
+PRE_COMPETITION = 50%
+COMPETITION = 50%
+  Prescriá∆o final deve respeitar seguranáa, restriá‰es f°sicas e validaá∆o profissional.
+  
+  17. Prediction BI
+  Abas/tabelas relacionadas
+  PREDICTION_BASE
+PREDICTION_BI
+TB_PREDICTION_SUMMARY
+TB_PREDICTION_DETAILS
+TB_PREDICTION_METRICS
+TB_PREDICTION_BY_YEAR
+TB_PREDICTION_METADATA
+  TambÇm h† vers‰es masculinas:
+  TB_PREDICTION_SUMMARY_MASCULINO
+TB_PREDICTION_DETAILS_MASCULINO
+TB_PREDICTION_METRICS_MASCULINO
+TB_PREDICTION_BY_YEAR_MASCULINO
+TB_PREDICTION_METADATA_MASCULINO
+  Finalidade
+  Base para projeá∆o de desempenho e comparaá∆o competitiva, incluindo futura calibraá∆o HCI Elite com dados ISSF.
+  
+  18. OUTPUT
+  Funá∆o
+  A OUTPUT Ç a interface principal de leitura executiva.
+  Ela deve:
+  exibir dados consolidados
+n∆o recalcular l¢gica pesada
+n∆o decidir diagn¢stico
+puxar sa°das dos motores
+alimentar dashboard VBA
+  Estrutura executiva aprovada
+  Quatro cards principais:
+  1. PRIORIDADE CR÷TICA
+2. INSIGHTS & RECOMENDAÄÂES
+3. TREINAMENTO TêCNICO
+4. PACOTE F÷SICO
+  Card 1 ? Prioridade cr°tica
+  Campos:
+  FRENTE CR÷TICA
+POR QU“
+RISCO ATUAL
+AÄ«O SUGERIDA
+IMPACTO ESPERADO
+  Cor:
+  #D62828
+  Card 2 ? Insights & Recomendaá‰es
+  Campos:
+  ANµLISE
+INSIGHTS
+RECOMENDAÄ«O
+  Cor:
+  #1D4ED8
+  Card 3 ? Treinamento tÇcnico
+  Campos:
+  OBJETIVO
+COMO EXECUTAR
+VOLUME / TEMPO
+  Cor:
+  #166534
+  Fonte:
+  TB_HCI_TRAINING_CONSULTATION
+  Card 4 ? Pacote f°sico
+  Campos:
+  PACOTE F÷SICO
+SESS«O
+EXERC÷CIOS PRINCIPAIS
+FREQU“NCIA / DURAÄ«O
+NOTA DE SEGURANÄA
+  Cor:
+  #5B21B6
+  Fonte:
+  TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT
+  Como a tabela possui uma linha, usar:
+  =÷NDICE(TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT[PACKAGE];1)
+  
+  19. RELATORIO
+  Funá∆o
+  A aba RELATORIO Ç a vis∆o completa para o coach.
+  Ela deve conter:
+  sa°das completas
+diagn¢sticos barrados da OUTPUT por prioridade
+informaá‰es complementares
+an†lises tÇcnicas
+recomendaá‰es filtradas e n∆o filtradas
+  Regra
+  A OUTPUT deve ser limpa e objetiva.
+  O RELATORIO pode ser amplo.
+  
+  20. Dashboard VBA ? APP_DASHBOARD_VBA
+  Funá∆o
+  Dashboard visual executivo em Excel/VBA.
+  ContÇm:
+  KPIs principais
+Rhythm Timeline
+gr†ficos radiais
+4 cards executivos
+  Arquitetura VBA
+  Foi criada arquitetura com Update Manager.
+  Macros principais:
+  AtualizarDashboardHCI
+HCI_CopiarRhythmChartSeguro
+HCI_CopiarStructureChartSeguro
+HCI_CopiarTargetsChartSeguro
+AtualizarBlueGoalBar
+AtualizarBlueStatusColor
+AtualizarBlueTrendColor
+  Regras de estabilidade
+  n∆o usar refresh global pesado
+n∆o usar CalculateFullRebuild como rotina padr∆o
+n∆o chamar queries pesadas automaticamente
+gr†ficos atualizam sob demanda
+copiar gr†ficos ap¢s renderizaá∆o
+  Gr†ficos mapeados
+  Origem:
+  CHART_RHYTHM_OUTPUT
+CHART_STRUCTURE_OUTPUT
+CHART_TARGETS_OUTPUT
+  Destino:
+  chart_rhythm_area
+chart_structure_area
+chart_targets_area
+  C¢pias no dashboard:
+  CHART_RHYTHM_DASH
+CHART_STRUCTURE_DASH
+CHART_TARGETS_DASH
+  Regra de c¢pia
+  Antes de colar novo gr†fico:
+  apagar gr†fico antigo
+copiar gr†fico atualizado
+colar no placeholder
+renomear
+redimensionar
+  Isso evita duplicaá∆o.
+  
+  21. VBA ? decis‰es importantes
+  Removido/evitado
+  refresh autom†tico pesado
+CalculateUntilAsyncQueriesDone em rotina di†ria
+CalculateFullRebuild como rotina padr∆o
+macros BACKUP antigas
+destino antigo ph_rhythm
+  Macro antiga descartada
+  BACKUP_AtualizarRhythmPathGrafico
+BACKUP_AtualizarGraficoRitmo
+  Motivos:
+  usavam conex∆o antiga
+podiam travar
+referenciavam placeholder incorreto
+foram substitu°das por c¢pia segura
+  
+  22. Queries estabilizadas na £ltima depuraá∆o
+  Foram estabilizadas:
+  HCI_PERF_TARGETS
+HCI_PERF_STRUCTURE
+HCI_RHYTHM_TIMELINE
+HCI_RHYTHM_PATH
+TB_HCI
+TB_HCI_TRAINING_CONSULTATION
+TB_HCI_TRAINING_ENGINE_FINAL
+  Correá‰es importantes:
+  TARGETS voltou a calcular RHYTHM em base 10
+STRUCTURE voltou a carregar scores e CURRENT_LEVEL
+RHYTHM_TIMELINE voltou a trazer SR1?SR6
+RHYTHM_PATH voltou a gerar partes P1/P2/P3
+TB_HCI ganhou trava FINAL real
+  
+  23. Regra sobre INICIANTE e INTERMEDIµRIO
+  Para fins do programa atual:
+  INICIANTE e INTERMEDIµRIO s∆o equivalentes operacionalmente.
+  As labels podem permanecer diferentes visualmente, mas em decis‰es pr†ticas podem cair no mesmo grupo funcional.
+  
+  24. Dependàncias principais
+  Gr†ficos
+  HCI_PERF_TARGETS ? CHART_TARGETS_OUTPUT
+HCI_PERF_STRUCTURE ? CHART_STRUCTURE_OUTPUT
+HCI_RHYTHM_PATH / HCI_RHYTHM_TIMELINE ? CHART_RHYTHM_OUTPUT
+  OUTPUT
+  TB_HCI_OUTPUT_DECISION_ENGINE
+TB_HCI_TRAINING_CONSULTATION
+TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT
+HCI_OUTPUT_QUALITATIVE_INTELLIGENCE
+PREDICTION_BI
+  RELATORIO
+  HCI_KNOWLEDGE_PLAN
+HCI_OUTPUT_QUALITATIVE_INTELLIGENCE
+HCI_PERF_TARGETS
+HCI_PERF_STRUCTURE
+TB_HCI_TRAINING_CONSULTATION
+TB_HCI_PHYSICAL_TRAINING_ENGINE
+  
+  25. Pontos de atená∆o futuros
+  1. Consolidar a trava FINAL em toda a cadeia
+  A trava j† entrou na TB_HCI, mas deve ser validada com eventos reais contendo:
+  SR7
+SR8
+SR9
+  Conferir:
+  HCI_EVENT_ROW_VALID = TRUE atÇ FINAL
+HCI_EVENT_ROW_VALID = FALSE ap¢s FINAL
+RESULTADO_EVENTO = soma apenas atÇ FINAL
+  2. Verificar se todos os gr†ficos est∆o usando queries finais
+  Confirmar:
+  CHART_TARGETS_OUTPUT ? HCI_PERF_TARGETS
+CHART_STRUCTURE_OUTPUT ? HCI_PERF_STRUCTURE
+CHART_RHYTHM_OUTPUT ? HCI_RHYTHM_PATH / TIMELINE
+  3. Revisar uso da TB_HCI_CHARTS_BUFFER
+  Algumas partes ainda podem usar buffer. A tendància futura Ç:
+  usar TB_HCI direta quando n∆o gerar loop
+usar buffer apenas quando houver ganho real de performance
+  4. Evitar c†lculos duplicados nos gr†ficos
+  Regra:
+  TB_HCI calcula
+queries de gr†fico apenas formatam
+OUTPUT apenas exibe
+  5. VBA
+  Manter atualizaá∆o manual/controlada dos gr†ficos.
+  Evitar:
+  RefreshAll
+CalculateFullRebuild
+CalculateUntilAsyncQueriesDone
+  como padr∆o do bot∆o di†rio.
+  
+  26. Resumo final da arquitetura aprovada
+  INPUT
+    ?
+TB_HCI
+    ?
+    √ƒƒ HCI_PERF_TARGETS
+    √ƒƒ HCI_PERF_STRUCTURE
+    √ƒƒ HCI_RHYTHM_TIMELINE
+    √ƒƒ HCI_RHYTHM_PATH
+    √ƒƒ HCI_ENGINE_V6
+    ¿ƒƒ HCI_KNOWLEDGE_PLAN
+            ?
+TB_HCI_OUTPUT_DECISION_ENGINE
+            ?
+OUTPUT
+            ?
+APP_DASHBOARD_VBA
+  Fluxo de treino:
+  TB_HCI_OUTPUT_DECISION_ENGINE
+? TB_HCI_TRAINING_ENGINE_FINAL
+? TB_HCI_TRAINING_CONSULTATION
+? OUTPUT / RELATORIO
+  Fluxo f°sico:
+  TB_HCI_ATHLETE_PROFILE
+? TB_HCI_ATHLETE_PROFILE_ENGINE
+? TB_HCI_PHYSICAL_TRAINING_ENGINE
+? TB_HCI_PHYSICAL_TRAINING_BI
+? TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT
+? OUTPUT / RELATORIO
+  Fluxo visual:
+  HCI_PERF_TARGETS
+HCI_PERF_STRUCTURE
+HCI_RHYTHM_PATH
+? gr†ficos na OUTPUT
+? c¢pia segura via VBA
+? APP_DASHBOARD_VBA
+  
+  27. Estado final do projeto
+  ? Sistema HCI V18 estabilizado
+? TB_HCI com trava FINAL estrutural
+? TARGETS estabilizada
+? STRUCTURE estabilizada
+? RHYTHM_TIMELINE estabilizada
+? RHYTHM_PATH estabilizada
+? Training Consultation corrigida
+? Dashboard VBA com arquitetura segura
+? Gr†ficos mapeados
+? OUTPUT preservada como camada de leitura
+? RELATORIO preservado como camada anal°tica ampla
+  Conclus∆o: o sistema HCI est† estruturado como uma aplicaá∆o anal°tica em Excel, com motores separados, dados rastre†veis, dashboard executivo e relat¢rio completo para o coach.
+
+NOVO - APP
+Pipeline
+
+Perfis De Acesso
+Criar ADMIN, COACH, ATHLETE.
+Por enquanto, um seletor interno no app para testar. Depois isso vira login real.
+
+Dicion·rio Training Plan
+Mapear cada cÛdigo da planilha para categorias da biblioteca:
+AT, PT, P, Q, W, D, RT/RIT, COM, SC, COMPET, Y, R.
+
+Motor De Elegibilidade
+Para cada cÛdigo, buscar treinos compatÌveis por:
+cÛdigo do fundamento + par‚metro HCI + fase da periodizaÁ„o + nÌvel do atleta + restriÁıes de competiÁ„o.
+
+Gerador 30 Dias
+Coach informa percentuais no topo.
+Sistema distribui os cÛdigos nos 30 dias respeitando a estrutura do Excel:
+rotina, fÌsico aerÛbico, review, estratÈgico, tÈcnico manh„/tarde, mental, fÌsico neuromuscular.
+
+PrescriÁ„o Do Coach
+Coach/Admin toca em uma cÈlula e vÍ lista de treinos compatÌveis.
+Escolhe um treino.
+O app salva: dia + bloco + cÛdigo + treino escolhido.
+
+Entrega Ao Atleta
+Atleta toca na cÈlula e abre direto o treino prescrito.
+Sem lista, sem ediÁ„o.
+
+Physical Training
+Criar aba separada com o motor fÌsico:
+gatilho por STD_GLOBAL, degradaÁ„o final, fase da periodizaÁ„o, pacote fÌsico, carga, volume, frequÍncia e nota de seguranÁa.
+
+PersistÍncia
+Salvar tudo no Room:
+usu·rio/perfil, plano mensal, percentuais, cÈlulas do plano, treino prescrito por cÈlula, pacote fÌsico.
+
+ValidaÁ„o
+Comparar uma saÌda do app contra a aba TRAINING_PLAN do Excel e contra os documentos dos assets.
+
+Eu faria em duas entregas:
+
+Entrega 1
+Perfis + Training Plan clic·vel + lista para coach + detalhe direto para atleta.
+
+Entrega 2
+PersistÍncia completa + aba Physical Training fiel ao motor dos assets.
+
+
+
+
+
+19:45
+
+  
+
+Atualizacao de pipeline do app - 01/06/2026
+
+Decisao de escopo:
+Para a versao beta do app, manter um treino por fundamento, por periodo de treino.
+Objetivo: facilitar a execucao pelo atleta e concentrar o trabalho em deixar cada treino impecavel.
+O banco de dados completo de treinos continuara preservado para uso futuro do Coach/Admin, mas nao deve aparecer como excesso de opcoes para o atleta nesta fase.
+
+Training Plan:
+Coach define meta e percentuais dos fundamentos.
+Sistema gera o plano de 30 dias.
+Coach/Admin escolhe o treino compativel.
+Atleta abre diretamente o treino prescrito.
+
+Idiomas:
+Adicionar ao final da pipeline da beta um botao Portugues/Ingles.
+O app deve nascer preparado para alternar PT/EN ainda na versao beta.
+
+Atualizacao de pipeline - calibracao Prediction BI (01/06/2026)
+
+Fonte de verdade:
+ISSF World Cup Munich 2026 (dados reais).
+
+Regra de calibracao preditiva aprovada:
+- Rifle: ancorar 627,4 em colocacao provavel 29.
+- Pistola: ancorar 576 em colocacao provavel 36.
+- Manter Top 15 e Top 8 como limites superiores da curva.
+- Abaixo de MQS, a curva deve penalizar com inclinacao especifica por prova (rifle mais sensivel).
+
+Implementacao no app:
+- Card ""Probabilidade e Metas"" passa a mostrar classificacao provavel e faixa.
+- Formula preditiva passa a usar ancoras reais (Munique 2026), sem perder os alvos MQS/Top15/Top8 do Prediction BI.
+
+Atualizacao de pipeline - consolidacao de modificacoes (01/06/2026)
+
+Itens implementados e agora registrados:
+1) INPUT ADMIN - metas de predicao por contexto
+- Inclusao de campos manuais: MQS (Selecao Nacional), Top 15 e Top 8.
+- Aplicacao por contexto atleta + evento + sessao.
+- Dashboard passa a consumir esses valores no card "Probabilidade e Metas".
+
+2) Carga inicial das metas via Excel (Prediction BI)
+- Seed inicial das metas vindo da aba PREDICTION_BI (arquivo base em assets).
+- Valores padrao por atleta/prova definidos para inicializacao.
+- Edicao manual no Admin permanece disponivel para ajuste futuro.
+
+3) Predicao de classificacao provavel no Dashboard
+- Inclusao de formula preditiva no card "Probabilidade e Metas".
+- Exibicao de colocacao provavel e faixa estimada.
+- Metas MQS/Top15/Top8 seguem visiveis e ativas no mesmo card.
+
+4) Recalibracao com dados reais da ISSF World Cup Munich 2026
+- Ancora rifle: 627,4 => 29 lugar provavel.
+- Ancora pistola: 576 => 36 lugar provavel.
+- Top 15 e Top 8 mantidos como limites superiores.
+- Curva abaixo de MQS com inclinacao diferenciada por prova.
+
+5) Diretriz de continuidade
+- Proximo passo tecnico: persistir MQS/Top15/Top8 em tabela Room por contexto.
+- Manter seed anual via Prediction BI e override manual no Admin.
+
+Pipeline de amanha - 02/06/2026
+
+1) Probabilidade por cenarios na UI (Prediction BI)
+- Exibir no card: Pessimista (-0,15), Realista (0), Otimista (+0,15).
+- Validar com formulas da ANALISE_OUTPUT.
+
+2) Persistencia completa da area Admin
+- Persistir no Room os campos do INPUT BASE, painel tecnico e painel fisico por contexto.
+- Recuperar automaticamente ao trocar atleta/evento/sessao.
+
+3) Auditoria final por atleta/prova
+- CHATEAUBRIAN, GABRIEL, IVIANE, MIRIAN.
+- Validar metas MQS/Top15/Top8, classificacao provavel, SR1..SR6, aprovacao por lote.
+
+4) PT/EN (beta)
+- Iniciar internacionalizacao nas telas principais.
+- Prioridade: Dash, Plan, Report, Entry, Admin.
+
+Adendo de pipeline - TARGET final review (02/06/2026)
+
+Item final da pipeline beta:
+- Revisar a aba TARGET apos concluir a pipeline principal.
+- Validar dois modelos fixos de referencia: HCI Radial - Pistola e HCI Radial - Rifle.
+- Conferir layout contra imagens de referencia: titulo, subtitulo, legenda, radial preenchido, percentuais externos, caixa Dominante/Secundario e indice IDD_MEDIO.
+- Depois conectar a leitura real de coordenadas X/Y do TargetScan para substituir os percentuais de referencia por dados do atleta/contexto.
+- A regra permanece: nao inventar coordenadas; quando nao houver X/Y, manter referencia/modelo e informar a origem.

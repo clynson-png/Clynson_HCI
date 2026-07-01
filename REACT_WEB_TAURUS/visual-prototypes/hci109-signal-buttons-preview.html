@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HCI 10.9 Signal Buttons Preview</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 70% 0%, rgba(255, 121, 0, 0.16), transparent 30%),
+        linear-gradient(135deg, #02070c, #06111f 54%, #02070c);
+      color: #f8fafc;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    .preview-shell {
+      width: min(1120px, calc(100vw - 48px));
+      padding: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(8, 18, 27, 0.96), rgba(5, 12, 19, 0.98));
+      box-shadow: 0 34px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    .preview-title {
+      margin: 0 0 22px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .preview-title small {
+      display: block;
+      color: #94a3b8;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .preview-title h1 {
+      margin: 8px 0 0;
+      font-size: 1.45rem;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+
+    .trainer-mock {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 18px;
+    }
+
+    .stage {
+      position: relative;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(239, 217, 159, 0.98), rgba(224, 196, 125, 0.98));
+      color: #172033;
+    }
+
+    .stage-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      color: #475569;
+      font-size: 0.76rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .discipline-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      width: 194px;
+      margin-bottom: 16px;
+    }
+
+    .signal-line {
+      display: grid;
+      grid-template-columns: 40px auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .signal-button {
+      width: 40px;
+      min-height: 30px;
+      padding: 0;
+      border: 1px solid rgba(15, 23, 42, 0.16);
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ffffff, #e9edf2);
+      color: #0f172a;
+      font-size: 0.58rem;
+      font-weight: 950;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 20px rgba(15, 23, 42, 0.12);
+    }
+
+    .starting-lights {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      width: fit-content;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #111827, #020617);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.68), 0 12px 24px rgba(15, 23, 42, 0.22);
+    }
+
+    .light {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: #111827;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.75);
+    }
+
+    .red .light {
+      background: radial-gradient(circle at 35% 30%, #fecaca, #ef4444 42%, #7f1d1d 72%);
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.78), inset 0 2px 4px rgba(255, 255, 255, 0.25);
+    }
+
+    .yellow .light {
+      background: radial-gradient(circle at 35% 30%, #fef3c7, #eab308 45%, #854d0e 74%);
+      box-shadow: 0 0 14px rgba(234, 179, 8, 0.74), inset 0 2px 4px rgba(255, 255, 255, 0.25);
+    }
+
+    .green .light {
+      background: radial-gradient(circle at 35% 30%, #bbf7d0, #22c55e 43%, #14532d 76%);
+      box-shadow: 0 0 14px rgba(34, 197, 94, 0.76), inset 0 2px 4px rgba(255, 255, 255, 0.25);
+    }
+
+    .range {
+      position: absolute;
+      left: 310px;
+      right: 28px;
+      top: 68px;
+      bottom: 34px;
+      border: 2px solid #d7bd7d;
+      border-radius: 12px;
+      background: #efd99f;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .target {
+      width: min(210px, 52%);
+      aspect-ratio: 1;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle, #111 0 31%, transparent 31.5%),
+        repeating-radial-gradient(circle, transparent 0 22px, rgba(0,0,0,0.28) 23px 24px),
+        #efd99f;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    }
+
+    .metrics {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .metric span {
+      display: block;
+      color: #94a3b8;
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      color: #f8fafc;
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="preview-shell">
+    <div class="preview-title">
+      <div>
+        <small>Primeira aproximacao visual - fora da aba real</small>
+        <h1>HCI 10.9: botoes compactos + semaforos alinhados</h1>
+      </div>
+    </div>
+
+    <section class="trainer-mock">
+      <div class="stage">
+        <div class="stage-header">
+          <span>HCI_109_RHYTHM</span>
+          <strong>Serie 0 / 10</strong>
+        </div>
+
+        <div class="discipline-row">
+          <div class="signal-line">
+            <button class="signal-button">READY</button>
+            <div class="starting-lights red" aria-label="vermelho">
+              <i class="light"></i><i class="light"></i><i class="light"></i>
+            </div>
+          </div>
+          <div class="signal-line">
+            <button class="signal-button">SET</button>
+            <div class="starting-lights yellow" aria-label="amarelo">
+              <i class="light"></i><i class="light"></i><i class="light"></i>
+            </div>
+          </div>
+          <div class="signal-line">
+            <button class="signal-button">GO</button>
+            <div class="starting-lights green" aria-label="verde">
+              <i class="light"></i><i class="light"></i><i class="light"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="range">
+          <div class="target"></div>
+        </div>
+      </div>
+
+      <aside class="metrics">
+        <div class="metric"><span>Disparos</span><strong>0/10</strong></div>
+        <div class="metric"><span>Total da serie</span><strong>0</strong></div>
+        <div class="metric"><span>Decimal bruto</span><strong>0.0</strong></div>
+        <div class="metric"><span>Status</span><strong>10</strong></div>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "168246497914",
+    "project_id": "com-example-sportsperfor-aae3a",
+    "storage_bucket": "com-example-sportsperfor-aae3a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:168246497914:android:660bde712d915fc92621c3",
+        "android_client_info": {
+          "package_name": "com.example.sportsperformance"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBp7rinivYJZHMp_1ihPAcgoxyeU8WLSsM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,1726 @@
+shared TB_HCI = let
+    FonteInput = Excel.CurrentWorkbook(){[Name="INPUT"]}[Content],
+
+    FonteBase =
+        Table.SelectRows(
+            FonteInput,
+            each
+                Text.Upper(Text.From([STATUS_EVENTO])) <> "STATUS_EVENTO"
+                and Text.Upper(Text.From([SERIE])) <> "SERIE"
+        ),
+
+    Tipos =
+        Table.TransformColumnTypes(
+            FonteBase,
+            {
+                {"DATA_COLETA", type text},
+                {"PROVA", type text},
+                {"ATLETA", type text},
+                {"EVENTO", type text},
+                {"SESSAO", type text},
+                {"ID_BLOCO", type text},
+                {"STATUS_EVENTO", type text},
+                {"TEMPO_MIN", type number},
+                {"SERIE", type text},
+                {"T1", type number},
+                {"T2", type number},
+                {"T3", type number},
+                {"T4", type number},
+                {"T5", type number},
+                {"T6", type number},
+                {"T7", type number},
+                {"T8", type number},
+                {"T9", type number},
+                {"T10", type number}
+            },
+            "pt-BR"
+        ),
+
+    // Função: lista dos tiros da série
+    ListaTiros = (linha as record) as list =>
+        {
+            try Number.From(Record.Field(linha, "T1")) otherwise null,
+            try Number.From(Record.Field(linha, "T2")) otherwise null,
+            try Number.From(Record.Field(linha, "T3")) otherwise null,
+            try Number.From(Record.Field(linha, "T4")) otherwise null,
+            try Number.From(Record.Field(linha, "T5")) otherwise null,
+            try Number.From(Record.Field(linha, "T6")) otherwise null,
+            try Number.From(Record.Field(linha, "T7")) otherwise null,
+            try Number.From(Record.Field(linha, "T8")) otherwise null,
+            try Number.From(Record.Field(linha, "T9")) otherwise null,
+            try Number.From(Record.Field(linha, "T10")) otherwise null
+        },
+
+    // Função: blocos consecutivos válidos, mínimo de 2 tiros
+    SequenciasValidas = (lista as list, criterio as function) as list =>
+        let
+            flags =
+                List.Transform(
+                    lista,
+                    each if _ <> null and criterio(_) then 1 else 0
+                ),
+
+            acumulado =
+                List.Accumulate(
+                    flags,
+                    [atual = 0, blocos = {}],
+                    (estado, valor) =>
+                        if valor = 1 then
+                            [
+                                atual = estado[atual] + 1,
+                                blocos = estado[blocos]
+                            ]
+                        else
+                            [
+                                atual = 0,
+                                blocos =
+                                    if estado[atual] >= 2 then
+                                        estado[blocos] & {estado[atual]}
+                                    else
+                                        estado[blocos]
+                            ]
+                ),
+
+            blocosFinais =
+                if acumulado[atual] >= 2 then
+                    acumulado[blocos] & {acumulado[atual]}
+                else
+                    acumulado[blocos]
+        in
+            blocosFinais,
+
+    QtdSequencias = (lista as list, criterio as function) as number =>
+        List.Count(SequenciasValidas(lista, criterio)),
+
+    MaxSequencia = (lista as list, criterio as function) as number =>
+        let
+            blocos = SequenciasValidas(lista, criterio)
+        in
+            if List.IsEmpty(blocos) then 0 else List.Max(blocos),
+
+    // TOTAL_SERIE recalculado, sem usar Coluna1 da INPUT
+    Add_TOTAL_SERIE =
+        Table.AddColumn(
+            Tipos,
+            "TOTAL_SERIE",
+            each List.Sum(List.RemoveNulls(ListaTiros(_))),
+            type number
+        ),
+
+    // CHAVE_SERIE oficial
+    Add_CHAVE_SERIE =
+        Table.AddColumn(
+            Add_TOTAL_SERIE,
+            "CHAVE_SERIE",
+            each
+                Text.From([DATA_COLETA])
+                & "_"
+                & Text.From([PROVA])
+                & "_"
+                & Text.From([ATLETA])
+                & "_"
+                & Text.From([EVENTO])
+                & "_"
+                & Text.From([SESSAO])
+                & "_"
+                & Text.From([ID_BLOCO])
+                & "_"
+                & Text.From([SERIE]),
+            type text
+        ),
+
+    // HCI 9/10: tiros >= 9
+    Add_HCI_9_10_QTD =
+        Table.AddColumn(
+            Add_CHAVE_SERIE,
+            "HCI_SEQ_9_10_QTD",
+            each QtdSequencias(ListaTiros(_), (x) => x >= 9),
+            Int64.Type
+        ),
+
+    Add_HCI_9_10_MAX =
+        Table.AddColumn(
+            Add_HCI_9_10_QTD,
+            "HCI_SEQ_9_10_MAX",
+            each MaxSequencia(ListaTiros(_), (x) => x >= 9),
+            Int64.Type
+        ),
+
+    // HCI 9: tiros >= 9 e < 10
+    Add_HCI_9_QTD =
+        Table.AddColumn(
+            Add_HCI_9_10_MAX,
+            "HCI_SEQ_9_QTD",
+            each QtdSequencias(ListaTiros(_), (x) => x >= 9 and x < 10),
+            Int64.Type
+        ),
+
+    Add_HCI_9_MAX =
+        Table.AddColumn(
+            Add_HCI_9_QTD,
+            "HCI_SEQ_9_MAX",
+            each MaxSequencia(ListaTiros(_), (x) => x >= 9 and x < 10),
+            Int64.Type
+        ),
+
+    // HCI 10: tiros >= 10
+    Add_HCI_10_QTD =
+        Table.AddColumn(
+            Add_HCI_9_MAX,
+            "HCI_SEQ_10_QTD",
+            each QtdSequencias(ListaTiros(_), (x) => x >= 10),
+            Int64.Type
+        ),
+
+    Add_HCI_10_MAX =
+        Table.AddColumn(
+            Add_HCI_10_QTD,
+            "HCI_SEQ_10_MAX",
+            each MaxSequencia(ListaTiros(_), (x) => x >= 10),
+            Int64.Type
+        ),
+
+    // Chave interna correta: ATLETA + EVENTO
+    // Usada apenas para calcular RESULTADO_EVENTO
+    Add_CHAVE_BLOCO_INTERNA =
+    Table.AddColumn(
+        Add_HCI_10_MAX,
+        "CHAVE_BLOCO_INTERNA",
+        each
+            Text.From([ATLETA])
+            & "_"
+            & Text.From([PROVA])
+            & "_"
+            & Text.From([EVENTO])
+            & "_"
+            & Text.From([SESSAO])
+            & "_"
+            & Text.From([ID_BLOCO]),
+        type text
+    ),
+	Add_SERIE_ORDER =
+    Table.AddColumn(
+        Add_CHAVE_BLOCO_INTERNA,
+        "HCI_SERIE_ORDER",
+        each
+            try Number.FromText(
+                Text.Select(
+                    Text.Upper(Text.Trim(Text.From([SERIE]))),
+                    {"0".."9"}
+                )
+            )
+            otherwise null,
+        Int64.Type
+    ),
+
+FinalPorEvento =
+    Table.Group(
+        Add_SERIE_ORDER,
+        {"CHAVE_BLOCO_INTERNA"},
+        {
+            {
+                "HCI_FINAL_SERIE_ORDER",
+                each
+                    let
+                        finais =
+                            Table.SelectRows(
+                                _,
+                                each Text.Upper(Text.Trim(Text.From([STATUS_EVENTO]))) = "FINAL"
+                            ),
+                        ordens =
+                            List.RemoveNulls(finais[HCI_SERIE_ORDER])
+                    in
+                        if List.Count(ordens) = 0 then null else List.Min(ordens),
+                Int64.Type
+            }
+        }
+    ),
+
+MesclarFinalPorEvento =
+    Table.NestedJoin(
+        Add_SERIE_ORDER,
+        {"CHAVE_BLOCO_INTERNA"},
+        FinalPorEvento,
+        {"CHAVE_BLOCO_INTERNA"},
+        "TB_FINAL_EVENTO",
+        JoinKind.LeftOuter
+    ),
+
+ExpandirFinalPorEvento =
+    Table.ExpandTableColumn(
+        MesclarFinalPorEvento,
+        "TB_FINAL_EVENTO",
+        {"HCI_FINAL_SERIE_ORDER"},
+        {"HCI_FINAL_SERIE_ORDER"}
+    ),
+
+	Add_EVENT_ROW_VALID =
+    	Table.AddColumn(
+        ExpandirFinalPorEvento,
+        "HCI_EVENT_ROW_VALID",
+        each
+            let
+                ordem = try Number.From([HCI_SERIE_ORDER]) otherwise null,
+                final = try Number.From([HCI_FINAL_SERIE_ORDER]) otherwise null
+            in
+                if final = null then
+                    true
+                else if ordem = null then
+                    false
+                else
+                    ordem <= final,
+        type logical
+    ),
+
+    // Soma somente SR1 a SR6 dentro do mesmo ATLETA + EVENTO
+
+    ResultadoPorEvento =
+    Table.Group(
+        Add_EVENT_ROW_VALID,
+
+            {"CHAVE_BLOCO_INTERNA"},
+            {
+                {
+                    "TOTAL_EVENTO",
+                    	each
+                        let
+                            linhasValidas =
+    						Table.SelectRows(
+   	     _,
+     			each [HCI_EVENT_ROW_VALID] = true
+    )
+
+                        in
+                            List.Sum(List.RemoveNulls(linhasValidas[TOTAL_SERIE])),
+                    type number
+                },
+                {
+                    "TEM_FINAL",
+                    each
+                        List.Contains(
+                            List.Transform(
+                                [STATUS_EVENTO],
+                                each Text.Upper(Text.Trim(Text.From(_)))
+                            ),
+                            "FINAL"
+                        ),
+                    type logical
+                }
+            }
+        ),
+
+
+    // Junta o total do evento de volta na tabela principal
+
+    MesclarResultadoEvento =
+    	Table.NestedJoin(
+        Add_EVENT_ROW_VALID,
+
+            {"CHAVE_BLOCO_INTERNA"},
+            ResultadoPorEvento,
+            {"CHAVE_BLOCO_INTERNA"},
+            "TB_RESULTADO_EVENTO",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandirResultadoEvento =
+        Table.ExpandTableColumn(
+            MesclarResultadoEvento,
+            "TB_RESULTADO_EVENTO",
+            {"TOTAL_EVENTO", "TEM_FINAL"},
+            {"TOTAL_EVENTO", "TEM_FINAL"}
+        ),
+
+    // RESULTADO_EVENTO só aparece na linha FINAL
+    Add_RESULTADO_EVENTO =
+        Table.AddColumn(
+            ExpandirResultadoEvento,
+            "RESULTADO_EVENTO",
+            each
+                let
+                    status = Text.Upper(Text.Trim(Text.From([STATUS_EVENTO]))),
+                    ehFinal = status = "FINAL",
+                    temFinal = try [TEM_FINAL] otherwise false
+                in
+                    if ehFinal and temFinal then
+                        [TOTAL_EVENTO]
+                    else
+                        null,
+            type number
+        ),
+
+    // Tabela apenas com resultados finais válidos por atleta
+    ResultadosValidos =
+        Table.SelectRows(
+            Add_RESULTADO_EVENTO,
+            each [RESULTADO_EVENTO] <> null
+        ),
+
+    // Mediana dos resultados válidos por atleta
+    MedianaResultadoPorAtleta =
+        Table.Group(
+            ResultadosValidos,
+            {"ATLETA"},
+            {
+                {
+                    "MED_RESULTADO_ATLETA",
+                    each List.Median(List.RemoveNulls([RESULTADO_EVENTO])),
+                    type number
+                }
+            }
+        ),
+
+    MesclarMedResultado =
+        Table.NestedJoin(
+            Add_RESULTADO_EVENTO,
+            {"ATLETA"},
+            MedianaResultadoPorAtleta,
+            {"ATLETA"},
+            "TB_MED_RESULTADO",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandirMedResultado =
+        Table.ExpandTableColumn(
+            MesclarMedResultado,
+            "TB_MED_RESULTADO",
+            {"MED_RESULTADO_ATLETA"},
+            {"MED_RESULTADO_ATLETA"}
+        ),
+
+    // MED_RESULTADO só aparece na linha FINAL válida
+    Add_MED_RESULTADO =
+        Table.AddColumn(
+            ExpandirMedResultado,
+            "MED_RESULTADO",
+            each
+                if [RESULTADO_EVENTO] <> null then
+                    [MED_RESULTADO_ATLETA]
+                else
+                    null,
+            type number
+        ),
+
+    // Medianas HCI por atleta, considerando somente linhas FINAL válidas
+    HCIValidosFinal =
+        Table.SelectRows(
+            Add_MED_RESULTADO,
+            each [RESULTADO_EVENTO] <> null
+        ),
+
+    MedianasHCIporAtleta =
+        Table.Group(
+            HCIValidosFinal,
+            {"ATLETA"},
+            {
+                {"MED_HCI_SEQ_9_10_QTD_ATLETA", each List.Median(List.RemoveNulls([HCI_SEQ_9_10_QTD])), type number},
+                {"MED_HCI_SEQ_9_10_MAX_ATLETA", each List.Median(List.RemoveNulls([HCI_SEQ_9_10_MAX])), type number},
+                {"MED_HCI_SEQ_9_QTD_ATLETA", each List.Median(List.RemoveNulls([HCI_SEQ_9_QTD])), type number},
+                {"MED_HCI_SEQ_9_MAX_ATLETA", each List.Median(List.RemoveNulls([HCI_SEQ_9_MAX])), type number},
+                {"MED_HCI_SEQ_10_QTD_ATLETA", each List.Median(List.RemoveNulls([HCI_SEQ_10_QTD])), type number},
+                {"MED_HCI_SEQ_10_MAX_ATLETA", each List.Median(List.RemoveNulls([HCI_SEQ_10_MAX])), type number}
+            }
+        ),
+
+    MesclarMedianasHCI =
+        Table.NestedJoin(
+            Add_MED_RESULTADO,
+            {"ATLETA"},
+            MedianasHCIporAtleta,
+            {"ATLETA"},
+            "TB_MED_HCI",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandirMedianasHCI =
+        Table.ExpandTableColumn(
+            MesclarMedianasHCI,
+            "TB_MED_HCI",
+            {
+                "MED_HCI_SEQ_9_10_QTD_ATLETA",
+                "MED_HCI_SEQ_9_10_MAX_ATLETA",
+                "MED_HCI_SEQ_9_QTD_ATLETA",
+                "MED_HCI_SEQ_9_MAX_ATLETA",
+                "MED_HCI_SEQ_10_QTD_ATLETA",
+                "MED_HCI_SEQ_10_MAX_ATLETA"
+            },
+            {
+                "MED_HCI_SEQ_9_10_QTD_ATLETA",
+                "MED_HCI_SEQ_9_10_MAX_ATLETA",
+                "MED_HCI_SEQ_9_QTD_ATLETA",
+                "MED_HCI_SEQ_9_MAX_ATLETA",
+                "MED_HCI_SEQ_10_QTD_ATLETA",
+                "MED_HCI_SEQ_10_MAX_ATLETA"
+            }
+        ),
+
+    // Medianas HCI só aparecem nas linhas FINAL válidas
+    Add_MED_HCI_SEQ_9_10_QTD =
+        Table.AddColumn(
+            ExpandirMedianasHCI,
+            "MED_HCI_SEQ_9_10_QTD",
+            each if [RESULTADO_EVENTO] <> null then [MED_HCI_SEQ_9_10_QTD_ATLETA] else null,
+            type number
+        ),
+
+    Add_MED_HCI_SEQ_9_10_MAX =
+        Table.AddColumn(
+            Add_MED_HCI_SEQ_9_10_QTD,
+            "MED_HCI_SEQ_9_10_MAX",
+            each if [RESULTADO_EVENTO] <> null then [MED_HCI_SEQ_9_10_MAX_ATLETA] else null,
+            type number
+        ),
+
+    Add_MED_HCI_SEQ_9_QTD =
+        Table.AddColumn(
+            Add_MED_HCI_SEQ_9_10_MAX,
+            "MED_HCI_SEQ_9_QTD",
+            each if [RESULTADO_EVENTO] <> null then [MED_HCI_SEQ_9_QTD_ATLETA] else null,
+            type number
+        ),
+
+    Add_MED_HCI_SEQ_9_MAX =
+        Table.AddColumn(
+            Add_MED_HCI_SEQ_9_QTD,
+            "MED_HCI_SEQ_9_MAX",
+            each if [RESULTADO_EVENTO] <> null then [MED_HCI_SEQ_9_MAX_ATLETA] else null,
+            type number
+        ),
+
+    Add_MED_HCI_SEQ_10_QTD =
+        Table.AddColumn(
+            Add_MED_HCI_SEQ_9_MAX,
+            "MED_HCI_SEQ_10_QTD",
+            each if [RESULTADO_EVENTO] <> null then [MED_HCI_SEQ_10_QTD_ATLETA] else null,
+            type number
+        ),
+
+    Add_MED_HCI_SEQ_10_MAX =
+        Table.AddColumn(
+            Add_MED_HCI_SEQ_10_QTD,
+            "MED_HCI_SEQ_10_MAX",
+            each if [RESULTADO_EVENTO] <> null then [MED_HCI_SEQ_10_MAX_ATLETA] else null,
+            type number
+        ),
+
+    // =========================================================
+    // BLOCO NOVO — HCI MASTER ENGINE
+    // Mantém a TB_HCI atual e apenas acrescenta novas colunas
+    // =========================================================
+
+    // Garante OBSERVACAO
+    Add_OBSERVACAO =
+        if Table.HasColumns(Add_MED_HCI_SEQ_10_MAX, "OBSERVACAO") then
+            Add_MED_HCI_SEQ_10_MAX
+        else
+            Table.AddColumn(Add_MED_HCI_SEQ_10_MAX, "OBSERVACAO", each null, type text),
+
+    // ---------------------------------------------------------
+    // Funções auxiliares novas
+    // ---------------------------------------------------------
+
+    TextoSeguro = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    NumeroSeguro = (valor as any) as nullable number =>
+        try Number.From(valor) otherwise null,
+
+    StdPopulacional = (lista as list) as nullable number =>
+        let
+            vals = List.RemoveNulls(List.Transform(lista, each try Number.From(_) otherwise null)),
+            n = List.Count(vals),
+            media = if n = 0 then null else List.Average(vals),
+            variancia =
+                if n = 0 then
+                    null
+                else
+                    List.Sum(List.Transform(vals, each Number.Power(_ - media, 2))) / n
+        in
+            if variancia = null then null else Number.Sqrt(variancia),
+
+    MedianaSegura = (lista as list) as nullable number =>
+        let
+            vals = List.RemoveNulls(List.Transform(lista, each try Number.From(_) otherwise null))
+        in
+            if List.Count(vals) = 0 then null else List.Median(vals),
+
+    MediaSegura = (lista as list) as nullable number =>
+        let
+            vals = List.RemoveNulls(List.Transform(lista, each try Number.From(_) otherwise null))
+        in
+            if List.Count(vals) = 0 then null else List.Average(vals),
+
+    MaxSeguro = (lista as list) as nullable number =>
+        let
+            vals = List.RemoveNulls(List.Transform(lista, each try Number.From(_) otherwise null))
+        in
+            if List.Count(vals) = 0 then null else List.Max(vals),
+
+    MinSeguro = (lista as list) as nullable number =>
+        let
+            vals = List.RemoveNulls(List.Transform(lista, each try Number.From(_) otherwise null))
+        in
+            if List.Count(vals) = 0 then null else List.Min(vals),
+
+    Limitar010 = (score as nullable number) as nullable number =>
+        if score = null then null
+        else if score < 0 then 0
+        else if score > 10 then 10
+        else Number.Round(score, 2),
+
+    Limitar310 = (score as nullable number) as nullable number =>
+        if score = null then null
+        else if score < 3 then 3
+        else if score > 10 then 10
+        else Number.Round(score, 2),
+
+    // Identifica tipo do evento de forma tolerante, usando campos existentes
+    Add_EVENT_KIND =
+        Table.AddColumn(
+            Add_OBSERVACAO,
+            "HCI_EVENT_KIND",
+            each
+                let
+                    texto =
+                        TextoSeguro([STATUS_EVENTO]) & " " &
+                        TextoSeguro([EVENTO]) & " " &
+                        TextoSeguro([SESSAO])
+                in
+                    if Text.Contains(texto, "COMPET") then
+                        "COMPETICAO"
+                    else if Text.Contains(texto, "SIMUL") then
+                        "SIMULADO"
+                    else if Text.Contains(texto, "TREINO") or Text.Contains(texto, "TRAIN") then
+                        "TREINO"
+                    else
+                        "NAO_CLASSIFICADO",
+            type text
+        ),
+
+    Add_IS_RIFLE =
+        Table.AddColumn(
+            Add_EVENT_KIND,
+            "HCI_IS_RIFLE",
+            each
+                let
+                    prova = TextoSeguro([PROVA])
+                in
+                    Text.Contains(prova, "RIFLE") or Text.Contains(prova, "CARABINA"),
+            type logical
+        ),
+
+    Add_IS_PISTOL =
+        Table.AddColumn(
+            Add_IS_RIFLE,
+            "HCI_IS_PISTOL",
+            each
+                let
+                    prova = TextoSeguro([PROVA])
+                in
+                    Text.Contains(prova, "PISTOL") or Text.Contains(prova, "PISTOLA"),
+            type logical
+        ),
+
+    // ---------------------------------------------------------
+    // Chave atleta + prova para medianas corretas por modalidade
+    // ---------------------------------------------------------
+
+    Add_CHAVE_ATLETA_PROVA =
+        Table.AddColumn(
+            Add_IS_PISTOL,
+            "HCI_CHAVE_ATLETA_PROVA",
+            each Text.From([ATLETA]) & "_" & Text.From([PROVA]),
+            type text
+        ),
+
+    // ---------------------------------------------------------
+    // Resultados finais válidos para medianas por tipo de evento
+    // ---------------------------------------------------------
+
+    ResultadosFinaisHCI =
+        Table.SelectRows(
+            Add_CHAVE_ATLETA_PROVA,
+            each [RESULTADO_EVENTO] <> null
+        ),
+
+    MedianasResultadoPorAtletaProva =
+        Table.Group(
+            ResultadosFinaisHCI,
+            {"HCI_CHAVE_ATLETA_PROVA"},
+            {
+                {
+                    "HCI_MED_COMPETICOES_ATLETA_PROVA",
+                    each
+                        MedianaSegura(
+                            Table.SelectRows(_, each [HCI_EVENT_KIND] = "COMPETICAO")[RESULTADO_EVENTO]
+                        ),
+                    type number
+                },
+                {
+                    "HCI_MED_SIMULADOS_ATLETA_PROVA",
+                    each
+                        MedianaSegura(
+                            Table.SelectRows(_, each [HCI_EVENT_KIND] = "SIMULADO")[RESULTADO_EVENTO]
+                        ),
+                    type number
+                },
+                {
+                    "HCI_MED_TREINOS_ATLETA_PROVA",
+                    each
+                        MedianaSegura(
+                            Table.SelectRows(_, each [HCI_EVENT_KIND] = "TREINO")[RESULTADO_EVENTO]
+                        ),
+                    type number
+                },
+                {
+                    "HCI_MED_SIM_TREINO_ATLETA_PROVA",
+                    each
+                        MedianaSegura(
+                            Table.SelectRows(
+                                _,
+                                each [HCI_EVENT_KIND] = "SIMULADO" or [HCI_EVENT_KIND] = "TREINO"
+                            )[RESULTADO_EVENTO]
+                        ),
+                    type number
+                }
+            }
+        ),
+
+    MesclarMedianasHCI_Master =
+        Table.NestedJoin(
+            Add_CHAVE_ATLETA_PROVA,
+            {"HCI_CHAVE_ATLETA_PROVA"},
+            MedianasResultadoPorAtletaProva,
+            {"HCI_CHAVE_ATLETA_PROVA"},
+            "TB_HCI_MASTER_MEDIANAS",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandirMedianasHCI_Master =
+        Table.ExpandTableColumn(
+            MesclarMedianasHCI_Master,
+            "TB_HCI_MASTER_MEDIANAS",
+            {
+                "HCI_MED_COMPETICOES_ATLETA_PROVA",
+                "HCI_MED_SIMULADOS_ATLETA_PROVA",
+                "HCI_MED_TREINOS_ATLETA_PROVA",
+                "HCI_MED_SIM_TREINO_ATLETA_PROVA"
+            },
+            {
+                "HCI_MED_COMPETICOES_ATLETA_PROVA",
+                "HCI_MED_SIMULADOS_ATLETA_PROVA",
+                "HCI_MED_TREINOS_ATLETA_PROVA",
+                "HCI_MED_SIM_TREINO_ATLETA_PROVA"
+            }
+        ),
+
+    Add_HCI_MED_TIRO_SIM_TREINO =
+        Table.AddColumn(
+            ExpandirMedianasHCI_Master,
+            "HCI_MED_TIRO_SIM_TREINO_ATLETA_PROVA",
+            each
+                if [HCI_MED_SIM_TREINO_ATLETA_PROVA] <> null then
+                    Number.Round([HCI_MED_SIM_TREINO_ATLETA_PROVA] / 60, 3)
+                else
+                    null,
+            type number
+        ),
+
+    // ---------------------------------------------------------
+    // Agrupamento por evento para métricas de prova inteira
+    // ---------------------------------------------------------
+
+    EventoHCI =
+        Table.Group(
+            Add_HCI_MED_TIRO_SIM_TREINO,
+            {"CHAVE_BLOCO_INTERNA"},
+            {
+                {
+                    "HCI_EVENT_RECORD",
+                    each
+                        let
+                            LinhasSR =
+   				Table.Sort(
+      				Table.SelectRows(
+            _,
+            			each [HCI_EVENT_ROW_VALID] = true
+        ),
+        			{{"HCI_SERIE_ORDER", Order.Ascending}}
+    ),
+
+                            SeriesTotals = List.RemoveNulls(LinhasSR[TOTAL_SERIE]),
+                            TirosEvento =
+                                List.Combine(
+                                    List.Transform(
+                                        Table.ToRecords(LinhasSR),
+                                        each ListaTiros(_)
+                                    )
+                                ),
+
+                            TirosValidos = List.RemoveNulls(TirosEvento),
+
+                            SR1 = try SeriesTotals{0} otherwise null,
+                            SR2 = try SeriesTotals{1} otherwise null,
+                            SR3 = try SeriesTotals{2} otherwise null,
+                            SR4 = try SeriesTotals{3} otherwise null,
+                            SR5 = try SeriesTotals{4} otherwise null,
+                            SR6 = try SeriesTotals{5} otherwise null,
+
+                            SeriesMedian = MedianaSegura(SeriesTotals),
+                            SeriesMin = MinSeguro(SeriesTotals),
+                            SeriesMax = MaxSeguro(SeriesTotals),
+                            SeriesAmplitude =
+                                if SeriesMin <> null and SeriesMax <> null then
+                                    SeriesMax - SeriesMin
+                                else
+                                    null,
+
+                            FinalSeriesAvg = MediaSegura({SR5, SR6}),
+                            WorstSeries = SeriesMin,
+
+                            ResilienceDropDepth =
+                                if SeriesMedian <> null and WorstSeries <> null then
+                                    SeriesMedian - WorstSeries
+                                else
+                                    null,
+
+                            ResilienceRecovery =
+                                if FinalSeriesAvg <> null and WorstSeries <> null then
+                                    FinalSeriesAvg - WorstSeries
+                                else
+                                    null,
+
+                            ResilienceRatio =
+                                if ResilienceDropDepth = null or ResilienceDropDepth <= 0 then
+                                    1
+                                else
+                                    ResilienceRecovery / ResilienceDropDepth,
+
+                            EventSeq_9_10_QTD = QtdSequencias(TirosValidos, (x) => x >= 9),
+                            EventSeq_9_10_MAX = MaxSequencia(TirosValidos, (x) => x >= 9),
+                            EventSeq_10_QTD = QtdSequencias(TirosValidos, (x) => x >= 10),
+                            EventSeq_10_MAX = MaxSequencia(TirosValidos, (x) => x >= 10),
+
+                            Blocos3 = List.Split(TirosValidos, 3),
+
+                            Blocos3Table =
+                                Table.FromColumns(
+                                    {
+                                        List.Numbers(1, List.Count(Blocos3)),
+                                        Blocos3
+                                    },
+                                    {"BLOCO_3", "TIROS_BLOCO"}
+                                ),
+
+                            AddMediaBloco =
+                                Table.AddColumn(
+                                    Blocos3Table,
+                                    "MEDIA_BLOCO_3",
+                                    each MediaSegura([TIROS_BLOCO]),
+                                    type number
+                                ),
+
+                            AddStdBloco =
+                                Table.AddColumn(
+                                    AddMediaBloco,
+                                    "STD_BLOCO_3",
+                                    each StdPopulacional([TIROS_BLOCO]),
+                                    type number
+                                ),
+
+                            MediasBloco = AddStdBloco[MEDIA_BLOCO_3],
+                            StdsBloco = AddStdBloco[STD_BLOCO_3],
+
+                            Drops =
+                                List.Transform(
+                                    List.Numbers(0, List.Count(MediasBloco)),
+                                    each
+                                        if _ = 0 then
+                                            0
+                                        else
+                                            let
+                                                anterior = try MediasBloco{_ - 1} otherwise null,
+                                                atual = try MediasBloco{_} otherwise null
+                                            in
+                                                if anterior <> null and atual <> null and anterior > atual then
+                                                    anterior - atual
+                                                else
+                                                    0
+                                ),
+
+                            StdProva = MedianaSegura(StdsBloco),
+
+                            DropCount =
+                                List.Count(
+                                    List.Select(
+                                        List.Numbers(0, List.Count(Drops)),
+                                        each
+                                            let
+                                                drop = try Drops{_} otherwise null,
+                                                std = try StdsBloco{_} otherwise null
+                                            in
+                                                drop <> null and std <> null and drop >= std and drop > 0
+                                    )
+                                ),
+
+                            MaxDropDepth = MaxSeguro(Drops),
+
+                            StdAjustadoRhythm =
+                              if StdProva <> null then
+                                 StdProva * (1 + 0.05 * List.Min({DropCount, 3}))
+                              else
+                                   null,
+
+                            PhysicalCount =
+                                List.Count(
+                                    List.Select(
+                                        List.Numbers(0, List.Count(Drops)),
+                                        each
+                                            let
+                                                bloco = _ + 1,
+                                                tiroFinalBloco = bloco * 3,
+                                                drop = try Drops{_} otherwise null,
+                                                std = try StdsBloco{_} otherwise null
+                                            in
+                                                tiroFinalBloco >= 30
+                                                and drop <> null
+                                                and std <> null
+                                                and drop >= std
+                                                and drop > 0
+                                    )
+                                ),
+
+                            PhysicalScore = Limitar010(10 - PhysicalCount),
+
+                            ConsistencyScore =
+                                if SeriesAmplitude <> null then
+                                    Limitar010(10 - (SeriesAmplitude * 0.7))
+                                else
+                                    null,
+
+                            ProcessRatio =
+                              (Number.From(EventSeq_9_10_MAX) * List.Min({Number.From(EventSeq_9_10_QTD), 2})) / 60,
+
+
+
+                            ProcessScore = Limitar010(ProcessRatio * 10),
+
+                            DeepeningScore = Limitar010((Number.From(EventSeq_10_MAX) / 7) * 10),
+
+                            ResilienceScore = Limitar010(ResilienceRatio * 10),
+
+                            PressureLoad = 
+                                if MaxDropDepth <> null and StdProva <> null then
+                                    MaxDropDepth + StdProva
+                                else
+                                    null
+                        in
+                            [
+                                HCI_SR1_TOTAL = SR1,
+                                HCI_SR2_TOTAL = SR2,
+                                HCI_SR3_TOTAL = SR3,
+                                HCI_SR4_TOTAL = SR4,
+                                HCI_SR5_TOTAL = SR5,
+                                HCI_SR6_TOTAL = SR6,
+
+                                HCI_SERIES_MEDIAN = SeriesMedian,
+                                HCI_SERIES_MIN = SeriesMin,
+                                HCI_SERIES_MAX = SeriesMax,
+                                HCI_SERIES_AMPLITUDE = SeriesAmplitude,
+                                HCI_FINAL_SERIES_AVG = FinalSeriesAvg,
+
+                                HCI_EVENT_SEQ_9_10_QTD = EventSeq_9_10_QTD,
+                                HCI_EVENT_SEQ_9_10_MAX = EventSeq_9_10_MAX,
+                                HCI_EVENT_SEQ_10_QTD = EventSeq_10_QTD,
+                                HCI_EVENT_SEQ_10_MAX = EventSeq_10_MAX,
+
+                                HCI_PROCESS_RATIO_BASE = ProcessRatio,
+                                HCI_PROCESS_SCORE_BASE = ProcessScore,
+                                HCI_DEEPENING_SCORE_BASE = DeepeningScore,
+                                HCI_CONSISTENCY_SCORE_BASE = ConsistencyScore,
+
+                                HCI_STD_PROVA_BLOCOS_3_MEDIANA = StdProva,
+                                HCI_DROP_COUNT_EVENTO = DropCount,
+                                HCI_DROP_DEPTH_MAX_EVENTO = MaxDropDepth,
+                                HCI_STD_AJUSTADO_RHYTHM = StdAjustadoRhythm,
+
+                                HCI_RESILIENCE_BASE_SERIES = SeriesMedian,
+                                HCI_RESILIENCE_WORST_SERIES = WorstSeries,
+                                HCI_RESILIENCE_FINAL_SERIES = FinalSeriesAvg,
+                                HCI_RESILIENCE_DROP_DEPTH = ResilienceDropDepth,
+                                HCI_RESILIENCE_RECOVERY_DEPTH = ResilienceRecovery,
+                                HCI_RESILIENCE_RATIO_BASE = ResilienceRatio,
+                                HCI_RESILIENCE_SCORE_BASE = ResilienceScore,
+
+                                HCI_PRESSURE_LOAD_EVENTO = PressureLoad,
+
+                                HCI_PHYSICAL_DEGRADATION_COUNT = PhysicalCount,
+                                HCI_PHYSICAL_SCORE_BASE = PhysicalScore
+                            ],
+                    type record
+                }
+            }
+        ),
+
+    ExpandirEventoHCI =
+        Table.ExpandRecordColumn(
+            EventoHCI,
+            "HCI_EVENT_RECORD",
+            {
+                "HCI_SR1_TOTAL",
+                "HCI_SR2_TOTAL",
+                "HCI_SR3_TOTAL",
+                "HCI_SR4_TOTAL",
+                "HCI_SR5_TOTAL",
+                "HCI_SR6_TOTAL",
+
+                "HCI_SERIES_MEDIAN",
+                "HCI_SERIES_MIN",
+                "HCI_SERIES_MAX",
+                "HCI_SERIES_AMPLITUDE",
+                "HCI_FINAL_SERIES_AVG",
+
+                "HCI_EVENT_SEQ_9_10_QTD",
+                "HCI_EVENT_SEQ_9_10_MAX",
+                "HCI_EVENT_SEQ_10_QTD",
+                "HCI_EVENT_SEQ_10_MAX",
+
+                "HCI_PROCESS_RATIO_BASE",
+                "HCI_PROCESS_SCORE_BASE",
+                "HCI_DEEPENING_SCORE_BASE",
+                "HCI_CONSISTENCY_SCORE_BASE",
+
+                "HCI_STD_PROVA_BLOCOS_3_MEDIANA",
+                "HCI_DROP_COUNT_EVENTO",
+                "HCI_DROP_DEPTH_MAX_EVENTO",
+                "HCI_STD_AJUSTADO_RHYTHM",
+
+                "HCI_RESILIENCE_BASE_SERIES",
+                "HCI_RESILIENCE_WORST_SERIES",
+                "HCI_RESILIENCE_FINAL_SERIES",
+                "HCI_RESILIENCE_DROP_DEPTH",
+                "HCI_RESILIENCE_RECOVERY_DEPTH",
+                "HCI_RESILIENCE_RATIO_BASE",
+                "HCI_RESILIENCE_SCORE_BASE",
+
+                "HCI_PRESSURE_LOAD_EVENTO",
+
+                "HCI_PHYSICAL_DEGRADATION_COUNT",
+                "HCI_PHYSICAL_SCORE_BASE"
+            },
+            {
+                "HCI_SR1_TOTAL",
+                "HCI_SR2_TOTAL",
+                "HCI_SR3_TOTAL",
+                "HCI_SR4_TOTAL",
+                "HCI_SR5_TOTAL",
+                "HCI_SR6_TOTAL",
+
+                "HCI_SERIES_MEDIAN",
+                "HCI_SERIES_MIN",
+                "HCI_SERIES_MAX",
+                "HCI_SERIES_AMPLITUDE",
+                "HCI_FINAL_SERIES_AVG",
+
+                "HCI_EVENT_SEQ_9_10_QTD",
+                "HCI_EVENT_SEQ_9_10_MAX",
+                "HCI_EVENT_SEQ_10_QTD",
+                "HCI_EVENT_SEQ_10_MAX",
+
+                "HCI_PROCESS_RATIO_BASE",
+                "HCI_PROCESS_SCORE_BASE",
+                "HCI_DEEPENING_SCORE_BASE",
+                "HCI_CONSISTENCY_SCORE_BASE",
+
+                "HCI_STD_PROVA_BLOCOS_3_MEDIANA",
+                "HCI_DROP_COUNT_EVENTO",
+                "HCI_DROP_DEPTH_MAX_EVENTO",
+                "HCI_STD_AJUSTADO_RHYTHM",
+
+                "HCI_RESILIENCE_BASE_SERIES",
+                "HCI_RESILIENCE_WORST_SERIES",
+                "HCI_RESILIENCE_FINAL_SERIES",
+                "HCI_RESILIENCE_DROP_DEPTH",
+                "HCI_RESILIENCE_RECOVERY_DEPTH",
+                "HCI_RESILIENCE_RATIO_BASE",
+                "HCI_RESILIENCE_SCORE_BASE",
+
+                "HCI_PRESSURE_LOAD_EVENTO",
+
+                "HCI_PHYSICAL_DEGRADATION_COUNT",
+                "HCI_PHYSICAL_SCORE_BASE"
+            }
+        ),
+
+    MesclarEventoHCI =
+        Table.NestedJoin(
+            Add_HCI_MED_TIRO_SIM_TREINO,
+            {"CHAVE_BLOCO_INTERNA"},
+            ExpandirEventoHCI,
+            {"CHAVE_BLOCO_INTERNA"},
+            "TB_HCI_EVENT_METRICS",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandirEventoHCI_NaBase =
+        Table.ExpandTableColumn(
+            MesclarEventoHCI,
+            "TB_HCI_EVENT_METRICS",
+            List.RemoveItems(Table.ColumnNames(ExpandirEventoHCI), {"CHAVE_BLOCO_INTERNA"}),
+            List.RemoveItems(Table.ColumnNames(ExpandirEventoHCI), {"CHAVE_BLOCO_INTERNA"})
+        ),
+
+    // ---------------------------------------------------------
+    // OUTCOME e TRANSFER base
+    // ---------------------------------------------------------
+
+    Add_OUTCOME_REFERENCE =
+        Table.AddColumn(
+            ExpandirEventoHCI_NaBase,
+            "HCI_OUTCOME_REFERENCE",
+            each
+                if [HCI_IS_RIFLE] then
+                    632
+                else
+                    578,
+            type number
+        ),
+
+    Add_OUTCOME_BASE10_BRUTO =
+        Table.AddColumn(
+            Add_OUTCOME_REFERENCE,
+            "HCI_OUTCOME_BASE10_BRUTO",
+            each
+                if [HCI_MED_COMPETICOES_ATLETA_PROVA] <> null and [HCI_OUTCOME_REFERENCE] <> null and [HCI_OUTCOME_REFERENCE] <> 0 then
+                    ([HCI_MED_COMPETICOES_ATLETA_PROVA] / [HCI_OUTCOME_REFERENCE]) * 10
+                else
+                    null,
+            type number
+        ),
+
+    Add_OUTCOME_HCI_SCORE =
+        Table.AddColumn(
+            Add_OUTCOME_BASE10_BRUTO,
+            "HCI_OUTCOME_HCI_SCORE",
+            each
+                if [HCI_OUTCOME_BASE10_BRUTO] <> null then
+                    Limitar010(([HCI_OUTCOME_BASE10_BRUTO] - 9) * 10)
+                else
+                    null,
+            type number
+        ),
+
+    Add_TRANSFER_SCORE_BASE =
+        Table.AddColumn(
+            Add_OUTCOME_HCI_SCORE,
+            "HCI_TRANSFER_SCORE_BASE",
+            each
+                if [RESULTADO_EVENTO] <> null
+                    and [HCI_MED_SIMULADOS_ATLETA_PROVA] <> null
+                    and [HCI_MED_SIMULADOS_ATLETA_PROVA] <> 0
+                then
+                    Limitar010(([RESULTADO_EVENTO] / [HCI_MED_SIMULADOS_ATLETA_PROVA]) * 10)
+                else
+                    null,
+            type number
+        ),
+
+    // ---------------------------------------------------------
+    // PRESSURE base por comparação competiçao x simulado/treino
+    // ---------------------------------------------------------
+
+    PressurePorAtletaProva =
+        Table.Group(
+            Table.SelectRows(Add_TRANSFER_SCORE_BASE, each [RESULTADO_EVENTO] <> null),
+            {"HCI_CHAVE_ATLETA_PROVA"},
+            {
+                {
+                    "HCI_PRESSURE_LOAD_SIM_TREINO",
+                    each
+                        MedianaSegura(
+                            Table.SelectRows(
+                                _,
+                                each [HCI_EVENT_KIND] = "SIMULADO" or [HCI_EVENT_KIND] = "TREINO"
+                            )[HCI_PRESSURE_LOAD_EVENTO]
+                        ),
+                    type number
+                }
+            }
+        ),
+
+    MesclarPressure =
+        Table.NestedJoin(
+            Add_TRANSFER_SCORE_BASE,
+            {"HCI_CHAVE_ATLETA_PROVA"},
+            PressurePorAtletaProva,
+            {"HCI_CHAVE_ATLETA_PROVA"},
+            "TB_HCI_PRESSURE",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandirPressure =
+        Table.ExpandTableColumn(
+            MesclarPressure,
+            "TB_HCI_PRESSURE",
+            {"HCI_PRESSURE_LOAD_SIM_TREINO"},
+            {"HCI_PRESSURE_LOAD_SIM_TREINO"}
+        ),
+
+       Add_PRESSURE_SCORE_BASE =
+        Table.AddColumn(
+            ExpandirPressure,
+            "HCI_PRESSURE_SCORE_BASE",
+            each
+                let
+                    evento = [HCI_PRESSURE_LOAD_EVENTO],
+                    referencia = [HCI_PRESSURE_LOAD_SIM_TREINO],
+                    diferenca =
+                        if evento <> null and referencia <> null then
+                            evento - referencia
+                        else
+                            null
+                in
+                    if diferenca = null then
+                        null
+                    else if diferenca <= 0 then
+                        Limitar010(7 + Number.Abs(diferenca) * 3)
+                    else
+                        Limitar010(7 - diferenca * 3),
+            type number
+        ),
+
+    // ---------------------------------------------------------
+    // EMOTIONAL base individual — apenas estrutura inicial
+    // Penalidade completa fica para o próximo refinamento se necessário
+    // ---------------------------------------------------------
+
+    Add_EMOTIONAL_BASE_ATLETA =
+        Table.AddColumn(
+            Add_PRESSURE_SCORE_BASE,
+            "HCI_EMOTIONAL_BASE_ATLETA",
+            each
+                let
+                    med = [HCI_MED_TIRO_SIM_TREINO_ATLETA_PROVA]
+                in
+                    if med = null then
+                        null
+                    else if [HCI_IS_RIFLE] then
+                        if med >= 10.5 then 10.5
+                        else if med >= 10.0 then 10.0
+                        else if med >= 9.8 then 9.8
+                        else Number.RoundDown(med, 1)
+                    else
+                        if med >= 9.5 then 10
+                        else Number.RoundDown(med + 0.3),
+            type number
+        ),
+
+    EmotionalPorEvento =
+    Table.Group(
+        Add_EMOTIONAL_BASE_ATLETA,
+        {"CHAVE_BLOCO_INTERNA"},
+        {
+            {
+                "HCI_EMOTIONAL_SCORE_BASE_EVENTO",
+                each
+                    let
+                        LinhasSR =
+   			 Table.Sort(
+       			 Table.SelectRows(
+            _,
+          		  each [HCI_EVENT_ROW_VALID] = true
+        ),
+       			 {{"HCI_SERIE_ORDER", Order.Ascending}}
+    ),
+
+                        BaseEmotional =
+                            try
+                                List.First(
+                                    List.RemoveNulls(
+                                        LinhasSR[HCI_EMOTIONAL_BASE_ATLETA]
+                                    )
+                                )
+                            otherwise
+                                null,
+
+                        ProvaTexto =
+                            try
+                                TextoSeguro(
+                                    List.First(
+                                        List.RemoveNulls(
+                                            LinhasSR[PROVA]
+                                        )
+                                    )
+                                )
+                            otherwise
+                                "",
+
+                        EhRifle =
+                            Text.Contains(ProvaTexto, "RIFLE")
+                            or Text.Contains(ProvaTexto, "CARABINA"),
+
+                        ClassificarTiro = (tiro as nullable number) as text =>
+                            if tiro = null or BaseEmotional = null then
+                                "NULL"
+                            else if EhRifle then
+                                if tiro >= BaseEmotional then
+                                    "LIMPO"
+                                else if tiro >= BaseEmotional - 0.2 then
+                                    "ALERTA"
+                                else
+                                    "ERRO"
+                            else
+                                if tiro >= BaseEmotional then
+                                    "LIMPO"
+                                else if tiro >= BaseEmotional - 1 then
+                                    "ALERTA"
+                                else
+                                    "ERRO",
+
+                        TodosTiros =
+                            List.Combine(
+                                List.Transform(
+                                    Table.ToRecords(LinhasSR),
+                                    each ListaTiros(_)
+                                )
+                            ),
+
+                        Classes =
+                            List.Transform(
+                                TodosTiros,
+                                each ClassificarTiro(_)
+                            ),
+
+                        ListaClasses =
+                            List.Select(
+                                Classes,
+                                each _ <> "NULL"
+                            ),
+
+                        Grupos =
+                            List.Accumulate(
+                                ListaClasses,
+                                [atual = {}, grupos = {}],
+                                (estado, classe) =>
+                                    if classe = "LIMPO" then
+                                        [
+                                            atual = {},
+                                            grupos =
+                                                if List.Count(estado[atual]) > 0 then
+                                                    estado[grupos] & {estado[atual]}
+                                                else
+                                                    estado[grupos]
+                                        ]
+                                    else
+                                        [
+                                            atual = estado[atual] & {classe},
+                                            grupos = estado[grupos]
+                                        ]
+                            ),
+
+                        GruposFinais =
+                            if List.Count(Grupos[atual]) > 0 then
+                                Grupos[grupos] & {Grupos[atual]}
+                            else
+                                Grupos[grupos],
+
+                        PenalidadeGrupo = (grupo as list) as number =>
+                            let
+                                n = List.Count(grupo),
+                                alertas =
+                                    List.Count(
+                                        List.Select(
+                                            grupo,
+                                            each _ = "ALERTA"
+                                        )
+                                    ),
+                                erros =
+                                    List.Count(
+                                        List.Select(
+                                            grupo,
+                                            each _ = "ERRO"
+                                        )
+                                    ),
+
+                                penalidade =
+                                    if n < 2 then
+                                        0
+                                    else if erros >= 2 then
+                                        if n >= 4 then 2.0 else 1.5
+                                    else if erros = 1 then
+                                        if n >= 3 then 1.5 else 1.0
+                                    else
+                                        if alertas >= 5 then 1.5
+                                        else if alertas = 4 then 1.0
+                                        else if alertas = 3 then 0.5
+                                        else 0
+                            in
+                                penalidade,
+
+                        PenalidadeTotal =
+                            List.Sum(
+                                List.Transform(
+                                    GruposFinais,
+                                    each PenalidadeGrupo(_)
+                                )
+                            ),
+
+                        Score =
+                            if BaseEmotional = null or List.Count(ListaClasses) = 0 then
+                                null
+                            else
+                                Limitar310(10 - PenalidadeTotal)
+                    in
+                        Score,
+                type number
+            }
+        }
+    ),
+
+MesclarEmotional =
+    Table.NestedJoin(
+        Add_EMOTIONAL_BASE_ATLETA,
+        {"CHAVE_BLOCO_INTERNA"},
+        EmotionalPorEvento,
+        {"CHAVE_BLOCO_INTERNA"},
+        "TB_HCI_EMOTIONAL",
+        JoinKind.LeftOuter
+    ),
+
+Add_EMOTIONAL_SCORE_BASE =
+    Table.ExpandTableColumn(
+        MesclarEmotional,
+        "TB_HCI_EMOTIONAL",
+        {"HCI_EMOTIONAL_SCORE_BASE_EVENTO"},
+        {"HCI_EMOTIONAL_SCORE_BASE"}
+    ),
+
+    // ---------------------------------------------------------
+    // EVENT PROGRESS DELTA — evolução média EV inicial vs EV recente
+    // ---------------------------------------------------------
+
+    
+    Add_EVENT_NUMBER =
+        Table.AddColumn(
+            Add_EMOTIONAL_SCORE_BASE,
+            "HCI_EVENT_NUMBER",
+            each
+                let
+                    evText = Text.Upper(Text.Trim(Text.From([EVENTO]))),
+                    onlyNumber = Text.Select(evText, {"0".."9"}),
+                    evNumber = try Number.From(onlyNumber) otherwise null
+                in
+                    evNumber,
+            Int64.Type
+        ),
+
+    EventProgressBase =
+        Table.SelectRows(
+            Add_EVENT_NUMBER,
+            each [RESULTADO_EVENTO] <> null and [HCI_EVENT_NUMBER] <> null
+        ),
+
+    EventProgressPorAtletaProva =
+            Table.Group(
+            EventProgressBase,
+            {"HCI_CHAVE_ATLETA_PROVA"},
+            {
+                {
+                    "HCI_EVENT_PROGRESS_BASE_AVG",
+                    each
+                        let
+                            t = Table.Sort(_, {{"HCI_EVENT_NUMBER", Order.Ascending}}),
+                            vals = List.FirstN(List.RemoveNulls(t[RESULTADO_EVENTO]), 2)
+                        in
+                            if List.Count(vals) = 0 then null else List.Average(vals),
+                    type number
+                },
+                {
+                    "HCI_EVENT_PROGRESS_RECENT_AVG",
+                    each
+                        let
+                            t = Table.Sort(_, {{"HCI_EVENT_NUMBER", Order.Descending}}),
+                            vals = List.FirstN(List.RemoveNulls(t[RESULTADO_EVENTO]), 2)
+                        in
+                            if List.Count(vals) = 0 then null else List.Average(vals),
+                    type number
+                },
+                {
+                    "HCI_EVENT_PROGRESS_EVENTS_COUNT",
+                    each List.Count(List.RemoveNulls([RESULTADO_EVENTO])),
+                    Int64.Type
+                }
+            }
+        ),
+        
+Add_EVENT_PROGRESS_DELTA =
+        Table.AddColumn(
+            EventProgressPorAtletaProva,
+            "HCI_EVENT_PROGRESS_DELTA",
+            each
+                if [HCI_EVENT_PROGRESS_BASE_AVG] <> null
+                    and [HCI_EVENT_PROGRESS_BASE_AVG] <> 0
+                    and [HCI_EVENT_PROGRESS_RECENT_AVG] <> null
+                then
+                    ([HCI_EVENT_PROGRESS_RECENT_AVG] - [HCI_EVENT_PROGRESS_BASE_AVG])
+                    / [HCI_EVENT_PROGRESS_BASE_AVG]
+                else
+                    null,
+            type number
+        ),
+
+    Add_EVENT_PROGRESS_DELTA_TEXT =
+        Table.AddColumn(
+            Add_EVENT_PROGRESS_DELTA,
+            "HCI_EVENT_PROGRESS_DELTA_TEXT",
+            each
+                if [HCI_EVENT_PROGRESS_DELTA] = null then
+                    null
+                else if [HCI_EVENT_PROGRESS_DELTA] > 0 then
+                    "+" & Number.ToText(Number.Round([HCI_EVENT_PROGRESS_DELTA] * 100, 1), "0
+", "pt-BR") & "%"
+                else
+                    Number.ToText(Number.Round([HCI_EVENT_PROGRESS_DELTA] * 100, 1), "0.0", "pt-BR") & "%",
+            type text
+        ),
+
+    Add_EVENT_PROGRESS_STATUS =
+        Table.AddColumn(
+            Add_EVENT_PROGRESS_DELTA_TEXT,
+            "HCI_EVENT_PROGRESS_STATUS",
+            each
+                if [HCI_EVENT_PROGRESS_EVENTS_COUNT] < 2 then
+                    "Dados insuficientes"
+                else
+                    "vs ciclo competitivo",
+            type text
+        ),
+    MesclarEventProgress =
+        Table.NestedJoin(
+            Add_EVENT_NUMBER,
+            {"HCI_CHAVE_ATLETA_PROVA"},
+            Add_EVENT_PROGRESS_STATUS,
+            {"HCI_CHAVE_ATLETA_PROVA"},
+            "TB_EVENT_PROGRESS",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandirEventProgress =
+        Table.ExpandTableColumn(
+            MesclarEventProgress,
+            "TB_EVENT_PROGRESS",
+            {
+                "HCI_EVENT_PROGRESS_BASE_AVG",
+                "HCI_EVENT_PROGRESS_RECENT_AVG",
+                "HCI_EVENT_PROGRESS_EVENTS_COUNT",
+                "HCI_EVENT_PROGRESS_DELTA",
+                "HCI_EVENT_PROGRESS_DELTA_TEXT",
+                "HCI_EVENT_PROGRESS_STATUS"
+            },
+            {
+                "HCI_EVENT_PROGRESS_BASE_AVG",
+                "HCI_EVENT_PROGRESS_RECENT_AVG",
+                "HCI_EVENT_PROGRESS_EVENTS_COUNT",
+                "HCI_EVENT_PROGRESS_DELTA",
+                "HCI_EVENT_PROGRESS_DELTA_TEXT",
+                "HCI_EVENT_PROGRESS_STATUS"
+            }
+        ),
+
+        Add_HCI_OVERALL_SCORE =
+        Table.AddColumn(
+            ExpandirEventProgress,
+            "HCI_OVERALL_SCORE",
+            each
+                let
+                    OutcomeBase =
+                        if [HCI_OUTCOME_HCI_SCORE] <> null then
+                            [HCI_OUTCOME_HCI_SCORE]
+                        else if [RESULTADO_EVENTO] <> null
+                            and [HCI_OUTCOME_REFERENCE] <> null
+                            and [HCI_OUTCOME_REFERENCE] <> 0
+                        then
+                            Limitar010((([RESULTADO_EVENTO] / [HCI_OUTCOME_REFERENCE]) * 10 - 9) * 10)
+                        else
+                            null,
+
+                    Complementares =
+                        List.Sum(
+                            List.RemoveNulls(
+                                {
+                                    [HCI_PROCESS_SCORE_BASE],
+                                    [HCI_DEEPENING_SCORE_BASE],
+                                    [HCI_CONSISTENCY_SCORE_BASE],
+                                    [HCI_TRANSFER_SCORE_BASE],
+                                    [HCI_RESILIENCE_SCORE_BASE],
+                                    [HCI_PRESSURE_SCORE_BASE],
+                                    [HCI_PHYSICAL_SCORE_BASE]
+                                }
+                            )
+                        ),
+
+                    EmotionalBonus =
+                        if [HCI_EMOTIONAL_SCORE_BASE] = null then
+                            0
+                        else
+                            [HCI_EMOTIONAL_SCORE_BASE] / 50
+                in
+                    if OutcomeBase = null then
+                        null
+                    else
+                        Number.Round(
+                            OutcomeBase + (Complementares / 100) + EmotionalBonus,
+                            2
+                        ),
+            type number
+        ),
+
+    Add_HCI_OVERALL_LEVEL =
+        Table.AddColumn(
+            Add_HCI_OVERALL_SCORE,
+            "HCI_OVERALL_LEVEL",
+            each
+                if [HCI_OVERALL_SCORE] = null then null
+                else if [HCI_OVERALL_SCORE] >= 10 then "ELITE"
+                else if [HCI_OVERALL_SCORE] >= 7.4 then "HIGH PERFORMANCE"
+                else "DEVELOPMENT",
+            type text
+        ),
+
+    // ---------------------------------------------------------
+    // Remove colunas internas antigas, mas preserva as novas HCI_
+    // ---------------------------------------------------------
+
+    RemoverColunasInternas =
+    Table.RemoveColumns(
+    Add_HCI_OVERALL_LEVEL,
+            List.Intersect(
+                {
+                    Table.ColumnNames(Add_EMOTIONAL_SCORE_BASE),
+                    {
+                        "CHAVE_BLOCO_INTERNA",
+                        "TOTAL_EVENTO",
+                        "TEM_FINAL",
+                        "MED_RESULTADO_ATLETA",
+                        "MED_HCI_SEQ_9_10_QTD_ATLETA",
+                        "MED_HCI_SEQ_9_10_MAX_ATLETA",
+                        "MED_HCI_SEQ_9_QTD_ATLETA",
+                        "MED_HCI_SEQ_9_MAX_ATLETA",
+                        "MED_HCI_SEQ_10_QTD_ATLETA",
+                        "MED_HCI_SEQ_10_MAX_ATLETA"
+                    }
+                }
+            )
+        ),
+
+    // Organização final preservando a sequência oficial antiga
+    // e acrescentando as novas colunas ao final
+    Resultado =
+        Table.SelectColumns(
+            RemoverColunasInternas,
+            {
+                "DATA_COLETA",
+                "PROVA",
+                "ATLETA",
+                "EVENTO",
+                "SESSAO",
+                "ID_BLOCO",
+                "STATUS_EVENTO",
+                "TEMPO_MIN",
+                "SERIE",
+                "T1",
+                "T2",
+                "T3",
+                "T4",
+                "T5",
+                "T6",
+                "T7",
+                "T8",
+                "T9",
+                "T10",
+                "TOTAL_SERIE",
+                "RESULTADO_EVENTO",
+                "MED_RESULTADO",
+                "CHAVE_SERIE",
+                "HCI_SEQ_9_10_QTD",
+                "HCI_SEQ_9_10_MAX",
+                "HCI_SEQ_9_QTD",
+                "HCI_SEQ_9_MAX",
+                "HCI_SEQ_10_QTD",
+                "HCI_SEQ_10_MAX",
+                "MED_HCI_SEQ_9_10_QTD",
+                "MED_HCI_SEQ_9_10_MAX",
+                "MED_HCI_SEQ_9_QTD",
+                "MED_HCI_SEQ_9_MAX",
+                "MED_HCI_SEQ_10_QTD",
+                "MED_HCI_SEQ_10_MAX",
+                "OBSERVACAO",
+
+                "HCI_EVENT_KIND",
+                "HCI_IS_RIFLE",
+                "HCI_IS_PISTOL",
+                "HCI_CHAVE_ATLETA_PROVA",
+
+                "HCI_MED_COMPETICOES_ATLETA_PROVA",
+                "HCI_MED_SIMULADOS_ATLETA_PROVA",
+                "HCI_MED_TREINOS_ATLETA_PROVA",
+                "HCI_MED_SIM_TREINO_ATLETA_PROVA",
+                "HCI_MED_TIRO_SIM_TREINO_ATLETA_PROVA",
+
+                "HCI_SR1_TOTAL",
+                "HCI_SR2_TOTAL",
+                "HCI_SR3_TOTAL",
+                "HCI_SR4_TOTAL",
+                "HCI_SR5_TOTAL",
+                "HCI_SR6_TOTAL",
+                "HCI_SERIES_MEDIAN",
+                "HCI_SERIES_MIN",
+                "HCI_SERIES_MAX",
+                "HCI_SERIES_AMPLITUDE",
+                "HCI_FINAL_SERIES_AVG",
+
+                "HCI_EVENT_SEQ_9_10_QTD",
+                "HCI_EVENT_SEQ_9_10_MAX",
+                "HCI_EVENT_SEQ_10_QTD",
+                "HCI_EVENT_SEQ_10_MAX",
+
+                "HCI_PROCESS_RATIO_BASE",
+                "HCI_PROCESS_SCORE_BASE",
+                "HCI_DEEPENING_SCORE_BASE",
+                "HCI_CONSISTENCY_SCORE_BASE",
+
+                "HCI_STD_PROVA_BLOCOS_3_MEDIANA",
+                "HCI_DROP_COUNT_EVENTO",
+                "HCI_DROP_DEPTH_MAX_EVENTO",
+                "HCI_STD_AJUSTADO_RHYTHM",
+
+                "HCI_RESILIENCE_BASE_SERIES",
+                "HCI_RESILIENCE_WORST_SERIES",
+                "HCI_RESILIENCE_FINAL_SERIES",
+                "HCI_RESILIENCE_DROP_DEPTH",
+                "HCI_RESILIENCE_RECOVERY_DEPTH",
+                "HCI_RESILIENCE_RATIO_BASE",
+                "HCI_RESILIENCE_SCORE_BASE",
+
+                "HCI_OUTCOME_REFERENCE",
+                "HCI_OUTCOME_BASE10_BRUTO",
+                "HCI_OUTCOME_HCI_SCORE",
+
+                "HCI_TRANSFER_SCORE_BASE",
+
+                "HCI_PRESSURE_LOAD_EVENTO",
+                "HCI_PRESSURE_LOAD_SIM_TREINO",
+                "HCI_PRESSURE_SCORE_BASE",
+
+                "HCI_EMOTIONAL_BASE_ATLETA",
+                "HCI_EMOTIONAL_SCORE_BASE",
+
+                "HCI_PHYSICAL_DEGRADATION_COUNT",
+                "HCI_PHYSICAL_SCORE_BASE",
+		"HCI_OVERALL_SCORE",
+		"HCI_OVERALL_LEVEL"
+            },
+            MissingField.UseNull
+        )
+in
+    Resultado;

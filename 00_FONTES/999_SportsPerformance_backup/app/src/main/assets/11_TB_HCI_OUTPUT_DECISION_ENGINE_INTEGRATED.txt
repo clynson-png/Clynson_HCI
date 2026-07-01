@@ -1,0 +1,484 @@
+shared TB_HCI_OUTPUT_DECISION_ENGINE_INTEGRATED = let
+    Fonte_DECISION =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_OUTPUT_DECISION_ENGINE"]}[Content],
+
+    Fonte_TRAINING_BI =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_TRAINING_BI"]}[Content],
+
+    Fonte_PHASE =
+        Excel.CurrentWorkbook(){[Name="HCI_SELECTED_PERIODIZATION_PHASE"]}[Content],
+
+    TextoLimpo = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    NumeroSeguro = (valor as any) as number =>
+        try Number.From(valor) otherwise 999999,
+
+    CampoSeguro = (linha as record, nome as text, optional padrao as any) as any =>
+        if Record.HasFields(linha, nome)
+        then Record.Field(linha, nome)
+        else padrao,
+
+    ValorNomeado = (tbl as table, valorPadrao as any) as any =>
+        let
+            PrimeiraLinha =
+                if Table.RowCount(tbl) > 0 then tbl{0} else [],
+
+            Campos =
+                if Table.RowCount(tbl) > 0 then Record.FieldValues(PrimeiraLinha) else {},
+
+            ValoresValidos =
+                List.Select(
+                    Campos,
+                    each _ <> null and Text.Trim(Text.From(_)) <> ""
+                ),
+
+            Resultado =
+                if List.Count(ValoresValidos) > 0
+                then ValoresValidos{0}
+                else valorPadrao
+        in
+            Resultado,
+
+    FasePeriodizacao =
+        ValorNomeado(Fonte_PHASE, "GENERAL_PREPARATION"),
+
+    FaseFiltro =
+        TextoLimpo(FasePeriodizacao),
+
+    PackageScore = (valor as any) as number =>
+        let
+            pacote = TextoLimpo(valor)
+        in
+            if Text.Contains(pacote, "TECNICO")
+                or Text.Contains(pacote, "TÉCNICO")
+                or Text.Contains(pacote, "TECHNICAL")
+            then 3
+            else if Text.Contains(pacote, "MENTAL")
+                or Text.Contains(pacote, "PROCESS")
+                or Text.Contains(pacote, "STRATEGY")
+            then 2
+            else if Text.Contains(pacote, "FISICO")
+                or Text.Contains(pacote, "FÍSICO")
+                or Text.Contains(pacote, "PHYSICAL")
+            then 1
+            else 0,
+
+    // =========================================================
+    // Preparar diagnóstico depurado
+    // =========================================================
+
+    DecisionPreparado =
+        Table.AddColumn(
+            Table.AddColumn(
+                Fonte_DECISION,
+                "_P1_KEY",
+                each TextoLimpo(CampoSeguro(_, "PARAMETER_1", "")),
+                type text
+            ),
+            "_P2_KEY",
+            each TextoLimpo(CampoSeguro(_, "PARAMETER_2", "")),
+            type text
+        ),
+
+    // =========================================================
+    // Preparar banco de treinos
+    // =========================================================
+
+    TrainingAtivo =
+        Table.SelectRows(
+            Fonte_TRAINING_BI,
+            each
+                List.Contains(
+                    {"TRUE", "VERDADEIRO", "SIM", "YES", "1"},
+                    TextoLimpo(CampoSeguro(_, "ACTIVE", "TRUE"))
+                )
+        ),
+
+    TrainingComChave =
+        Table.AddColumn(
+            TrainingAtivo,
+            "_TRAINING_PARAMETER_KEY",
+            each TextoLimpo(CampoSeguro(_, "HCI_PARAMETER", "")),
+            type text
+        ),
+
+    TrainingComFaseOk =
+        Table.AddColumn(
+            TrainingComChave,
+            "_PHASE_OK",
+            each
+                if FaseFiltro = "GENERAL_PREPARATION"
+                then CampoSeguro(_, "PHASE_GENERAL_PREPARATION", false) = true
+                else if FaseFiltro = "SPECIFIC_PREPARATION"
+                then CampoSeguro(_, "PHASE_SPECIFIC_PREPARATION", false) = true
+                else if FaseFiltro = "PRE_COMPETITION"
+                then CampoSeguro(_, "PHASE_PRE_COMPETITION", false) = true
+                else if FaseFiltro = "COMPETITION"
+                then CampoSeguro(_, "PHASE_COMPETITION", false) = true
+                else Text.Contains(TextoLimpo(CampoSeguro(_, "PERIODIZATION_PHASE", "")), FaseFiltro),
+            type logical
+        ),
+
+    TrainingFiltrado =
+        Table.SelectRows(
+            TrainingComFaseOk,
+            each [_TRAINING_PARAMETER_KEY] <> "" and [_PHASE_OK] = true
+        ),
+
+    TrainingComScores =
+        Table.AddColumn(
+            Table.AddColumn(
+                TrainingFiltrado,
+                "_TRAINING_PRIORITY",
+                each NumeroSeguro(CampoSeguro(_, "RECOMMENDATION_PRIORITY", null)),
+                type number
+            ),
+            "_PACKAGE_SCORE",
+            each PackageScore(CampoSeguro(_, "PACKAGE_TYPE", "")),
+            Int64.Type
+        ),
+
+    TrainingComAction =
+        Table.AddColumn(
+            TrainingComScores,
+            "ACTION_RECOMMENDED_FINAL",
+            each
+                let
+                    adaptacao =
+                        Text.Trim(Text.From(CampoSeguro(_, "EXPECTED_ADAPTATION_EN", ""))),
+
+                    quando =
+                        Text.Trim(Text.From(CampoSeguro(_, "WHEN_TO_USE_EN", ""))),
+
+                    objetivo =
+                        Text.Trim(Text.From(CampoSeguro(_, "OBJECTIVE_ORIGINAL", "")))
+                in
+                    if adaptacao <> "" and quando <> ""
+                    then adaptacao & " | " & quando
+                    else if adaptacao <> ""
+                    then adaptacao
+                    else if quando <> ""
+                    then quando
+                    else objetivo,
+            type text
+        ),
+
+    // =========================================================
+    // Criar candidatos para PARAMETER_1
+    // =========================================================
+
+    JoinP1 =
+        Table.NestedJoin(
+            DecisionPreparado,
+            {"_P1_KEY"},
+            TrainingComAction,
+            {"_TRAINING_PARAMETER_KEY"},
+            "TREINOS_P1",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandP1 =
+        Table.ExpandTableColumn(
+            JoinP1,
+            "TREINOS_P1",
+            Table.ColumnNames(TrainingComAction),
+            List.Transform(Table.ColumnNames(TrainingComAction), each "P1_" & _)
+        ),
+
+    AddSideP1 =
+        Table.AddColumn(
+            ExpandP1,
+            "TRAINING_COVERAGE_SIDE",
+            each "PARAMETER_1",
+            type text
+        ),
+
+    AddCoveredP1 =
+        Table.AddColumn(
+            AddSideP1,
+            "TRAINING_PARAMETER_COVERED",
+            each [PARAMETER_1],
+            type text
+        ),
+
+    // =========================================================
+    // Criar candidatos para PARAMETER_2
+    // =========================================================
+
+    JoinP2 =
+        Table.NestedJoin(
+            DecisionPreparado,
+            {"_P2_KEY"},
+            TrainingComAction,
+            {"_TRAINING_PARAMETER_KEY"},
+            "TREINOS_P2",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandP2 =
+        Table.ExpandTableColumn(
+            JoinP2,
+            "TREINOS_P2",
+            Table.ColumnNames(TrainingComAction),
+            List.Transform(Table.ColumnNames(TrainingComAction), each "P2_" & _)
+        ),
+
+    AddSideP2 =
+        Table.AddColumn(
+            ExpandP2,
+            "TRAINING_COVERAGE_SIDE",
+            each "PARAMETER_2",
+            type text
+        ),
+
+    AddCoveredP2 =
+        Table.AddColumn(
+            AddSideP2,
+            "TRAINING_PARAMETER_COVERED",
+            each [PARAMETER_2],
+            type text
+        ),
+
+    // =========================================================
+    // Padronizar candidatos P1
+    // =========================================================
+
+    P1Padronizado =
+        Table.SelectColumns(
+            Table.RenameColumns(
+                AddCoveredP1,
+                {
+                    {"P1_CANONICAL_TRAINING_ID", "TRAINING_ID"},
+                    {"P1_SOURCE_TRAINING_ID", "SOURCE_TRAINING_ID"},
+                    {"P1_TRAINING_NAME_ORIGINAL", "TRAINING_NAME"},
+                    {"P1_TRAINING_NAME_EN", "TRAINING_NAME_EN"},
+                    {"P1_TRAINING_DOMAIN", "TRAINING_DOMAIN"},
+                    {"P1_TRAINING_FAMILY", "TRAINING_FAMILY"},
+                    {"P1_TRAINING_COMPONENT", "TRAINING_COMPONENT"},
+                    {"P1_HCI_PARAMETER", "TRAINING_HCI_PARAMETER"},
+                    {"P1_HCI_LEVEL", "TRAINING_HCI_LEVEL"},
+                    {"P1_PERIODIZATION_PHASE", "TRAINING_PHASE"},
+                    {"P1_PACKAGE_TYPE", "TRAINING_PACKAGE"},
+                    {"P1_RECOMMENDATION_PRIORITY", "TRAINING_PRIORITY"},
+                    {"P1_EXPECTED_ADAPTATION_EN", "EXPECTED_ADAPTATION"},
+                    {"P1_WHEN_TO_USE_EN", "WHEN_TO_USE"},
+                    {"P1_ACTION_RECOMMENDED_FINAL", "ACTION_RECOMMENDED_FINAL"},
+                    {"P1_OBJECTIVE_ORIGINAL", "TRAINING_OBJECTIVE"},
+                    {"P1_EXERCISE_DESCRIPTION_ORIGINAL", "TRAINING_DESCRIPTION"},
+                    {"P1_BI_RESTRICTIONS", "TRAINING_RESTRICTIONS"},
+                    {"P1_WEAPON_CLASS", "TRAINING_WEAPON_CLASS"},
+
+                    {"P1_ESTIMATED_TIME_MIN", "ESTIMATED_TIME_MIN"},
+                    {"P1_TOTAL_TIME_MIN", "TOTAL_TIME_MIN"},
+                    {"P1_MIND_SHOTS_TM", "MIND_SHOTS_TM"},
+                    {"P1_DRY_FIRE_SHOTS_TS", "DRY_FIRE_SHOTS_TS"},
+                    {"P1_REAL_SHOTS_TR", "REAL_SHOTS_TR"},
+                    {"P1_TOTAL_SHOTS_EXTRACTED", "TOTAL_SHOTS_EXTRACTED"},
+                    {"P1_SERIES_COUNT", "SERIES_COUNT"},
+                    {"P1_SHOTS_PER_SERIES", "SHOTS_PER_SERIES"},
+                    {"P1_VOLUME_NOTES_ORIGINAL", "VOLUME_NOTES_ORIGINAL"},
+
+                    {"P1__PACKAGE_SCORE", "_PACKAGE_SCORE"},
+                    {"P1__TRAINING_PRIORITY", "_TRAINING_PRIORITY"}
+                },
+                MissingField.Ignore
+            ),
+            {
+                "OUTPUT_RANK",
+                "DIAGNOSIS_KEY",
+                "PARAMETER_1",
+                "LEVEL_1",
+                "PARAMETER_2",
+                "LEVEL_2",
+                "INSIGHT",
+                "KNOWLEDGE_TO_DO",
+                "SOURCE_ENGINE",
+                "SOURCE_RANK",
+                "DISPLAY_STATUS",
+                "TRAINING_COVERAGE_SIDE",
+                "TRAINING_PARAMETER_COVERED",
+                "TRAINING_ID",
+                "SOURCE_TRAINING_ID",
+                "TRAINING_NAME",
+                "TRAINING_NAME_EN",
+                "TRAINING_DOMAIN",
+                "TRAINING_FAMILY",
+                "TRAINING_COMPONENT",
+                "TRAINING_HCI_PARAMETER",
+                "TRAINING_HCI_LEVEL",
+                "TRAINING_PHASE",
+                "TRAINING_PACKAGE",
+                "TRAINING_PRIORITY",
+                "ACTION_RECOMMENDED_FINAL",
+                "WHEN_TO_USE",
+                "EXPECTED_ADAPTATION",
+                "TRAINING_OBJECTIVE",
+                "TRAINING_DESCRIPTION",
+                "TRAINING_RESTRICTIONS",
+                "TRAINING_WEAPON_CLASS",
+                "ESTIMATED_TIME_MIN",
+                "TOTAL_TIME_MIN",
+                "MIND_SHOTS_TM",
+                "DRY_FIRE_SHOTS_TS",
+                "REAL_SHOTS_TR",
+                "TOTAL_SHOTS_EXTRACTED",
+                "SERIES_COUNT",
+                "SHOTS_PER_SERIES",
+                "VOLUME_NOTES_ORIGINAL",
+                "_PACKAGE_SCORE",
+                "_TRAINING_PRIORITY"
+            },
+            MissingField.Ignore
+        ),
+
+    // =========================================================
+    // Padronizar candidatos P2
+    // =========================================================
+
+    P2Padronizado =
+        Table.SelectColumns(
+            Table.RenameColumns(
+                AddCoveredP2,
+                {
+                    {"P2_CANONICAL_TRAINING_ID", "TRAINING_ID"},
+                    {"P2_SOURCE_TRAINING_ID", "SOURCE_TRAINING_ID"},
+                    {"P2_TRAINING_NAME_ORIGINAL", "TRAINING_NAME"},
+                    {"P2_TRAINING_NAME_EN", "TRAINING_NAME_EN"},
+                    {"P2_TRAINING_DOMAIN", "TRAINING_DOMAIN"},
+                    {"P2_TRAINING_FAMILY", "TRAINING_FAMILY"},
+                    {"P2_TRAINING_COMPONENT", "TRAINING_COMPONENT"},
+                    {"P2_HCI_PARAMETER", "TRAINING_HCI_PARAMETER"},
+                    {"P2_HCI_LEVEL", "TRAINING_HCI_LEVEL"},
+                    {"P2_PERIODIZATION_PHASE", "TRAINING_PHASE"},
+                    {"P2_PACKAGE_TYPE", "TRAINING_PACKAGE"},
+                    {"P2_RECOMMENDATION_PRIORITY", "TRAINING_PRIORITY"},
+                    {"P2_EXPECTED_ADAPTATION_EN", "EXPECTED_ADAPTATION"},
+                    {"P2_WHEN_TO_USE_EN", "WHEN_TO_USE"},
+                    {"P2_ACTION_RECOMMENDED_FINAL", "ACTION_RECOMMENDED_FINAL"},
+                    {"P2_OBJECTIVE_ORIGINAL", "TRAINING_OBJECTIVE"},
+                    {"P2_EXERCISE_DESCRIPTION_ORIGINAL", "TRAINING_DESCRIPTION"},
+                    {"P2_BI_RESTRICTIONS", "TRAINING_RESTRICTIONS"},
+                    {"P2_WEAPON_CLASS", "TRAINING_WEAPON_CLASS"},
+
+                    {"P2_ESTIMATED_TIME_MIN", "ESTIMATED_TIME_MIN"},
+                    {"P2_TOTAL_TIME_MIN", "TOTAL_TIME_MIN"},
+                    {"P2_MIND_SHOTS_TM", "MIND_SHOTS_TM"},
+                    {"P2_DRY_FIRE_SHOTS_TS", "DRY_FIRE_SHOTS_TS"},
+                    {"P2_REAL_SHOTS_TR", "REAL_SHOTS_TR"},
+                    {"P2_TOTAL_SHOTS_EXTRACTED", "TOTAL_SHOTS_EXTRACTED"},
+                    {"P2_SERIES_COUNT", "SERIES_COUNT"},
+                    {"P2_SHOTS_PER_SERIES", "SHOTS_PER_SERIES"},
+                    {"P2_VOLUME_NOTES_ORIGINAL", "VOLUME_NOTES_ORIGINAL"},
+
+                    {"P2__PACKAGE_SCORE", "_PACKAGE_SCORE"},
+                    {"P2__TRAINING_PRIORITY", "_TRAINING_PRIORITY"}
+                },
+                MissingField.Ignore
+            ),
+            Table.ColumnNames(P1Padronizado),
+            MissingField.UseNull
+        ),
+
+    // =========================================================
+    // Combinar candidatos P1 + P2
+    // =========================================================
+
+    Candidatos =
+        Table.Combine(
+            {
+                P1Padronizado,
+                P2Padronizado
+            }
+        ),
+
+    AddCoverageStatus =
+        Table.AddColumn(
+            Candidatos,
+            "TRAINING_COVERAGE_STATUS",
+            each
+                if TextoLimpo(CampoSeguro(_, "TRAINING_ID", "")) <> ""
+                    or TextoLimpo(CampoSeguro(_, "TRAINING_NAME", "")) <> ""
+                then "DIRECT_TRAINING_FOUND"
+                else "NO_DIRECT_TRAINING_MAPPING",
+            type text
+        ),
+
+    AddCoverageScore =
+        Table.AddColumn(
+            AddCoverageStatus,
+            "_COVERAGE_SCORE",
+            each
+                if [TRAINING_COVERAGE_STATUS] = "DIRECT_TRAINING_FOUND"
+                then 1
+                else 0,
+            Int64.Type
+        ),
+
+    AddSideScore =
+        Table.AddColumn(
+            AddCoverageScore,
+            "_SIDE_SCORE",
+            each
+                if [TRAINING_COVERAGE_SIDE] = "PARAMETER_1"
+                then 2
+                else 1,
+            Int64.Type
+        ),
+
+    // =========================================================
+    // Ordenar e escolher o melhor treino por diagnóstico
+    // =========================================================
+
+    Ordenado =
+        Table.Sort(
+            AddSideScore,
+            {
+                {"DIAGNOSIS_KEY", Order.Ascending},
+                {"_COVERAGE_SCORE", Order.Descending},
+                {"_TRAINING_PRIORITY", Order.Ascending},
+                {"_PACKAGE_SCORE", Order.Descending},
+                {"_SIDE_SCORE", Order.Descending},
+                {"OUTPUT_RANK", Order.Ascending}
+            }
+        ),
+
+    Agrupado =
+        Table.Group(
+            Ordenado,
+            {"DIAGNOSIS_KEY"},
+            {
+                {
+                    "MELHOR_TREINO_DO_DIAGNOSTICO",
+                    each Table.FirstN(_, 1),
+                    type table
+                }
+            }
+        ),
+
+    Expandido =
+        Table.ExpandTableColumn(
+            Agrupado,
+            "MELHOR_TREINO_DO_DIAGNOSTICO",
+            List.RemoveItems(
+                Table.ColumnNames(Ordenado),
+                {"DIAGNOSIS_KEY"}
+            )
+        ),
+
+    ResultadoFinal =
+        Table.RemoveColumns(
+            Expandido,
+            {
+                "_P1_KEY",
+                "_P2_KEY",
+                "_COVERAGE_SCORE",
+                "_SIDE_SCORE",
+                "_PACKAGE_SCORE",
+                "_TRAINING_PRIORITY"
+            },
+            MissingField.Ignore
+        )
+
+in
+    ResultadoFinal;

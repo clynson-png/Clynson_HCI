@@ -1,0 +1,41 @@
+# Preferencias do usuario - HCI IA
+
+- Em 2026-05-17, o motor aprovado e testado para leitura e auditoria foi consolidado em `/workspace/memory/hci_motor_aprovado.md` e passa a complementar/substituir a versao anterior quando houver conflito.
+- O somatorio padrao deve ser sempre de 10 em 10 tiros, alinhado as series SR1, SR2, SR3, SR4, SR5 e SR6.
+- Na leitura visual, se o furo encostar no aro de maior valor, conta o valor maior.
+- Essa regra de aro superior vale tanto para pistola quanto para carabina.
+- Procedimento validado em 2026-05-17: quando houver anotacoes manuscritas legiveis ao pe do alvo com a leitura dos disparos, elas podem ser usadas como fonte primaria de apoio para transporte e auditoria, sempre preservando a ordem original e conferindo com os furos.
+- Validacao aprovada para alvo com 3 disparos: montar a sequencia continua pela numeracao dos alvos, transportar os valores lidos/anotados e fechar somatorio em series de 10.
+- Para Carabina de Ar 10m e Pistola de Ar 10m, o metodo obrigatorio passa a ser: Maquina -> Furo -> Soma da serie -> Soma da prova.
+- Total oficial e subtotal oficial servem apenas para auditoria; nunca autorizam inventar ou ajustar tiros.
+- Quando houver divergencia de soma, a regra fixa e refazer a leitura e marcar incertezas, nunca forcar fechamento artificial.
+- Para carabina, usar leitura decimal por raio; para pistola, leitura inteira por aros/raio, salvo instrucao contraria do usuario.
+- Para pedidos como `igual`, `executar`, `apresente a tabela` ou `para conferencia`, priorizar resposta curta com tabela limpa e somatoria.
+- Em leituras de alvos ISSF numerados, a ordem oficial deve seguir sempre a numeracao continua do alvo, de 1 ate 20.
+- A sequencia dos tiros deve ser montada primeiro pela ordem dos alvos numerados, nunca pela ordem das fotos.
+- As series SR1 a SR6 e suas somas devem ser cortadas apenas depois da sequencia continua dos alvos estar montada.
+- Para carabina, a leitura deve preservar os decimais.
+- Em fitas de carabina, cada alvo corresponde a um disparo.
+- Em fitas de carabina, a ordem deve respeitar a sequencia das fitas identificadas, da mesma forma que nos alvos de pistola.
+- Em imagens com varias fitas, a leitura deve seguir a numeracao escrita na fita, nao a posicao visual na foto.
+- Fita com linhas paralelas deve ser tratada sempre como ensaio e nunca entra na contagem.
+- Procedimento validado para carabina em fitas ISSF: ler cada fita da esquerda para a direita, agrupar duas fitas consecutivas em series de 10 tiros, preservar decimais e conferir subtotal por serie e total geral quando solicitado.
+- Metodologia validada em 2026-05-28 para SIUS video / visor eletronico: ler os disparos em ordem cronologica pela tela ou pela coluna lateral direita, usando a numeracao oficial dos tiros como referencia, como 1P, 2P, 3P e assim por diante.
+- Em SIUS video, quando o usuario pedir sem decimais, transportar apenas numeros inteiros.
+- Em SIUS video, tiros duvidosos devem ser confirmados visualmente no alvo com esta regra: centro sem marcacao vale 10; proximo aro vale 9; depois 8 e 7 dentro da bola preta; se tocar a linha interna da maior pontuacao, vale a maior.
+- Em SIUS video, agrupar sempre de 10 em 10: SR1 = tiros 1 a 10, SR2 = tiros 11 a 20, SR3 = tiros 21 a 30 e assim por diante.
+- Em SIUS video, a saida padrao aprovada para conferencia e `SERIE | T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | SOMA`.
+- Em SIUS video, informar TOTAL geral somente quando o usuario pedir explicitamente.
+- Em SIUS video, nunca inventar valores para fechar soma; tiros incertos devem ser marcados com `?` ou `provavel`.
+- Em 2026-06-01, foi criado o modelo `HCI_analise_alvos` para leitura direcional/radial de alvos: classificar disparos em setores de 45 graus a partir de 0 graus, medir distancia radial ao centro e usar como indice principal o `IDD_MEDIO = QTDE_TIROS * DIST_MEDIA_MM`; nao usar maior distancia como criterio principal por poder representar ponto fora da curva estatistica.
+- Para prescricoes derivadas do `HCI_analise_alvos`, o formato aprovado pelo usuario e sintetico: apenas 2 insights e 1 exercicio principal, com linguagem direta para o atleta.
+- Em 2026-06-01, foi adicionada a memoria `hci_analise_alvos_prescricoes.md` com frases e analises padrao para combinacoes direcionais de pistola, pronta para ser exportada ao Codex/app junto com a tabela BI.
+- Em rifle/carabina, o `HCI_analise_alvos` deve classificar impactos em 4 quadrantes de 90 graus: 0-90 superior direita, 90-180 superior esquerda, 180-270 inferior esquerda, 270-360 inferior direita. Nao usar os 8 setores de pistola para rifle.
+- Em 2026-06-01, foi validada a prescricao de rifle/carabina para predominancia do lado direito: quando Q1 superior direita e Q4 inferior direita sao os maiores `IDD_MEDIO` e ficam proximos, ler como tendencia lateral direita/posicao natural, com 2 insights e 1 exercicio de checagem de posicao natural + disparo seco.
+- O grafico padrao do `HCI_analise_alvos` deve ser radial preenchido: cada raio representa `%IDD_MEDIO` do setor/quadrante, os pontos sao ligados e a area e preenchida. Pistola usa 8 setores; rifle/carabina usa 4 quadrantes.
+- No grafico radial de rifle/carabina, as radiais devem ficar no meio dos quadrantes: Q1 em 45 graus, Q2 em 135 graus, Q3 em 225 graus e Q4 em 315 graus.
+- Em 2026-06-01, foi validada a modalidade **Duelo 20**: 20 disparos divididos em 4 series de 5.
+- No Duelo 20, modo 10m, o 'X' vale 12 pontos; no modo 25m, o 'X' vale 10 pontos.
+- Regra obrigatoria para Duelo 20: o 'X' deve ser sempre registrado na direcao **Centro (C)**.
+- O calculo do somatorio geral no Duelo 20 deve respeitar o valor do 'X' conforme o modo selecionado (10m ou 25m).
+

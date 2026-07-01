@@ -1,0 +1,514 @@
+{
+  "schemaVersion": "1.0.0",
+  "assetName": "target_intelligence_direction_matrix",
+  "description": {
+    "pt-BR": "Matriz direcional de inteligência de alvo para Duelo 20, pistola e rifle. Define relação entre direção/ângulo, parâmetros técnicos, insights e códigos de treino para consulta pelo motor TargetIntelligenceEngine.",
+    "en-US": "Directional target intelligence matrix for Duel 20, pistol and rifle. Defines relation between direction/angle, technical parameters, insights and training codes for TargetIntelligenceEngine lookup."
+  },
+  "evaluationPolicy": {
+    "aggregation": "MEDIAN",
+    "useMean": false,
+    "dominantSelection": "highest_weight_or_highest_count",
+    "secondarySelection": "second_highest_weight_or_count",
+    "notes": {
+      "pt-BR": "Usar MEDIANA como regra estatística do projeto. Não usar média para consolidação de avaliações.",
+      "en-US": "Use MEDIAN as the project statistical rule. Do not use mean for evaluation consolidation."
+    }
+  },
+  "parameterKeys": [
+    "AIMING",
+    "TRIGGERING",
+    "INNER_POSITION",
+    "OUTER_POSITION",
+    "BREATH",
+    "WRIST_GRIP",
+    "SHOULDERS"
+  ],
+  "trainingCodeLegend": {
+    "AT": "Aiming / atenção visual / ajuste técnico",
+    "PT": "Position / postura / posição",
+    "P": "Position package",
+    "Q": "Quiet / quality control package",
+    "W": "Wrist / empunhadura / follow-through"
+  },
+  "profiles": [
+    {
+      "weaponClass": "PISTOL",
+      "model": "DUEL_20_8_SECTORS",
+      "scoreModel": {
+        "seriesCount": 4,
+        "shotsPerSeries": 5,
+        "totalShots": 20,
+        "resultMode": "GENERAL_TOTAL_ONLY",
+        "duel20_10m_xValue": 12,
+        "duel20_25m_xValue": 10
+      },
+      "directions": [
+        {
+          "angle": 0,
+          "sourceDirectionCode": "AC",
+          "appDirectionCode": "E",
+          "label": {
+            "pt-BR": "Direita",
+            "en-US": "Right"
+          },
+          "parameters": {
+            "AIMING": 1,
+            "TRIGGERING": 0,
+            "INNER_POSITION": 0,
+            "OUTER_POSITION": 0,
+            "BREATH": 0,
+            "WRIST_GRIP": 1,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "FOLLOW THROUGH",
+              "ÁREA DE VISADA",
+              "TRAVAR PULSO"
+            ],
+            "en-US": [
+              "Follow-through",
+              "Aiming area",
+              "Lock the wrist"
+            ]
+          },
+          "primaryParameter": "AIMING",
+          "secondaryParameter": "WRIST_GRIP",
+          "trainingLookupCodes": [
+            "PT",
+            "W"
+          ],
+          "targetTrainingParameter": "TARGET_AIMING"
+        },
+        {
+          "angle": 45,
+          "sourceDirectionCode": "SD",
+          "appDirectionCode": "NE",
+          "label": {
+            "pt-BR": "Superior direita",
+            "en-US": "Upper right"
+          },
+          "parameters": {
+            "AIMING": 1,
+            "TRIGGERING": 0,
+            "INNER_POSITION": 1,
+            "OUTER_POSITION": 0,
+            "BREATH": 1,
+            "WRIST_GRIP": 0,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "RESPIRAR ABDOMINAL",
+              "AJUSTAR EMPUNHADURA",
+              "SENTIR A POSIÇÃO"
+            ],
+            "en-US": [
+              "Abdominal breathing",
+              "Adjust grip",
+              "Feel the position"
+            ]
+          },
+          "primaryParameter": "AIMING",
+          "secondaryParameter": "INNER_POSITION",
+          "trainingLookupCodes": [
+            "AT",
+            "PT"
+          ],
+          "targetTrainingParameter": "TARGET_AIMING"
+        },
+        {
+          "angle": 90,
+          "sourceDirectionCode": "D",
+          "appDirectionCode": "N",
+          "label": {
+            "pt-BR": "Acima",
+            "en-US": "Up"
+          },
+          "parameters": {
+            "AIMING": 0,
+            "TRIGGERING": 0,
+            "INNER_POSITION": 1,
+            "OUTER_POSITION": 0,
+            "BREATH": 0,
+            "WRIST_GRIP": 1,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "SOLTAR O POLEGAR",
+              "MENOS PRESSÃO NA EMPUNHADURA",
+              "ATIVAÇÃO MUSCULAR"
+            ],
+            "en-US": [
+              "Release the thumb",
+              "Less grip pressure",
+              "Muscle activation"
+            ]
+          },
+          "primaryParameter": "INNER_POSITION",
+          "secondaryParameter": "WRIST_GRIP",
+          "trainingLookupCodes": [
+            "PT",
+            "W"
+          ],
+          "targetTrainingParameter": "TARGET_GRIP"
+        },
+        {
+          "angle": 135,
+          "sourceDirectionCode": "ID",
+          "appDirectionCode": "NW",
+          "label": {
+            "pt-BR": "Superior esquerda",
+            "en-US": "Upper left"
+          },
+          "parameters": {
+            "AIMING": 1,
+            "TRIGGERING": 1,
+            "INNER_POSITION": 0,
+            "OUTER_POSITION": 1,
+            "BREATH": 0,
+            "WRIST_GRIP": 0,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "GATILHADA",
+              "POSIÇÃO DA CABEÇA",
+              "MENOS PRESSÃO NA EMPUNHADURA"
+            ],
+            "en-US": [
+              "Trigger jerk",
+              "Head position",
+              "Less grip pressure"
+            ]
+          },
+          "primaryParameter": "TRIGGERING",
+          "secondaryParameter": "OUTER_POSITION",
+          "trainingLookupCodes": [
+            "PT",
+            "AT"
+          ],
+          "targetTrainingParameter": "TARGET_TRIGGERING"
+        },
+        {
+          "angle": 180,
+          "sourceDirectionCode": "AB",
+          "appDirectionCode": "W",
+          "label": {
+            "pt-BR": "Esquerda",
+            "en-US": "Left"
+          },
+          "parameters": {
+            "AIMING": 1,
+            "TRIGGERING": 0,
+            "INNER_POSITION": 0,
+            "OUTER_POSITION": 0,
+            "BREATH": 0,
+            "WRIST_GRIP": 1,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "ALINHAMENTO DE MIRAS",
+              "FOLLOW THROUGH",
+              "ÁREA DE VISADA"
+            ],
+            "en-US": [
+              "Sight alignment",
+              "Follow-through",
+              "Aiming area"
+            ]
+          },
+          "primaryParameter": "AIMING",
+          "secondaryParameter": "WRIST_GRIP",
+          "trainingLookupCodes": [
+            "AT",
+            "W"
+          ],
+          "targetTrainingParameter": "TARGET_AIMING"
+        },
+        {
+          "angle": 225,
+          "sourceDirectionCode": "IE",
+          "appDirectionCode": "SW",
+          "label": {
+            "pt-BR": "Inferior esquerda",
+            "en-US": "Lower left"
+          },
+          "parameters": {
+            "AIMING": 1,
+            "TRIGGERING": 1,
+            "INNER_POSITION": 0,
+            "OUTER_POSITION": 1,
+            "BREATH": 0,
+            "WRIST_GRIP": 1,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "ACIONAMENTO GRADUAL",
+              "AJUSTAR EMPUNHADURA",
+              "ALINHAMENTO DE MIRAS"
+            ],
+            "en-US": [
+              "Gradual trigger action",
+              "Adjust grip",
+              "Sight alignment"
+            ]
+          },
+          "primaryParameter": "TRIGGERING",
+          "secondaryParameter": "WRIST_GRIP",
+          "trainingLookupCodes": [
+            "PT",
+            "AT"
+          ],
+          "targetTrainingParameter": "TARGET_TRIGGERING"
+        },
+        {
+          "angle": 270,
+          "sourceDirectionCode": "E",
+          "appDirectionCode": "S",
+          "label": {
+            "pt-BR": "Abaixo",
+            "en-US": "Down"
+          },
+          "parameters": {
+            "AIMING": 0,
+            "TRIGGERING": 0,
+            "INNER_POSITION": 1,
+            "OUTER_POSITION": 0,
+            "BREATH": 0,
+            "WRIST_GRIP": 1,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "POSIÇÃO DO DEDO NO GATILHO",
+              "POSIÇÃO DOS PÉS",
+              "TRAVAR PULSO"
+            ],
+            "en-US": [
+              "Trigger finger position",
+              "Foot position",
+              "Lock the wrist"
+            ]
+          },
+          "primaryParameter": "INNER_POSITION",
+          "secondaryParameter": "WRIST_GRIP",
+          "trainingLookupCodes": [
+            "PT",
+            "W"
+          ],
+          "targetTrainingParameter": "TARGET_TRIGGERING"
+        },
+        {
+          "angle": 315,
+          "sourceDirectionCode": "SE",
+          "appDirectionCode": "SE",
+          "label": {
+            "pt-BR": "Inferior direita",
+            "en-US": "Lower right"
+          },
+          "parameters": {
+            "AIMING": 1,
+            "TRIGGERING": 0,
+            "INNER_POSITION": 0,
+            "OUTER_POSITION": 0,
+            "BREATH": 1,
+            "WRIST_GRIP": 0,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "POSIÇÃO INTERNA",
+              "FOLLOW THROUGH",
+              "ACALMAR A MENTE"
+            ],
+            "en-US": [
+              "Inner position",
+              "Follow-through",
+              "Calm the mind"
+            ]
+          },
+          "primaryParameter": "BREATH",
+          "secondaryParameter": "AIMING",
+          "trainingLookupCodes": [
+            "AT",
+            "PT"
+          ],
+          "targetTrainingParameter": "TARGET_TRIGGERING"
+        }
+      ]
+    },
+    {
+      "weaponClass": "RIFLE",
+      "model": "RIFLE_4_QUADRANTS",
+      "directions": [
+        {
+          "angleRange": "0-90",
+          "sourceDirectionCode": "SD",
+          "appDirectionCode": "Q1",
+          "label": {
+            "pt-BR": "Superior direita",
+            "en-US": "Upper right"
+          },
+          "parameters": {
+            "AIMING": 0,
+            "TRIGGERING": 1,
+            "INNER_POSITION": 0,
+            "OUTER_POSITION": 1,
+            "BREATH": 0,
+            "WRIST_GRIP": 0,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "CG À FRENTE",
+              "SHORT STOCK",
+              "OMBROS TENSOS",
+              "MÃO À FRENTE NO PALM REST"
+            ],
+            "en-US": [
+              "Center of gravity forward",
+              "Short stock",
+              "Tense shoulders",
+              "Forward hand on palm rest"
+            ]
+          },
+          "primaryParameter": "OUTER_POSITION",
+          "secondaryParameter": "TRIGGERING",
+          "trainingLookupCodes": [
+            "PT",
+            "P"
+          ],
+          "targetTrainingParameter": "TARGET_POSITION"
+        },
+        {
+          "angleRange": "91-180",
+          "sourceDirectionCode": "ID",
+          "appDirectionCode": "Q2",
+          "label": {
+            "pt-BR": "Superior esquerda",
+            "en-US": "Upper left"
+          },
+          "parameters": {
+            "AIMING": 0,
+            "TRIGGERING": 1,
+            "INNER_POSITION": 0,
+            "OUTER_POSITION": 1,
+            "BREATH": 0,
+            "WRIST_GRIP": 0,
+            "SHOULDERS": 1
+          },
+          "insights": {
+            "pt-BR": [
+              "CABEÇA PARA TRÁS",
+              "CG ARMA À DIREITA",
+              "CG CORPO PARA TRÁS",
+              "BOCHECHEIRA BAIXA",
+              "BUTT PLATE MUITO BAIXO",
+              "DEDO MUITO FORA DO GATILHO"
+            ],
+            "en-US": [
+              "Head back",
+              "Rifle center of gravity to the right",
+              "Body center of gravity back",
+              "Low cheek piece",
+              "Butt plate too low",
+              "Trigger finger too far out"
+            ]
+          },
+          "primaryParameter": "OUTER_POSITION",
+          "secondaryParameter": "SHOULDERS",
+          "trainingLookupCodes": [
+            "PT",
+            "Q"
+          ],
+          "targetTrainingParameter": "TARGET_POSITION"
+        },
+        {
+          "angleRange": "181-270",
+          "sourceDirectionCode": "IE",
+          "appDirectionCode": "Q3",
+          "label": {
+            "pt-BR": "Inferior esquerda",
+            "en-US": "Lower left"
+          },
+          "parameters": {
+            "AIMING": 1,
+            "TRIGGERING": 1,
+            "INNER_POSITION": 0,
+            "OUTER_POSITION": 0,
+            "BREATH": 1,
+            "WRIST_GRIP": 0,
+            "SHOULDERS": 1
+          },
+          "insights": {
+            "pt-BR": [
+              "CG ARMA À ESQUERDA",
+              "STOCK TOO LONG",
+              "BOCHECHEIRA BAIXA",
+              "BUTT PLATE MUITO BAIXO",
+              "DEDO MUITO DENTRO DO GATILHO"
+            ],
+            "en-US": [
+              "Rifle center of gravity to the left",
+              "Stock too long",
+              "Low cheek piece",
+              "Butt plate too low",
+              "Trigger finger too far inside"
+            ]
+          },
+          "primaryParameter": "AIMING",
+          "secondaryParameter": "TRIGGERING",
+          "trainingLookupCodes": [
+            "AT",
+            "P"
+          ],
+          "targetTrainingParameter": "TARGET_AIMING"
+        },
+        {
+          "angleRange": "271-0",
+          "sourceDirectionCode": "SE",
+          "appDirectionCode": "Q4",
+          "label": {
+            "pt-BR": "Inferior direita",
+            "en-US": "Lower right"
+          },
+          "parameters": {
+            "AIMING": 1,
+            "TRIGGERING": 1,
+            "INNER_POSITION": 0,
+            "OUTER_POSITION": 0,
+            "BREATH": 1,
+            "WRIST_GRIP": 0,
+            "SHOULDERS": 0
+          },
+          "insights": {
+            "pt-BR": [
+              "CG ARMA À ESQUERDA",
+              "STOCK TOO LONG",
+              "PRESSÃO NA MÃO QUE ATIRA",
+              "BUTT PLATE MUITO ALTO"
+            ],
+            "en-US": [
+              "Rifle center of gravity to the left",
+              "Stock too long",
+              "Pressure in the firing hand",
+              "Butt plate too high"
+            ]
+          },
+          "primaryParameter": "TRIGGERING",
+          "secondaryParameter": "AIMING",
+          "trainingLookupCodes": [
+            "AT",
+            "Q"
+          ],
+          "targetTrainingParameter": "TARGET_TRIGGERING"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "assetName": "hci_happy_prescription_canonical",
+  "createdAt": "2026-06-24",
+  "language": "en-US",
+  "purpose": "Canonical prescription matrix connecting HAPPY/COMANDO gaps to HCI evidence and exercise dosage.",
+  "severityBands": {
+    "CRITICAL": { "range": "< 2.0", "meaning": "Immediate development priority", "dosage": "3 exercises / 2 weeks / coach follow-up required" },
+    "ATTENTION": { "range": "2.0 - 2.99", "meaning": "Needs focused intervention", "dosage": "2 exercises / 2 weeks / athlete report + coach review" },
+    "STABLE": { "range": "3.0 - 3.99", "meaning": "Monitor and consolidate", "dosage": "1 exercise / 1 week / self-report" },
+    "HIGH_PERFORMANCE": { "range": "4.0 - 4.49", "meaning": "Maintain and refine", "dosage": "Reinforcement only" },
+    "ELITE": { "range": "4.5 - 5.0", "meaning": "Reference behavior", "dosage": "Protect and monitor" }
+  },
+  "rules": [
+    { "parameter": "CONFIDENCE", "sourceSystem": "COMANDO", "primaryHciEvidence": "OUTCOME", "secondaryHciEvidence": ["CONSISTENCY", "PRESSURE"], "criticalExercises": ["HAPPY_CONFIDENCE_001", "HAPPY_CONFIDENCE_002", "HAPPY_CONFIDENCE_003"], "attentionExercises": ["HAPPY_CONFIDENCE_001", "HAPPY_CONFIDENCE_002"], "monitorExercises": ["HAPPY_CONFIDENCE_001"] },
+    { "parameter": "ORGANIZATION", "sourceSystem": "COMANDO", "primaryHciEvidence": "CONSISTENCY", "secondaryHciEvidence": ["RHYTHM", "PHYSICAL"], "criticalExercises": ["HAPPY_ORGANIZATION_001", "HAPPY_ORGANIZATION_002", "HAPPY_ORGANIZATION_003"], "attentionExercises": ["HAPPY_ORGANIZATION_001", "HAPPY_ORGANIZATION_002"], "monitorExercises": ["HAPPY_ORGANIZATION_001"] },
+    { "parameter": "MANAGEMENT", "sourceSystem": "COMANDO", "primaryHciEvidence": "PROCESS", "secondaryHciEvidence": ["TRANSFER", "CONSISTENCY"], "criticalExercises": ["HAPPY_MANAGEMENT_001", "HAPPY_MANAGEMENT_002", "HAPPY_MANAGEMENT_003"], "attentionExercises": ["HAPPY_MANAGEMENT_001", "HAPPY_MANAGEMENT_002"], "monitorExercises": ["HAPPY_MANAGEMENT_001"] },
+    { "parameter": "ANALYSIS", "sourceSystem": "COMANDO", "primaryHciEvidence": "DEEPENING", "secondaryHciEvidence": ["PROCESS", "RHYTHM"], "criticalExercises": ["HAPPY_ANALYSIS_001", "HAPPY_ANALYSIS_002", "HAPPY_ANALYSIS_003"], "attentionExercises": ["HAPPY_ANALYSIS_001", "HAPPY_ANALYSIS_002"], "monitorExercises": ["HAPPY_ANALYSIS_001"] },
+    { "parameter": "NERVE", "sourceSystem": "COMANDO", "primaryHciEvidence": "PRESSURE", "secondaryHciEvidence": ["EMOTIONAL", "RHYTHM"], "criticalExercises": ["HAPPY_NERVE_001", "HAPPY_NERVE_002", "HAPPY_NERVE_003"], "attentionExercises": ["HAPPY_NERVE_001", "HAPPY_NERVE_002"], "monitorExercises": ["HAPPY_NERVE_001"] },
+    { "parameter": "DISCIPLINE", "sourceSystem": "COMANDO", "primaryHciEvidence": "CONSISTENCY", "secondaryHciEvidence": ["PROCESS", "PHYSICAL"], "criticalExercises": ["HAPPY_DISCIPLINE_001", "HAPPY_DISCIPLINE_002", "HAPPY_DISCIPLINE_003"], "attentionExercises": ["HAPPY_DISCIPLINE_001", "HAPPY_DISCIPLINE_002"], "monitorExercises": ["HAPPY_DISCIPLINE_001"] },
+    { "parameter": "OPPORTUNITY", "sourceSystem": "COMANDO", "primaryHciEvidence": "TRANSFER", "secondaryHciEvidence": ["DEEPENING", "OUTCOME"], "criticalExercises": ["HAPPY_OPPORTUNITY_001", "HAPPY_OPPORTUNITY_002", "HAPPY_OPPORTUNITY_003"], "attentionExercises": ["HAPPY_OPPORTUNITY_001", "HAPPY_OPPORTUNITY_002"], "monitorExercises": ["HAPPY_OPPORTUNITY_001"] },
+    { "parameter": "HEED", "sourceSystem": "HAPPY", "primaryHciEvidence": "RHYTHM", "secondaryHciEvidence": ["EMOTIONAL", "PRESSURE"], "criticalExercises": ["HAPPY_HEED_001", "HAPPY_HEED_002", "HAPPY_HEED_003"], "attentionExercises": ["HAPPY_HEED_001", "HAPPY_HEED_002"], "monitorExercises": ["HAPPY_HEED_001"] },
+    { "parameter": "ALIGNMENT", "sourceSystem": "HAPPY", "primaryHciEvidence": "TRANSFER", "secondaryHciEvidence": ["PROCESS", "OUTCOME"], "criticalExercises": ["HAPPY_ALIGNMENT_001", "HAPPY_ALIGNMENT_002", "HAPPY_ALIGNMENT_003"], "attentionExercises": ["HAPPY_ALIGNMENT_001", "HAPPY_ALIGNMENT_002"], "monitorExercises": ["HAPPY_ALIGNMENT_001"] },
+    { "parameter": "PLAN", "sourceSystem": "HAPPY", "primaryHciEvidence": "PROCESS", "secondaryHciEvidence": ["CONSISTENCY", "TRANSFER"], "criticalExercises": ["HAPPY_PLAN_001", "HAPPY_PLAN_002", "HAPPY_PLAN_003"], "attentionExercises": ["HAPPY_PLAN_001", "HAPPY_PLAN_002"], "monitorExercises": ["HAPPY_PLAN_001"] },
+    { "parameter": "POWERING", "sourceSystem": "HAPPY", "primaryHciEvidence": "PHYSICAL", "secondaryHciEvidence": ["RHYTHM", "PRESSURE"], "criticalExercises": ["HAPPY_POWERING_001", "HAPPY_POWERING_002", "HAPPY_POWERING_003"], "attentionExercises": ["HAPPY_POWERING_001", "HAPPY_POWERING_002"], "monitorExercises": ["HAPPY_POWERING_001"] },
+    { "parameter": "YEARN", "sourceSystem": "HAPPY", "primaryHciEvidence": "CONSISTENCY", "secondaryHciEvidence": ["OUTCOME", "PHYSICAL"], "criticalExercises": ["HAPPY_YEARN_001", "HAPPY_YEARN_002", "HAPPY_YEARN_003"], "attentionExercises": ["HAPPY_YEARN_001", "HAPPY_YEARN_002"], "monitorExercises": ["HAPPY_YEARN_001"] }
+  ]
+}

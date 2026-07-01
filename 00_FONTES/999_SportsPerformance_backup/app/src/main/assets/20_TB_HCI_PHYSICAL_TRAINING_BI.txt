@@ -1,0 +1,614 @@
+shared TB_HCI_PHYSICAL_TRAINING_BI = let
+    Fonte =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_TRAINING_BI"]}[Content],
+
+    TextoLimpo = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    TextoOriginal = (valor as any) as text =>
+        if valor = null then "" else Text.Trim(Text.From(valor)),
+
+    CampoSeguro = (linha as record, campo as text, optional padrao as any) as any =>
+        if Record.HasFields(linha, campo) then
+            Record.Field(linha, campo)
+        else
+            padrao,
+
+    AddPhysicalAuditText =
+        Table.AddColumn(
+            Fonte,
+            "_PHYSICAL_AUDIT_TEXT",
+            each
+                Text.Combine(
+                    List.Transform(
+                        {
+                            CampoSeguro(_, "HCI_PARAMETER", ""),
+                            CampoSeguro(_, "TRAINING_DOMAIN", ""),
+                            CampoSeguro(_, "TRAINING_FAMILY", ""),
+                            CampoSeguro(_, "TRAINING_COMPONENT", ""),
+                            CampoSeguro(_, "COMPONENT_DOMAIN", ""),
+                            CampoSeguro(_, "PACKAGE_TYPE", ""),
+                            CampoSeguro(_, "TRAINING_NAME_ORIGINAL", ""),
+                            CampoSeguro(_, "TRAINING_NAME_EN", ""),
+                            CampoSeguro(_, "OBJECTIVE_ORIGINAL", ""),
+                            CampoSeguro(_, "EXERCISE_DESCRIPTION_ORIGINAL", ""),
+                            CampoSeguro(_, "OBSERVATION_ORIGINAL", ""),
+                            CampoSeguro(_, "TARGET_ORIGINAL", "")
+                        },
+                        each TextoLimpo(_)
+                    ),
+                    " | "
+                ),
+            type text
+        ),
+
+    AddExcludePhysical =
+        Table.AddColumn(
+            AddPhysicalAuditText,
+            "EXCLUDE_FROM_PHYSICAL_BI",
+            each
+                let
+                    txt = [_PHYSICAL_AUDIT_TEXT]
+                in
+                    Text.Contains(txt, "MENTAL SHOT")
+                    or Text.Contains(txt, "DRYFIRE")
+                    or Text.Contains(txt, "DRY FIRE")
+                    or Text.Contains(txt, "REAL SHOT")
+                    or Text.Contains(txt, "THE DATA ANALYSIS")
+                    or Text.Contains(txt, "DATA ANALYSIS")
+                    or Text.Contains(txt, "COMPETITION_EXECUTION")
+                    or Text.Contains(txt, "OUTCOME_CONSISTENCY")
+                    or Text.Contains(txt, "WINNING_MINDSET")
+                    or Text.Contains(txt, "EMOTIONAL")
+                    or Text.Contains(txt, "CONSISTENCY|OUTCOME")
+                    or Text.Contains(txt, "CONSISTENCY")
+                    or Text.Contains(txt, "PROCESS")
+                    or Text.Contains(txt, "RHYTHM"),
+            type logical
+        ),
+
+    AddPhysicalFilterReason =
+        Table.AddColumn(
+            AddExcludePhysical,
+            "PHYSICAL_FILTER_REASON",
+            each
+                let
+                    hci =
+                        TextoLimpo(CampoSeguro(_, "HCI_PARAMETER", "")),
+
+                    domain =
+                        TextoLimpo(CampoSeguro(_, "TRAINING_DOMAIN", "")),
+
+                    componentDomain =
+                        TextoLimpo(CampoSeguro(_, "COMPONENT_DOMAIN", "")),
+
+                    family =
+                        TextoLimpo(CampoSeguro(_, "TRAINING_FAMILY", "")),
+
+                    component =
+                        TextoLimpo(CampoSeguro(_, "TRAINING_COMPONENT", "")),
+
+                    package =
+                        TextoLimpo(CampoSeguro(_, "PACKAGE_TYPE", "")),
+
+                    nameOriginal =
+                        TextoLimpo(CampoSeguro(_, "TRAINING_NAME_ORIGINAL", "")),
+
+                    nameEn =
+                        TextoLimpo(CampoSeguro(_, "TRAINING_NAME_EN", "")),
+
+                    objective =
+                        TextoLimpo(CampoSeguro(_, "OBJECTIVE_ORIGINAL", "")),
+
+                    description =
+                        TextoLimpo(CampoSeguro(_, "EXERCISE_DESCRIPTION_ORIGINAL", "")),
+
+                    txt =
+                        [_PHYSICAL_AUDIT_TEXT]
+                in
+                    if Text.Contains(hci, "PHYSICAL") then
+                        "HCI_PARAMETER_PHYSICAL"
+
+                    else if Text.Contains(domain, "PHYSICAL")
+                        or Text.Contains(domain, "FISICO")
+                        or Text.Contains(domain, "FÍSICO") then
+                        "TRAINING_DOMAIN_PHYSICAL"
+
+                    else if Text.Contains(componentDomain, "PHYSICAL")
+                        or Text.Contains(componentDomain, "FISICO")
+                        or Text.Contains(componentDomain, "FÍSICO") then
+                        "COMPONENT_DOMAIN_PHYSICAL"
+
+                    else if Text.Contains(component, "PHYSICAL")
+                        or Text.Contains(component, "PHYSICAL_CONDITIONING")
+                        or Text.Contains(component, "FISICO")
+                        or Text.Contains(component, "FÍSICO") then
+                        "TRAINING_COMPONENT_PHYSICAL"
+
+                    else if Text.Contains(family, "PHYSICAL")
+                        or Text.Contains(family, "PHYSICAL_CONDITIONING")
+                        or Text.Contains(family, "CONDITIONING")
+                        or Text.Contains(family, "FISICO")
+                        or Text.Contains(family, "FÍSICO") then
+                        "TRAINING_FAMILY_PHYSICAL"
+
+                    else if Text.Contains(package, "PHYSICAL")
+                        or Text.Contains(package, "PACOTE_FISICO")
+                        or Text.Contains(package, "PACOTE_FÍSICO") then
+                        "PACKAGE_TYPE_PHYSICAL"
+
+                    else if Text.Contains(nameOriginal, "RUN")
+                        or Text.Contains(nameOriginal, "CONTINUOUS RUN")
+                        or Text.Contains(nameOriginal, "INTERVAL RUN")
+                        or Text.Contains(nameOriginal, "JUMPING JACKS")
+                        or Text.Contains(nameOriginal, "BURPEE")
+                        or Text.Contains(nameOriginal, "BUPREE")
+                        or Text.Contains(nameOriginal, "PUSH-UP")
+                        or Text.Contains(nameOriginal, "PUSH UP")
+                        or Text.Contains(nameOriginal, "PLANK")
+                        or Text.Contains(nameOriginal, "SQUAT")
+                        or Text.Contains(nameOriginal, "SQUATCH")
+                        or Text.Contains(nameOriginal, "V-SIT")
+                        or Text.Contains(nameOriginal, "FLUTTER")
+                        or Text.Contains(nameOriginal, "LEG")
+                        or Text.Contains(nameOriginal, "THIGH")
+                        or Text.Contains(nameOriginal, "THIGT")
+                        or Text.Contains(nameOriginal, "CALF")
+                        or Text.Contains(nameOriginal, "ABDOMINAL")
+                        or Text.Contains(nameOriginal, "PECTORAL")
+                        or Text.Contains(nameOriginal, "DELTOID")
+                        or Text.Contains(nameOriginal, "LATISIMUS")
+                        or Text.Contains(nameOriginal, "LATISSIMUS")
+                        or Text.Contains(nameOriginal, "BICEPS")
+                        or Text.Contains(nameOriginal, "TRICEPS")
+                        or Text.Contains(nameOriginal, "TERA BAND")
+                        or Text.Contains(nameOriginal, "THERABAND")
+                        or Text.Contains(nameOriginal, "CARCI TUBING")
+                        or Text.Contains(nameOriginal, "ELASTIC TUBING")
+                        or Text.Contains(nameOriginal, "NECK")
+                        or Text.Contains(nameOriginal, "ARM ROTATION")
+                        or Text.Contains(nameOriginal, "ARTM ROTATION") then
+                        "TRAINING_NAME_PHYSICAL_EXERCISE"
+
+                    else if Text.Contains(nameEn, "RUN")
+                        or Text.Contains(nameEn, "JUMPING JACKS")
+                        or Text.Contains(nameEn, "BURPEE")
+                        or Text.Contains(nameEn, "PUSH-UP")
+                        or Text.Contains(nameEn, "PUSH UP")
+                        or Text.Contains(nameEn, "PLANK")
+                        or Text.Contains(nameEn, "SQUAT")
+                        or Text.Contains(nameEn, "V-SIT")
+                        or Text.Contains(nameEn, "LEG")
+                        or Text.Contains(nameEn, "THIGH")
+                        or Text.Contains(nameEn, "CALF")
+                        or Text.Contains(nameEn, "ABDOMINAL")
+                        or Text.Contains(nameEn, "PECTORAL")
+                        or Text.Contains(nameEn, "DELTOID")
+                        or Text.Contains(nameEn, "LATISSIMUS")
+                        or Text.Contains(nameEn, "BICEPS")
+                        or Text.Contains(nameEn, "TRICEPS")
+                        or Text.Contains(nameEn, "THERABAND")
+                        or Text.Contains(nameEn, "ELASTIC TUBING")
+                        or Text.Contains(nameEn, "NECK")
+                        or Text.Contains(nameEn, "ARM ROTATION") then
+                        "TRAINING_NAME_EN_PHYSICAL_EXERCISE"
+
+                    else if Text.Contains(objective, "PHYSICAL")
+                        or Text.Contains(objective, "CONDITIONING")
+                        or Text.Contains(objective, "STRENGTH")
+                        or Text.Contains(objective, "POSTURAL")
+                        or Text.Contains(objective, "CORE")
+                        or Text.Contains(objective, "AEROBIC")
+                        or Text.Contains(objective, "CARDIO") then
+                        "OBJECTIVE_PHYSICAL"
+
+                    else if Text.Contains(description, "PHYSICAL")
+                        or Text.Contains(description, "CONDITIONING")
+                        or Text.Contains(description, "STRENGTH")
+                        or Text.Contains(description, "POSTURAL")
+                        or Text.Contains(description, "CORE")
+                        or Text.Contains(description, "AEROBIC")
+                        or Text.Contains(description, "CARDIO") then
+                        "DESCRIPTION_PHYSICAL"
+
+                    else
+                        "",
+            type text
+        ),
+
+    AddIsPhysical =
+        Table.AddColumn(
+            AddPhysicalFilterReason,
+            "IS_PHYSICAL_TRAINING",
+            each
+                [EXCLUDE_FROM_PHYSICAL_BI] = false
+                and [PHYSICAL_FILTER_REASON] <> "",
+            type logical
+        ),
+
+    FiltrarSomenteFisicos =
+        Table.SelectRows(
+            AddIsPhysical,
+            each [IS_PHYSICAL_TRAINING] = true
+        ),
+
+    AddNormalizedExerciseName =
+        Table.AddColumn(
+            FiltrarSomenteFisicos,
+            "NORMALIZED_EXERCISE_NAME",
+            each
+                let
+                    nomeOriginal =
+                        TextoOriginal(
+                            CampoSeguro(
+                                _,
+                                "TRAINING_NAME_ORIGINAL",
+                                CampoSeguro(_, "TRAINING_NAME_EN", "")
+                            )
+                        ),
+
+                    nome =
+                        TextoLimpo(nomeOriginal),
+
+                    normalizado =
+                        if Text.Contains(nome, "ARTM ROTATION") then
+                            "Arm rotation"
+                        else if nome = "THIGT" then
+                            "Thigh"
+                        else if Text.Contains(nome, "POSTERIOR THIGT") then
+                            "Posterior Thigh"
+                        else if Text.Contains(nome, "SQUATCH") then
+                            "Squat"
+                        else if Text.Contains(nome, "BUPREE") then
+                            "Burpee"
+                        else if Text.Contains(nome, "TERA BAND") then
+                            "TheraBand"
+                        else if Text.Contains(nome, "CARCI TUBING") then
+                            "Elastic tubing"
+                        else if Text.Contains(nome, "LATISIMUS") then
+                            Text.Replace(nomeOriginal, "latisimus", "latissimus")
+                        else
+                            nomeOriginal
+                in
+                    normalizado,
+            type text
+        ),
+
+AddPhysicalCategory =
+    Table.AddColumn(
+        AddNormalizedExerciseName,
+        "PHYSICAL_CATEGORY",
+        each
+            let
+                nome =
+                    TextoLimpo([NORMALIZED_EXERCISE_NAME]),
+
+                txt =
+                    Text.Combine(
+                        List.Transform(
+                            {
+                                CampoSeguro(_, "HCI_PARAMETER", ""),
+                                CampoSeguro(_, "TRAINING_DOMAIN", ""),
+                                CampoSeguro(_, "TRAINING_FAMILY", ""),
+                                CampoSeguro(_, "TRAINING_COMPONENT", ""),
+                                CampoSeguro(_, "COMPONENT_DOMAIN", ""),
+                                CampoSeguro(_, "PACKAGE_TYPE", ""),
+                                CampoSeguro(_, "TRAINING_NAME_ORIGINAL", ""),
+                                CampoSeguro(_, "TRAINING_NAME_EN", ""),
+                                CampoSeguro(_, "OBJECTIVE_ORIGINAL", ""),
+                                CampoSeguro(_, "EXERCISE_DESCRIPTION_ORIGINAL", ""),
+                                CampoSeguro(_, "OBSERVATION_ORIGINAL", ""),
+                                CampoSeguro(_, "TARGET_ORIGINAL", ""),
+                                [NORMALIZED_EXERCISE_NAME]
+                            },
+                            each TextoLimpo(_)
+                        ),
+                        " | "
+                    ),
+
+                cardio =
+                    Text.Contains(txt, "RUN")
+                    or Text.Contains(txt, "CONTINUOUS RUN")
+                    or Text.Contains(txt, "INTERVAL RUN")
+                    or Text.Contains(txt, "JUMPING JACKS")
+                    or Text.Contains(txt, "BURPEE")
+                    or Text.Contains(txt, "CARDIO")
+                    or Text.Contains(txt, "CARDIOPULMON")
+                    or Text.Contains(txt, "AEROBIC")
+                    or Text.Contains(txt, "AERÓBICO")
+                    or Text.Contains(txt, "BIKE")
+                    or Text.Contains(txt, "CYCL")
+                    or Text.Contains(txt, "WALK")
+                    or Text.Contains(txt, "CAMINH"),
+
+                mobility =
+                    Text.Contains(txt, "NECK")
+                    or Text.Contains(txt, "MOBILITY")
+                    or Text.Contains(txt, "MOBILIDADE")
+                    or Text.Contains(txt, "FLEXIBILITY")
+                    or Text.Contains(txt, "FLEXIBILIDADE")
+                    or Text.Contains(txt, "STRETCH")
+                    or Text.Contains(txt, "ALONG")
+                    or Text.Contains(txt, "WARM UP")
+                    or Text.Contains(txt, "COOL-DOWN")
+                    or Text.Contains(txt, "RECOVERY")
+                    or Text.Contains(txt, "RECUPERA"),
+
+                core =
+                    Text.Contains(txt, "CORE")
+                    or Text.Contains(txt, "TRUNK")
+                    or Text.Contains(txt, "TRONCO")
+                    or Text.Contains(txt, "ABDOMINAL")
+                    or Text.Contains(txt, "SUPRA ABDOMINAL")
+                    or Text.Contains(txt, "V-SIT")
+                    or Text.Contains(txt, "FLUTTER")
+                    or Text.Contains(txt, "PLANK")
+                    or Text.Contains(txt, "SIDE PLANK")
+                    or Text.Contains(txt, "ROLLING SIDE PLANK")
+                    or Text.Contains(txt, "SWIM ABDOMINAL"),
+
+                upper =
+                    Text.Contains(txt, "SHOULDER")
+                    or Text.Contains(txt, "SCAPULAR")
+                    or Text.Contains(txt, "OMBRO")
+                    or Text.Contains(txt, "ESCAP")
+                    or Text.Contains(txt, "ARM")
+                    or Text.Contains(txt, "BRAÇO")
+                    or Text.Contains(txt, "DELTOID")
+                    or Text.Contains(txt, "PECTORAL")
+                    or Text.Contains(txt, "LATISSIMUS")
+                    or Text.Contains(txt, "LATISIMUS")
+                    or Text.Contains(txt, "BICEPS")
+                    or Text.Contains(txt, "TRICEPS")
+                    or Text.Contains(txt, "PUSH-UP")
+                    or Text.Contains(txt, "PUSH UP")
+                    or Text.Contains(txt, "PIKE PUSH-UP")
+                    or Text.Contains(txt, "HINDU PUSH-UP")
+                    or Text.Contains(txt, "REVERSE GRIP PUSH-UP")
+                    or Text.Contains(txt, "PRONE HAND RELEASE PUSH-UP")
+                    or Text.Contains(txt, "PRONE LAT PULL-DOWN")
+                    or Text.Contains(txt, "THERABAND")
+                    or Text.Contains(txt, "TERA BAND")
+                    or Text.Contains(txt, "ELASTIC TUBING")
+                    or Text.Contains(txt, "CARCI TUBING")
+                    or Text.Contains(txt, "ARM ROTATION")
+                    or Text.Contains(txt, "ARTM ROTATION"),
+
+                lower =
+                    Text.Contains(txt, "LOWER")
+                    or Text.Contains(txt, "LEG")
+                    or Text.Contains(txt, "LEGS")
+                    or Text.Contains(txt, "MEMBRO INFERIOR")
+                    or Text.Contains(txt, "ADDUCTOR")
+                    or Text.Contains(txt, "ADDUCTORS")
+                    or Text.Contains(txt, "ABDUCTOR")
+                    or Text.Contains(txt, "ABDUCTORS")
+                    or Text.Contains(txt, "LEG CURL")
+                    or Text.Contains(txt, "THIGH")
+                    or Text.Contains(txt, "THIGT")
+                    or Text.Contains(txt, "POSTERIOR THIGH")
+                    or Text.Contains(txt, "POSTERIOR THIGT")
+                    or Text.Contains(txt, "CALF")
+                    or Text.Contains(txt, "SQUAT")
+                    or Text.Contains(txt, "SQUATCH")
+                    or Text.Contains(txt, "HIP")
+                    or Text.Contains(txt, "QUADRIL")
+                    or Text.Contains(txt, "KNEE")
+                    or Text.Contains(txt, "JOELHO")
+                    or Text.Contains(txt, "ANKLE")
+                    or Text.Contains(txt, "TORNOZELO"),
+
+                neuromuscular =
+                    core or upper or lower
+                    or Text.Contains(txt, "POSTURAL")
+                    or Text.Contains(txt, "POSTURA")
+                    or Text.Contains(txt, "STABILITY")
+                    or Text.Contains(txt, "ESTABILIDADE")
+                    or Text.Contains(txt, "ISOMETRY")
+                    or Text.Contains(txt, "ISOMETRIA")
+                    or Text.Contains(txt, "BALANCE")
+                    or Text.Contains(txt, "EQUIL")
+            in
+                if cardio and neuromuscular then
+                    "MIXED_PHYSICAL"
+                else if cardio then
+                    "CARDIOPULMONARY"
+                else if core then
+                    "CORE"
+                else if upper then
+                    "UPPER_LIMBS"
+                else if lower then
+                    "LOWER_LIMBS"
+                else if mobility then
+                    "MOBILITY_RECOVERY"
+                else if neuromuscular then
+                    "NEUROMUSCULAR"
+                else
+                    "UNCLASSIFIED_PHYSICAL",
+        type text
+    ),
+
+AddPhysicalPackage =
+    Table.AddColumn(
+        AddPhysicalCategory,
+        "PHYSICAL_PACKAGE",
+        each
+            if List.Contains({"CORE", "UPPER_LIMBS", "LOWER_LIMBS", "NEUROMUSCULAR"}, [PHYSICAL_CATEGORY]) then
+                "NEUROMUSCULAR"
+            else if [PHYSICAL_CATEGORY] = "CARDIOPULMONARY" then
+                "CARDIOPULMONARY"
+            else if [PHYSICAL_CATEGORY] = "MIXED_PHYSICAL" then
+                "MIXED_PHYSICAL"
+            else if [PHYSICAL_CATEGORY] = "MOBILITY_RECOVERY" then
+                "MOBILITY_RECOVERY"
+            else
+                "UNCLASSIFIED_PHYSICAL",
+        type text
+    ),
+
+AddPhysicalSubpackage =
+    Table.AddColumn(
+        AddPhysicalPackage,
+        "PHYSICAL_SUBPACKAGE",
+        each
+            let
+                nome = TextoLimpo([NORMALIZED_EXERCISE_NAME]),
+                txt =
+                    Text.Combine(
+                        List.Transform(
+                            {
+                                CampoSeguro(_, "TRAINING_NAME_ORIGINAL", ""),
+                                CampoSeguro(_, "TRAINING_NAME_EN", ""),
+                                CampoSeguro(_, "TRAINING_FAMILY", ""),
+                                CampoSeguro(_, "TRAINING_COMPONENT", ""),
+                                [NORMALIZED_EXERCISE_NAME]
+                            },
+                            each TextoLimpo(_)
+                        ),
+                        " | "
+                    )
+            in
+                if [PHYSICAL_CATEGORY] = "CORE" then
+                    "CORE_STABILITY"
+
+                else if [PHYSICAL_CATEGORY] = "UPPER_LIMBS" and (
+                    Text.Contains(txt, "THERABAND")
+                    or Text.Contains(txt, "TERA BAND")
+                    or Text.Contains(txt, "ELASTIC TUBING")
+                    or Text.Contains(txt, "CARCI TUBING")
+                    or Text.Contains(txt, "ARM ROTATION")
+                    or Text.Contains(txt, "ARTM ROTATION")
+                    or Text.Contains(txt, "SCAPULAR")
+                    or Text.Contains(txt, "SHOULDER")
+                    or Text.Contains(txt, "DELTOID")
+                ) then
+                    "SHOULDER_SCAPULAR_CONTROL"
+
+                else if [PHYSICAL_CATEGORY] = "UPPER_LIMBS" then
+                    "UPPER_LIMB_STRENGTH_CONTROL"
+
+                else if [PHYSICAL_CATEGORY] = "LOWER_LIMBS" then
+                    "LOWER_BODY_STABILITY"
+
+                else if [PHYSICAL_CATEGORY] = "CARDIOPULMONARY" and (
+                    Text.Contains(txt, "INTERVAL")
+                    or Text.Contains(txt, "JUMPING JACKS")
+                    or Text.Contains(txt, "BURPEE")
+                    or Text.Contains(txt, "BUPREE")
+                ) then
+                    "INTERVAL_AEROBIC_CONTROL"
+
+                else if [PHYSICAL_CATEGORY] = "CARDIOPULMONARY" and (
+                    Text.Contains(txt, "BIKE")
+                    or Text.Contains(txt, "WALK")
+                    or Text.Contains(txt, "CAMINH")
+                    or Text.Contains(txt, "LOW IMPACT")
+                ) then
+                    "LOW_IMPACT_CARDIO"
+
+                else if [PHYSICAL_CATEGORY] = "CARDIOPULMONARY" then
+                    "ZONE_2_AEROBIC"
+
+                else if [PHYSICAL_CATEGORY] = "MIXED_PHYSICAL" then
+                    "NEURO_CARDIO_COMBINED"
+
+                else if [PHYSICAL_CATEGORY] = "MOBILITY_RECOVERY" and (
+                    Text.Contains(txt, "COOL-DOWN")
+                    or Text.Contains(txt, "RECOVERY")
+                    or Text.Contains(txt, "RECUPERA")
+                ) then
+                    "RECOVERY_SESSION"
+
+                else if [PHYSICAL_CATEGORY] = "MOBILITY_RECOVERY" then
+                    "MOBILITY_RESET"
+
+                else if [PHYSICAL_CATEGORY] = "NEUROMUSCULAR" then
+                    "POSTURAL_STABILITY"
+
+                else
+                    "REVIEW_REQUIRED",
+        type text
+    ),
+
+AddHCITriggerType =
+    Table.AddColumn(
+        AddPhysicalSubpackage,
+        "HCI_TRIGGER_TYPE",
+        each
+            if [PHYSICAL_PACKAGE] = "NEUROMUSCULAR" then
+                "STD_GLOBAL_TRIGGER"
+            else if [PHYSICAL_PACKAGE] = "CARDIOPULMONARY" then
+                "FINAL_DEGRADATION_TRIGGER"
+            else if [PHYSICAL_PACKAGE] = "MIXED_PHYSICAL" then
+                "STD_GLOBAL_AND_FINAL_DEGRADATION_TRIGGER"
+            else if [PHYSICAL_PACKAGE] = "MOBILITY_RECOVERY" then
+                "SUPPORT_RECOVERY_TRIGGER"
+            else
+                "REVIEW_REQUIRED",
+        type text
+    ),
+
+AddHCITriggerRule =
+    Table.AddColumn(
+        AddHCITriggerType,
+        "HCI_TRIGGER_RULE",
+        each
+            if [PHYSICAL_PACKAGE] = "NEUROMUSCULAR" then
+                "STD_GLOBAL > 0.6"
+            else if [PHYSICAL_PACKAGE] = "CARDIOPULMONARY" then
+                "FINAL_DEGRADATION = TRUE"
+            else if [PHYSICAL_PACKAGE] = "MIXED_PHYSICAL" then
+                "STD_GLOBAL > 0.6 AND FINAL_DEGRADATION = TRUE"
+            else if [PHYSICAL_PACKAGE] = "MOBILITY_RECOVERY" then
+                "SUPPORT / RECOVERY / COMPLEMENTARY"
+            else
+                "MANUAL_REVIEW",
+        type text
+    ),
+
+AddOutputEligible =
+    Table.AddColumn(
+        AddHCITriggerRule,
+        "OUTPUT_ELIGIBLE",
+        each
+            List.Contains(
+                {"NEUROMUSCULAR", "CARDIOPULMONARY", "MIXED_PHYSICAL"},
+                [PHYSICAL_PACKAGE]
+            ),
+        type logical
+    ),
+
+AddReportEligible =
+    Table.AddColumn(
+        AddOutputEligible,
+        "REPORT_ELIGIBLE",
+        each [PHYSICAL_PACKAGE] <> "UNCLASSIFIED_PHYSICAL",
+        type logical
+    ),
+
+AddPhysicalBIStatus =
+    Table.AddColumn(
+        AddReportEligible,
+        "PHYSICAL_BI_STATUS",
+        each
+            if [PHYSICAL_PACKAGE] = "UNCLASSIFIED_PHYSICAL" then
+                "NEEDS_MANUAL_REVIEW"
+            else
+                "READY_FOR_ENGINE",
+        type text
+    ),
+
+FiltrarReady =
+    Table.SelectRows(
+        AddPhysicalBIStatus,
+        each [PHYSICAL_BI_STATUS] <> "NEEDS_MANUAL_REVIEW"
+    ),
+
+Resultado =
+    Table.RemoveColumns(
+        FiltrarReady,
+        {"_PHYSICAL_AUDIT_TEXT"},
+        MissingField.Ignore
+    )
+in
+    Resultado;

@@ -1,0 +1,218 @@
+shared TB_HCI_OUTPUT_DECISION_ENGINE = let
+    Fonte_KNOWLEDGE =
+        Excel.CurrentWorkbook(){[Name="HCI_KNOWLEDGE_PLAN"]}[Content],
+
+    TextoLimpo = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    TextoOriginal = (valor as any) as text =>
+        if valor = null then "" else Text.Trim(Text.From(valor)),
+
+    NumeroSeguro = (valor as any) as number =>
+        try Number.From(valor) otherwise 999999,
+
+    CampoSeguro = (linha as record, nome as text, optional padrao as any) as any =>
+        if Record.HasFields(linha, nome)
+        then Record.Field(linha, nome)
+        else padrao,
+
+    KnowledgeValido =
+        Table.SelectRows(
+            Fonte_KNOWLEDGE,
+            each
+                TextoLimpo(CampoSeguro(_, "PARAMETER_1", "")) <> ""
+                and TextoLimpo(CampoSeguro(_, "PARAMETER_2", "")) <> ""
+        ),
+
+    AddSourceRank =
+        Table.AddColumn(
+            KnowledgeValido,
+            "SOURCE_RANK",
+            each NumeroSeguro(CampoSeguro(_, "RANK", null)),
+            type number
+        ),
+
+    AddDiagnosisKey =
+        Table.AddColumn(
+            AddSourceRank,
+            "DIAGNOSIS_KEY",
+            each
+                let
+                    p1 = TextoLimpo(CampoSeguro(_, "PARAMETER_1", "")),
+                    p2 = TextoLimpo(CampoSeguro(_, "PARAMETER_2", "")),
+                    lista = List.Sort({p1, p2})
+                in
+                    if p1 = "" or p2 = ""
+                    then ""
+                    else lista{0} & "|" & lista{1},
+            type text
+        ),
+
+    OrdenadoPorKnowledge =
+        Table.Sort(
+            AddDiagnosisKey,
+            {
+                {"SOURCE_RANK", Order.Ascending},
+                {"DIAGNOSIS_KEY", Order.Ascending}
+            }
+        ),
+
+    Agrupado =
+        Table.Group(
+            OrdenadoPorKnowledge,
+            {"DIAGNOSIS_KEY"},
+            {
+                {
+                    "MELHOR_DIAGNOSTICO",
+                    each Table.FirstN(_, 1),
+                    type table
+                }
+            }
+        ),
+
+    Expandido =
+        Table.ExpandTableColumn(
+            Agrupado,
+            "MELHOR_DIAGNOSTICO",
+            List.RemoveItems(
+                Table.ColumnNames(OrdenadoPorKnowledge),
+                {"DIAGNOSIS_KEY"}
+            )
+        ),
+
+    ReordenarPorPrioridade =
+        Table.Sort(
+            Expandido,
+            {
+                {"SOURCE_RANK", Order.Ascending},
+                {"DIAGNOSIS_KEY", Order.Ascending}
+            }
+        ),
+
+    AddOutputRank =
+        Table.AddIndexColumn(
+            ReordenarPorPrioridade,
+            "OUTPUT_RANK",
+            1,
+            1,
+            Int64.Type
+        ),
+
+    AddSourceEngine =
+        Table.AddColumn(
+            AddOutputRank,
+            "SOURCE_ENGINE",
+            each "HCI_KNOWLEDGE_PLAN",
+            type text
+        ),
+
+    AddDisplayStatus =
+        Table.AddColumn(
+            AddSourceEngine,
+            "DISPLAY_STATUS",
+            each "SHOW",
+            type text
+        ),
+
+    AddOutputSlot =
+        Table.AddColumn(
+            AddDisplayStatus,
+            "OUTPUT_SLOT",
+            each
+                if [OUTPUT_RANK] = 1 then "PRIMARY"
+                else if [OUTPUT_RANK] = 2 then "SECONDARY"
+                else if [OUTPUT_RANK] = 3 then "TERcIARY"
+                else "SUPPORT",
+            type text
+        ),
+
+    AddOutputTitle =
+        Table.AddColumn(
+            AddOutputSlot,
+            "OUTPUT_TITLE",
+            each
+                let
+                    p1 = TextoOriginal(CampoSeguro(_, "PARAMETER_1", "")),
+                    l1 = TextoOriginal(CampoSeguro(_, "LEVEL_1", "")),
+                    p2 = TextoOriginal(CampoSeguro(_, "PARAMETER_2", "")),
+                    l2 = TextoOriginal(CampoSeguro(_, "LEVEL_2", ""))
+                in
+                    p1 & " (" & l1 & ") + " & p2 & " (" & l2 & ")",
+            type text
+        ),
+
+    AddOutputInsight =
+        Table.AddColumn(
+            AddOutputTitle,
+            "OUTPUT_INSIGHT",
+            each TextoOriginal(CampoSeguro(_, "INSIGHT", "")),
+            type text
+        ),
+
+    AddOutputAction =
+        Table.AddColumn(
+            AddOutputInsight,
+            "OUTPUT_ACTION",
+            each TextoOriginal(CampoSeguro(_, "TO_DO", "")),
+            type text
+        ),
+
+    ResultadoFinal =
+        Table.SelectColumns(
+            AddOutputAction,
+            List.Intersect({
+                Table.ColumnNames(AddOutputAction),
+                {
+                    "OUTPUT_RANK",
+                    "OUTPUT_SLOT",
+                    "DIAGNOSIS_KEY",
+                    "PARAMETER_1",
+                    "LEVEL_1",
+                    "PARAMETER_2",
+                    "LEVEL_2",
+                    "OUTPUT_TITLE",
+                    "INSIGHT",
+                    "OUTPUT_INSIGHT",
+                    "TO_DO",
+                    "OUTPUT_ACTION",
+                    "SOURCE_ENGINE",
+                    "SOURCE_RANK",
+                    "DISPLAY_STATUS"
+                }
+            })
+        ),
+
+    Renomeado =
+        Table.RenameColumns(
+            ResultadoFinal,
+            {
+                {"TO_DO", "KNOWLEDGE_TO_DO"}
+            },
+            MissingField.Ignore
+        ),
+
+    Reordenado =
+        Table.ReorderColumns(
+            Renomeado,
+            {
+                "OUTPUT_RANK",
+                "OUTPUT_SLOT",
+                "DIAGNOSIS_KEY",
+                "PARAMETER_1",
+                "LEVEL_1",
+                "PARAMETER_2",
+                "LEVEL_2",
+                "OUTPUT_TITLE",
+                "INSIGHT",
+                "OUTPUT_INSIGHT",
+                "KNOWLEDGE_TO_DO",
+                "OUTPUT_ACTION",
+                "SOURCE_ENGINE",
+                "SOURCE_RANK",
+                "DISPLAY_STATUS"
+            },
+            MissingField.Ignore
+        )
+
+in
+    Reordenado;

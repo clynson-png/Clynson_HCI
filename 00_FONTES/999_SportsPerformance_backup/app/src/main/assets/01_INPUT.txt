@@ -1,0 +1,5 @@
+shared INPUT = let
+    Fonte = Excel.CurrentWorkbook(){[Name="INPUT"]}[Content],
+    #"Tipo Alterado" = Table.TransformColumnTypes(Fonte,{{"DATA_COLETA", type any}, {"PROVA", type text}, {"ATLETA", type text}, {"EVENTO", type text}, {"SESSAO", type text}, {"ID_BLOCO", type text}, {"STATUS_EVENTO", type text}, {"TEMPO_MIN", type any}, {"SERIE", type text}, {"T1", type any}, {"T2", type any}, {"T3", type any}, {"T4", type any}, {"T5", type any}, {"T6", type any}, {"T7", type any}, {"T8", type any}, {"T9", type any}, {"T10", type any}, {"Coluna1", type any}})
+in
+    #"Tipo Alterado";

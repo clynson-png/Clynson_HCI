@@ -1,0 +1,113 @@
+shared TB_HCI_CHARTS_BUFFER = let
+    Fonte =
+        Excel.CurrentWorkbook(){[Name="TB_HCI"]}[Content],
+
+    ColunasMantidas =
+        Table.SelectColumns(
+            Fonte,
+            {
+                "ATLETA",
+                "EVENTO",
+                "PROVA",
+                "ID_BLOCO",
+                "STATUS_EVENTO",
+                "HCI_EVENT_KIND",
+                "SERIE",
+                "TOTAL_SERIE",
+                "RESULTADO_EVENTO",
+
+                "T1",
+                "T2",
+                "T3",
+                "T4",
+                "T5",
+                "T6",
+                "T7",
+                "T8",
+                "T9",
+                "T10",
+
+                "HCI_OVERALL_SCORE",
+                "HCI_OVERALL_LEVEL",
+
+                "HCI_PROCESS_SCORE_BASE",
+                "HCI_DEEPENING_SCORE_BASE",
+                "HCI_CONSISTENCY_SCORE_BASE",
+                "HCI_RESILIENCE_SCORE_BASE",
+                "HCI_PRESSURE_SCORE_BASE",
+                "HCI_TRANSFER_SCORE_BASE",
+                "HCI_PHYSICAL_SCORE_BASE",
+                "HCI_EMOTIONAL_SCORE_BASE",
+
+                "HCI_OUTCOME_HCI_SCORE",
+                "HCI_OUTCOME_REFERENCE",
+                "HCI_STD_AJUSTADO_RHYTHM",
+                "HCI_DROP_COUNT_EVENTO",
+                "HCI_DROP_DEPTH_MAX_EVENTO",
+
+                "HCI_EVENT_SEQ_9_10_QTD",
+                "HCI_EVENT_SEQ_9_10_MAX",
+                "HCI_EVENT_SEQ_10_QTD",
+                "HCI_EVENT_SEQ_10_MAX",
+
+                "HCI_MED_COMPETICOES_ATLETA_PROVA",
+                "HCI_MED_SIMULADOS_ATLETA_PROVA",
+                "HCI_MED_TREINOS_ATLETA_PROVA"
+            },
+            MissingField.UseNull
+        ),
+
+    Tipos =
+        Table.TransformColumnTypes(
+            ColunasMantidas,
+            {
+                {"ATLETA", type text},
+                {"EVENTO", type text},
+                {"PROVA", type text},
+                {"ID_BLOCO", type text},
+                {"STATUS_EVENTO", type text},
+                {"HCI_EVENT_KIND", type text},
+                {"SERIE", type text},
+                {"TOTAL_SERIE", type number},
+                {"RESULTADO_EVENTO", type number},
+
+                {"T1", type number},
+                {"T2", type number},
+                {"T3", type number},
+                {"T4", type number},
+                {"T5", type number},
+                {"T6", type number},
+                {"T7", type number},
+                {"T8", type number},
+                {"T9", type number},
+                {"T10", type number},
+
+                {"HCI_OVERALL_SCORE", type number},
+                {"HCI_PROCESS_SCORE_BASE", type number},
+                {"HCI_DEEPENING_SCORE_BASE", type number},
+                {"HCI_CONSISTENCY_SCORE_BASE", type number},
+                {"HCI_RESILIENCE_SCORE_BASE", type number},
+                {"HCI_PRESSURE_SCORE_BASE", type number},
+                {"HCI_TRANSFER_SCORE_BASE", type number},
+                {"HCI_PHYSICAL_SCORE_BASE", type number},
+                {"HCI_EMOTIONAL_SCORE_BASE", type number},
+                {"HCI_OUTCOME_HCI_SCORE", type number},
+                {"HCI_OUTCOME_REFERENCE", type number},
+                {"HCI_STD_AJUSTADO_RHYTHM", type number},
+                {"HCI_DROP_COUNT_EVENTO", type number},
+                {"HCI_DROP_DEPTH_MAX_EVENTO", type number},
+                {"HCI_EVENT_SEQ_9_10_QTD", type number},
+                {"HCI_EVENT_SEQ_9_10_MAX", type number},
+                {"HCI_EVENT_SEQ_10_QTD", type number},
+                {"HCI_EVENT_SEQ_10_MAX", type number},
+                {"HCI_MED_COMPETICOES_ATLETA_PROVA", type number},
+                {"HCI_MED_SIMULADOS_ATLETA_PROVA", type number},
+                {"HCI_MED_TREINOS_ATLETA_PROVA", type number}
+            },
+            "pt-BR"
+        ),
+
+    Buffer =
+        Table.Buffer(Tipos)
+in
+    Buffer;

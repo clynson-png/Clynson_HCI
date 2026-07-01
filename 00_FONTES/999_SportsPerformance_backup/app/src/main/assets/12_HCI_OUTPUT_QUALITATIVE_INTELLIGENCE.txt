@@ -1,0 +1,370 @@
+shared HCI_OUTPUT_QUALITATIVE_INTELLIGENCE = let
+    FonteTargets =
+        Excel.CurrentWorkbook(){[Name="HCI_PERF_TARGETS"]}[Content],
+
+    FonteStructure =
+        Excel.CurrentWorkbook(){[Name="HCI_PERF_STRUCTURE"]}[Content],
+
+    TargetsTipos =
+        Table.TransformColumnTypes(
+            FonteTargets,
+            {
+                {"DISPLAY_ORDER", Int64.Type},
+                {"PARAMETER", type text},
+                {"SCORE", type number},
+                {"CURRENT_LEVEL", type text},
+                {"REPORT_PROFILE", type text}
+            },
+            "pt-BR"
+        ),
+
+    StructureTipos =
+        Table.TransformColumnTypes(
+            FonteStructure,
+            {
+                {"DISPLAY_ORDER", Int64.Type},
+                {"PARAMETER", type text},
+                {"SCORE", type number},
+                {"CURRENT_LEVEL", type text},
+                {"REPORT_PROFILE", type text}
+            },
+            "pt-BR"
+        ),
+
+    FonteUnificada =
+    Table.Buffer(
+        Table.Combine({TargetsTipos, StructureTipos})
+    ),
+
+    TextoLimpo = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    NumeroSeguro = (valor as any) as nullable number =>
+        try Number.From(valor) otherwise null,
+
+    NivelNormalizado = (nivel as any) as text =>
+        let
+            n0 = TextoLimpo(nivel),
+            n1 = Text.Replace(n0, "É", "E"),
+            n2 = Text.Replace(n1, "Á", "A"),
+            n3 = Text.Replace(n2, "Ã", "A"),
+            n4 = Text.Replace(n3, "Í", "I"),
+            n5 = Text.Replace(n4, "Ó", "O"),
+            n6 = Text.Replace(n5, "Ç", "C")
+        in
+            if n6 = "" then "SEM_CLASSIFICACAO"
+            else if n6 = "INTERMEDIARIO" then "INTERMEDIARIO"
+            else if n6 = "ALTO RENDIMENTO" then "ALTO_RENDIMENTO"
+            else if n6 = "HIGH PERFORMANCE" then "ALTO_RENDIMENTO"
+            else if n6 = "ELITE" then "ELITE"
+            else if n6 = "INICIANTE" then "INICIANTE"
+            else if n6 = "BEGINNER" then "INICIANTE"
+            else n6,
+
+    MensagemPorNivel = (parametro as text, nivel as text, score as nullable number) as text =>
+        let
+            p = TextoLimpo(parametro),
+            n = NivelNormalizado(nivel)
+        in
+            if p = "OUTCOME" then
+                if n = "ELITE" then
+                    "• OUTCOME — ELITE: Elite technical result at international competitive standard."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• OUTCOME — HIGH PERFORMANCE: Strong competitive result with high-performance standard."
+                else if n = "INTERMEDIARIO" then
+                    "• OUTCOME — INTERMEDIATE: Competitive result in development toward high-performance level."
+                else
+                    "• OUTCOME — DEVELOPMENT: Competitive result still below the expected intermediate standard."
+
+            else if p = "PROCESS" then
+                if n = "ELITE" then
+                    "• PROCESS — ELITE: Technical process sustained at elite standard."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• PROCESS — HIGH PERFORMANCE: Strong technical continuity with high-performance consistency."
+                else if n = "INTERMEDIARIO" then
+                    "• PROCESS — INTERMEDIATE: Technical continuity is present but still irregular."
+                else
+                    "• PROCESS — DEVELOPMENT: Technical process is unstable and needs consolidation."
+
+            else if p = "RHYTHM" then
+                if n = "ELITE" then
+                    "• RHYTHM — ELITE: Very stable rhythm within the athlete's current performance level."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• RHYTHM — HIGH PERFORMANCE: Stable rhythm with minor competitive oscillations."
+                else if n = "INTERMEDIARIO" then
+                    "• RHYTHM — INTERMEDIATE: Rhythm shows moderate instability and needs refinement."
+                else
+                    "• RHYTHM — DEVELOPMENT: Rhythm is unstable and requires technical stabilization."
+
+            else if p = "DEEPENING" then
+                if n = "ELITE" then
+                    "• DEEPENING — ELITE: High capacity to produce deep shots in sequence."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• DEEPENING — HIGH PERFORMANCE: Good shot depth with room to extend elite sequences."
+                else if n = "INTERMEDIARIO" then
+                    "• DEEPENING — INTERMEDIATE: Shot depth appears in moments but is not yet sustained."
+                else
+                    "• DEEPENING — DEVELOPMENT: Low production of deep shots in sequence."
+
+            else if p = "CONSISTENCY" then
+                if n = "ELITE" then
+                    "• CONSISTENCY — ELITE: Series repeatability is highly stable."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• CONSISTENCY — HIGH PERFORMANCE: Good series repeatability with small variation."
+                else if n = "INTERMEDIARIO" then
+                    "• CONSISTENCY — INTERMEDIATE: Series repeatability is moderate and still needs consolidation."
+                else
+                    "• CONSISTENCY — DEVELOPMENT: Large variation between series indicates unstable repetition."
+
+            else if p = "TRANSFER" then
+                if n = "ELITE" then
+                    "• TRANSFER — ELITE: Selected competition result reached elite transfer standard."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• TRANSFER — HIGH PERFORMANCE: Selected competition result shows strong competitive transfer."
+                else if n = "INTERMEDIARIO" then
+                    "• TRANSFER — INTERMEDIATE: Selected competition result shows partial competitive transfer."
+                else
+                    "• TRANSFER — DEVELOPMENT: Selected competition result is below the expected competitive transfer standard."
+
+            else if p = "RESILIENCE" then
+                if n = "ELITE" then
+                    "• RESILIENCE — ELITE: Immediate return to normal pattern after atypical low shots."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• RESILIENCE — HIGH PERFORMANCE: Good return capacity with few delayed recoveries."
+                else if n = "INTERMEDIARIO" then
+                    "• RESILIENCE — INTERMEDIATE: Return to normal pattern is inconsistent after low shots."
+                else
+                    "• RESILIENCE — DEVELOPMENT: Difficulty returning to normal pattern after atypical low shots."
+
+            else if p = "PRESSURE" then
+                if n = "ELITE" then
+                    "• PRESSURE — ELITE: Excellent competitive pressure response in the athlete's critical zones."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• PRESSURE — HIGH PERFORMANCE: Good resistance under competitive pressure."
+                else if n = "INTERMEDIARIO" then
+                    "• PRESSURE — INTERMEDIATE: Pressure response is still oscillating under competition demands."
+                else
+                    "• PRESSURE — DEVELOPMENT: Low resistance under competitive pressure."
+
+            else if p = "EMOTIONAL" then
+                if n = "ELITE" then
+                    "• EMOTIONAL — ELITE: Excellent control of emotional contamination below the individual standard."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• EMOTIONAL — HIGH PERFORMANCE: Good emotional stability with low contamination."
+                else if n = "INTERMEDIARIO" then
+                    "• EMOTIONAL — INTERMEDIATE: Moderate emotional contamination appears below the individual standard."
+                else
+                    "• EMOTIONAL — DEVELOPMENT: High emotional contamination below the individual standard."
+
+            else if p = "PHYSICAL" then
+                if n = "ELITE" then
+                    "• PHYSICAL — ELITE: Physical sustainability preserved throughout the second half of the match."
+                else if n = "ALTO_RENDIMENTO" then
+                    "• PHYSICAL — HIGH PERFORMANCE: Good physical sustainability with few late drops."
+                else if n = "INTERMEDIARIO" then
+                    "• PHYSICAL — INTERMEDIATE: Moderate signs of physical degradation in the second half."
+                else
+                    "• PHYSICAL — DEVELOPMENT: Relevant physical degradation appears in the second half."
+
+            else
+                "",
+
+    AddOutputText =
+        Table.AddColumn(
+            FonteUnificada,
+            "OUTPUT_TEXT",
+            each MensagemPorNivel([PARAMETER], [CURRENT_LEVEL], NumeroSeguro([SCORE])),
+            type text
+        ),
+
+    AddOutputDisplayOrder =
+        Table.AddColumn(
+            AddOutputText,
+            "OUTPUT_DISPLAY_ORDER",
+            each
+                let
+                    p = TextoLimpo([PARAMETER])
+                in
+                    if p = "RHYTHM" then 1
+                    else if p = "DEEPENING" then 2
+                    else if p = "CONSISTENCY" then 3
+                    else if p = "RESILIENCE" then 4
+                    else if p = "TRANSFER" then 5
+                    else if p = "OUTCOME" then 6
+                    else if p = "PROCESS" then 7
+                    else if p = "EMOTIONAL" then 8
+                    else if p = "PRESSURE" then 9
+                    else if p = "PHYSICAL" then 10
+                    else 99,
+            Int64.Type
+        ),
+
+    AddOutputLabel =
+        Table.AddColumn(
+            AddOutputDisplayOrder,
+            "OUTPUT_LABEL",
+            each
+                let
+                    p = TextoLimpo([PARAMETER])
+                in
+                    if p = "HCI_OVERALL" then "HCI OVERALL"
+                    else p,
+            type text
+        ),
+
+    ResultadoBase =
+        Table.SelectColumns(
+            AddOutputLabel,
+            {
+                "OUTPUT_DISPLAY_ORDER",
+                "OUTPUT_LABEL",
+                "PARAMETER",
+                "REPORT_PROFILE",
+                "SCORE",
+                "CURRENT_LEVEL",
+                "OUTPUT_TEXT"
+            },
+            MissingField.UseNull
+        ),
+
+        ScoreTabela =
+        Table.Buffer(
+            Table.SelectColumns(
+                FonteUnificada,
+                {"PARAMETER", "SCORE"},
+                MissingField.UseNull
+            )
+        ),
+
+    ScoreTabelaNormalizada =
+        Table.TransformColumns(
+            ScoreTabela,
+            {
+                {"PARAMETER", each TextoLimpo(_), type text},
+                {"SCORE", each NumeroSeguro(_), type number}
+            }
+        ),
+
+    ScoreAgrupado =
+        Table.Group(
+            ScoreTabelaNormalizada,
+            {"PARAMETER"},
+            {
+                {"SCORE_FINAL", each List.First(List.RemoveNulls([SCORE])), type number}
+            }
+        ),
+
+    ScoreRecord =
+        Record.FromTable(
+            Table.RenameColumns(
+                ScoreAgrupado,
+                {
+                    {"PARAMETER", "Name"},
+                    {"SCORE_FINAL", "Value"}
+                }
+            )
+        ),
+
+    ScoreParametro = (parametro as text) as nullable number =>
+        try Record.Field(ScoreRecord, TextoLimpo(parametro)) otherwise null,
+
+    OutcomeScore = ScoreParametro("OUTCOME"),
+    ProcessScore = ScoreParametro("PROCESS"),
+    RhythmScore = ScoreParametro("RHYTHM"),
+    DeepeningScore = ScoreParametro("DEEPENING"),
+    ConsistencyScore = ScoreParametro("CONSISTENCY"),
+    TransferScore = ScoreParametro("TRANSFER"),
+    ResilienceScore = ScoreParametro("RESILIENCE"),
+    PressureScore = ScoreParametro("PRESSURE"),
+    EmotionalScore = ScoreParametro("EMOTIONAL"),
+    PhysicalScore = ScoreParametro("PHYSICAL"),
+
+    HCI_Value =
+        if OutcomeScore = null then
+            null
+        else
+            Number.Round(
+                OutcomeScore
+                + (
+                    List.Sum(
+                        List.RemoveNulls(
+                            {
+                                ProcessScore,
+                                RhythmScore,
+                                DeepeningScore,
+                                ConsistencyScore,
+                                TransferScore,
+                                ResilienceScore,
+                                PressureScore,
+                                PhysicalScore
+                            }
+                        )
+                    ) / 100
+                )
+                + (
+                    if EmotionalScore = null then 0 else EmotionalScore / 50
+                ),
+                2
+            ),
+
+    HCI_Level =
+        if HCI_Value = null then
+            null
+        else if HCI_Value >= 10 then
+            "ELITE"
+        else if HCI_Value >= 7.4 then
+            "HIGH PERFORMANCE"
+        else
+            "DEVELOPMENT",
+
+    HCI_Text =
+        if HCI_Value = null then
+            ""
+        else if HCI_Value >= 10 then
+            "• HCI OVERALL — ELITE: Integrated competitive profile at elite standard."
+        else if HCI_Value >= 7.4 then
+            "• HCI OVERALL — HIGH PERFORMANCE: Strong integrated HCI profile with high-performance consistency."
+        else
+            "• HCI OVERALL — DEVELOPMENT: Developing integrated HCI profile; priority should be directed to the limiting parameters.",
+
+    LinhaHCIOverall =
+        #table(
+            type table
+            [
+                OUTPUT_DISPLAY_ORDER = Int64.Type,
+                OUTPUT_LABEL = text,
+                PARAMETER = text,
+                REPORT_PROFILE = text,
+                SCORE = nullable number,
+                CURRENT_LEVEL = nullable text,
+                OUTPUT_TEXT = text
+            ],
+            {
+                {
+                    11,
+                    "HCI OVERALL",
+                    "HCI_OVERALL",
+                    "OVERALL",
+                    HCI_Value,
+                    HCI_Level,
+                    HCI_Text
+                }
+            }
+        ),
+
+    ResultadoComHCI =
+        Table.Combine(
+            {
+                ResultadoBase,
+                LinhaHCIOverall
+            }
+        ),
+
+    Ordenado =
+        Table.Sort(
+            ResultadoComHCI,
+            {{"OUTPUT_DISPLAY_ORDER", Order.Ascending}}
+        )
+
+in
+    Ordenado;

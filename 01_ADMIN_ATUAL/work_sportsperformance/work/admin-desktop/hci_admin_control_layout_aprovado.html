@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" /><title>SportsPerformance Admin v4.0</title>
+  <style>
+    :root {
+      --bg: #f4f7f6; --panel: #ffffff; --header-bg: #1c1e21; --text-main: #2c3e50;
+      --text-muted: #7f8c8d; --accent: #1877f2; --border: #dcdde1; --danger: #fa3e3e; --success: #42b72a; --warn: #f5c33b;
+    }
+    body { margin: 0; font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    header { padding: 12px 20px; background: var(--header-bg); color: white; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+    main { display: grid; grid-template-columns: 320px 1fr; flex: 1; overflow: hidden; }
+    aside { background: var(--panel); border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; }
+    .sidebar-stat { padding: 12px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid var(--accent); margin-bottom: 12px; }
+    .sidebar-stat label { display: block; font-size: 10px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+    .sidebar-stat b { font-size: 18px; color: var(--accent); }
+    .content-area { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+    .tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid var(--border); flex-shrink: 0; }
+    .tab { padding: 14px 24px; cursor: pointer; font-weight: bold; color: var(--text-muted); transition: 0.2s; border-bottom: 3px solid transparent; font-size: 13px; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .card { background: var(--panel); border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 20px; }
+    .card-header { background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .card-header h3 { margin: 0; font-size: 14px; font-weight: bold; color: var(--header-bg); text-transform: uppercase; }
+    .card-body { padding: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { text-align: left; padding: 10px; background: #f8fafc; color: var(--text-muted); font-weight: bold; border-bottom: 1px solid var(--border); }
+    td { padding: 10px; border-bottom: 1px solid #f1f1f1; vertical-align: middle; }
+    input, select, textarea { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; width: 100%; box-sizing: border-box; }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.2s; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+    .btn-blue { background: var(--accent); } .btn-red { background: var(--danger); } .btn-green { background: var(--success); } .btn-muted { background: var(--text-muted); }
+    .tag { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+    .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    .compare-bar { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 20px; display: flex; gap: 15px; overflow-x: auto; white-space: nowrap; align-items: center; }
+    .event-chip { display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid var(--border); padding: 8px 15px; border-radius: 8px; font-size: 11px; cursor: pointer; transition: 0.2s; }
+    .event-chip.active { border-color: var(--accent); background: #f0f7ff; font-weight: bold; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Admin Framework v4.0 - SportsPerformance</h1>
+  <div style="display: flex; gap: 10px;">
+    <button class="btn btn-green" onclick="load()">SINCRONIZAR PC <-> CELULAR</button>
+    <button class="btn btn-muted" onclick="shutdown()">SAIR</button>
+  </div>
+</header>
+<main>
+  <aside>
+    <h3 style="font-size: 13px; color: var(--text-muted); margin-top: 0;">Contexto do Atleta</h3>
+    <select id="athleteSelect" onchange="renderTabs()" style="font-weight: bold; padding: 10px; margin-bottom: 20px;"></select>
+    <div id="sidebarContext"></div>
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border);" />
+    <button class="btn btn-blue" style="width: 100%;" onclick="window.print()">Imprimir Relatório 360</button>
+  </aside>
+  <div class="content-area">
+    <div class="tabs">
+      <div class="tab active" onclick="setTab('Resumo')">RESUMO</div>
+      <div class="tab" onclick="setTab('Indices')">ÍNDICES</div>
+      <div class="tab" onclick="setTab('Plano')">MESOCICLO & PLANO</div>
+      <div class="tab" onclick="setTab('Target')">ANÁLISE RADIAL</div>
+      <div class="tab" onclick="setTab('Ritmo')">RITMO DUAL-AXIS</div>
+    </div>
+
+    <!-- VIEW RESUMO -->
+    <div id="view_Resumo" class="view">
+      <div class="card">
+        <div class="card-header"><h3>Gestão de Leads (Motor v3.4)</h3></div>
+        <div class="card-body">
+          <div style="display:flex; gap:10px; margin-bottom:15px">
+            <input id="newLeadName" placeholder="Nome do atleta" />
+            <input id="newLeadEmail" placeholder="Email" />
+            <button class="btn btn-blue" onclick="addLead()">Criar Lead</button>
+          </div>
+          <div id="leadsList"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Entradas dos atletas - ISSF pendente</h3></div>
+        <div class="card-body" id="pendingISSF"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Historico de sessoes ISSF - gerenciar</h3></div>
+        <div class="card-body" id="issfSessions"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Resultados ISSF gravados</h3></div>
+        <div class="card-body" id="issfResults" style="padding: 0; max-height: 250px; overflow: auto;"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>HCI Target Sessions</h3></div>
+        <div class="card-body" id="targetSessionsTable" style="padding: 0; max-height: 300px; overflow: auto;"></div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-header"><h3>Importar TargetScan para atleta</h3></div>
+          <div class="card-body">
+            <div class="form-row">
+              <input id="tsEvent" placeholder="Evento" value="TARGETSCAN_ADMIN" />
+              <input id="tsSession" placeholder="Sessao" value="TREINO" />
+              <select id="tsProva"><option>PISTOL</option><option>RIFLE</option></select>
+            </div>
+            <textarea id="tsText" placeholder="Cole o texto exportado aqui..." style="height: 60px; margin-bottom: 10px;"></textarea>
+            <button class="btn btn-blue" style="width: 100%;" onclick="importTargetScan()">Carregar para Atleta</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Enviar treino extra</h3></div>
+          <div class="card-body">
+            <div class="form-row">
+              <input id="exDay" placeholder="Dia" style="width: 60px;" />
+              <input id="exTitle" placeholder="Titulo do treino extra" />
+              <input id="exCode" placeholder="Codigo" style="width: 80px;" />
+            </div>
+            <input id="exBlock" placeholder="Atleta / contexto / observação" style="margin-bottom: 10px;" />
+            <button class="btn btn-green" style="width: 100%;" onclick="sendExtra()">Enviar</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Plan e prescricoes</h3></div>
+        <div class="card-body" id="prescriptionsList" style="padding: 0;"></div>
+      </div>
+    </div>
+
+    <!-- OUTRAS VIEWS (LAYOUT v4.0) -->
+    <div id="view_Indices" class="view" style="display:none">
+       <div class="card"><div class="card-header"><h3>Tabela de Índices HCI</h3></div><div class="card-body" id="indicesTable"></div></div>
+       <div class="dashboard-grid"><div class="card"><div class="card-header"><h3>HCI Structure Radar</h3></div><div class="card-body" id="radarStructure" style="text-align:center"></div></div><div class="card"><div class="card-header"><h3>Target Radar (App Parameters)</h3></div><div class="card-body" id="radarTarget" style="text-align:center"></div></div></div>
+    </div>
+    <div id="view_Plano" class="view" style="display:none">
+      <div class="card"><div class="card-header"><h3>Mesociclo - 31 dias</h3></div><div class="card-body" style="padding:0"><div id="mesoGridContainer" style="overflow:auto"></div></div></div>
+    </div>
+    <div id="view_Target" class="view" style="display:none">
+      <div class="card"><div class="card-header"><h3>Análise Direcional de Precisão</h3></div><div class="card-body" id="targetContent"></div></div>
+    </div>
+    <div id="view_Ritmo" class="view" style="display:none">
+      <div id="compareBar" class="compare-bar"></div>
+      <div class="card"><div class="card-header"><h3>Rhythm chart principal: barras + linhas (v3.4)</h3></div><div class="card-body" id="ritmoMainChart" style="height:380px"></div></div>
+      <div id="ritmoGrid" class="chart-grid"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+let SNAPSHOT = null; let TAB = 'Resumo';
+const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function setTab(t) {
+    TAB = t;
+    document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.innerText.includes(t.toUpperCase())));
+    document.querySelectorAll('.view').forEach(el => el.style.display = (el.id === 'view_' + t ? 'block' : 'none'));
+    renderTabs();
+}
+
+async function load() {
+    const d = await fetch('/api/snapshot').then(r => r.json());
+    SNAPSHOT = d;
+    athleteSelect.innerHTML = d.athlete360.map(a => `<option value="${escapeHtml(a.athlete)}">${escapeHtml(a.athlete)}</option>`).join('');
+    renderTabs();
+}
+
+function renderTabs() {
+    if(!SNAPSHOT) return;
+    const item = SNAPSHOT.athlete360.find(a => a.athlete === athleteSelect.value) || SNAPSHOT.athlete360[0];
+    if(!item) return;
+    sidebarContext.innerHTML = `<div class="sidebar-stat"><label>HCI ATUAL</label><b>${item.hci} (${item.level})</b></div>`;
+    if(TAB === 'Resumo') renderResumo(item);
+    if(TAB === 'Indices') renderIndices(item);
+    if(TAB === 'Ritmo') renderRitmo(item);
+}
+
+function renderResumo(item) {
+    leadsList.innerHTML = '<table><thead><tr><th>Atleta</th><th>Email</th><th>Ação</th></tr></thead><tbody>' +
+        SNAPSHOT.leads.map((l,idx) => `<tr>
+            <td><input id="ln_${idx}" value="${escapeHtml(l.athleteName)}"/></td>
+            <td><input id="le_${idx}" value="${escapeHtml(l.athleteEmail)}"/></td>
+            <td><button class="btn btn-blue" onclick="saveLead('${l.leadId}', ${idx})">Salvar</button> <button class="btn btn-red" onclick="delLead('${l.leadId}')">Deletar</button></td>
+        </tr>`).join('') + '</tbody></table>';
+
+    pendingISSF.innerHTML = SNAPSHOT.pendingISSF.length ? '...' : '<div style="color:var(--text-muted); text-align:center; padding:20px">Nenhum registro pendente.</div>';
+    issfSessions.innerHTML = '<table><thead><tr><th>Evento</th><th>Total</th><th>Acao</th></tr></thead><tbody>' +
+        (item.sessions || []).map(s => `<tr><td>${escapeHtml(s.evento)}</td><td>${s.total}</td><td><button class="btn btn-red">Deletar</button></td></tr>`).join('') + '</tbody></table>';
+    issfResults.innerHTML = '<table><thead><tr><th>Atleta</th><th>Série</th><th>Tiros</th></tr></thead><tbody>' +
+        SNAPSHOT.shotSeries.map(r => `<tr><td>${escapeHtml(r.atleta)}</td><td>${escapeHtml(r.serie)}</td><td>${escapeHtml(r.tiros)}</td></tr>`).join('') + '</tbody></table>';
+    targetSessionsTable.innerHTML = '<table><thead><tr><th>Atleta</th><th>Evento</th><th>Zonas</th><th>Ações</th></tr></thead><tbody>' +
+        SNAPSHOT.targetSessions.slice(0, 5).map(t => `<tr><td>${escapeHtml(t.athlete)}</td><td>${escapeHtml(t.event)}</td><td>${escapeHtml(t.zoneCounts)}</td><td><button class="btn btn-blue">Salvar</button> <button class="btn btn-blue">Lançar</button></td></tr>`).join('') + '</tbody></table>';
+    prescriptionsList.innerHTML = '<table><thead><tr><th>Dia</th><th>Treino</th></tr></thead><tbody>' +
+        SNAPSHOT.prescriptions.map(p => `<tr><td>${p.day}</td><td>${escapeHtml(p.trainingTitle)}</td></tr>`).join('') + '</tbody></table>';
+}
+
+async function addLead() {
+    await fetch('/api/create-lead', {method:'POST', body:JSON.stringify({name:newLeadName.value, email:newLeadEmail.value})});
+    load();
+}
+async function saveLead(id, idx) {
+    const payload = {leadId:id, athleteName:document.getElementById('ln_'+idx).value, athleteEmail:document.getElementById('le_'+idx).value};
+    await fetch('/api/update-lead', {method:'POST', body:JSON.stringify(payload)});
+    load();
+}
+async function delLead(id) {
+    if(confirm('Deletar lead?')) { await fetch('/api/delete-lead', {method:'POST', body:JSON.stringify({leadId:id})}); load(); }
+}
+
+async function sendExtra() {
+    const payload = {day:exDay.value, trainingTitle:exTitle.value, block:exBlock.value, code:exCode.value};
+    await fetch('/api/prescribe-extra', {method:'POST', body:JSON.stringify(payload)});
+    load();
+}
+
+async function importTargetScan() {
+    const payload = {athlete:athleteSelect.value, event:tsEvent.value, session:tsSession.value, prova:tsProva.value, text:tsText.value};
+    await fetch('/api/import-targetscan', {method:'POST', body:JSON.stringify(payload)});
+    load();
+}
+
+async function shutdown() { await fetch('/api/shutdown', {method:'POST'}); window.close(); }
+load();
+</script>
+</body></html>

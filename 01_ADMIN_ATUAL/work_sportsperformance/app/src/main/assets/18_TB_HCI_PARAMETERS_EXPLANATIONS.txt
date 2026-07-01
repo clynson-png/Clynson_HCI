@@ -1,0 +1,5 @@
+shared TB_HCI_PARAMETERS_EXPLANATIONS = let
+    Fonte = Excel.CurrentWorkbook(){[Name="TB_HCI_PARAMETERS_EXPLANATIONS"]}[Content],
+    #"Tipo Alterado" = Table.TransformColumnTypes(Fonte,{{"PARAMETER", type text}, {"PROFILE", type text}, {"CATEGORY", type text}, {"WHAT_IT_MEASURES", type text}, {"DATA_SOURCE", type text}, {"CONCEPTUAL_FORMULA", type text}, {"SCORE_SCALE", type text}, {"ELITE_RULE", type text}, {"HIGH_PERFORMANCE_RULE", type text}, {"INTERMEDIATE_RULE", type text}, {"BEGINNER_RULE", type text}, {"HCI_FINAL_ROLE", type text}, {"GRAPH_RULE", type text}, {"PISTOL_RULE", type text}, {"RIFLE_RULE", type text}, {"IMPLEMENTATION_NOTES", type text}})
+in
+    #"Tipo Alterado";

@@ -1,0 +1,449 @@
+shared TB_HCI_TRAINING_ENGINE = let
+    FonteHCI =
+        Excel.CurrentWorkbook(){[Name="TB_HCI"]}[Content],
+
+    FonteContext =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_SELECTED_CONTEXT"]}[Content],
+
+    FonteStructure =
+        Excel.CurrentWorkbook(){[Name="HCI_PERF_STRUCTURE"]}[Content],
+
+    FontePhysicalBI =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_PHYSICAL_TRAINING_BI"]}[Content],
+
+    FontePhase =
+        try Excel.CurrentWorkbook(){[Name="HCI_SELECTED_PERIODIZATION_PHASE"]}[Content] otherwise #table({"VALUE"}, {{"GENERAL_PREPARATION"}}),
+
+    TextoLimpo = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    TextoSeguro = (valor as any) as text =>
+        if valor = null then "" else Text.Trim(Text.From(valor)),
+
+    NumeroSeguro = (valor as any) as nullable number =>
+        try Number.From(valor) otherwise null,
+
+    CampoSeguro = (linha as record, campo as text, optional padrao as any) as any =>
+        if Record.HasFields(linha, campo) then
+            Record.Field(linha, campo)
+        else
+            padrao,
+
+    PegarCampoTexto = (linha as nullable record, nomes as list) as text =>
+        let
+            existentes =
+                if linha = null then
+                    {}
+                else
+                    List.Select(nomes, each Record.HasFields(linha, _)),
+
+            valor =
+                if List.Count(existentes) = 0 then
+                    ""
+                else
+                    try Text.From(Record.Field(linha, existentes{0})) otherwise ""
+        in
+            valor,
+
+    StdPopulacional = (lista as list) as nullable number =>
+        let
+            vals =
+                List.RemoveNulls(
+                    List.Transform(lista, each try Number.From(_) otherwise null)
+                ),
+            n = List.Count(vals),
+            media =
+                if n = 0 then null else List.Average(vals),
+            variancia =
+                if n = 0 then
+                    null
+                else
+                    List.Sum(
+                        List.Transform(
+                            vals,
+                            each Number.Power(_ - media, 2)
+                        )
+                    ) / n
+        in
+            if variancia = null then null else Number.Sqrt(variancia),
+
+    // =========================================================
+    // CONTEXTO OFICIAL
+    // =========================================================
+
+    ContextoLinha =
+        try FonteContext{0} otherwise null,
+
+    AtletaSelecionado =
+        PegarCampoTexto(ContextoLinha, {"ATHLETE", "ATLETA"}),
+
+    EventoSelecionado =
+        PegarCampoTexto(ContextoLinha, {"EVENT", "EVENTO"}),
+
+    EnvironmentSelecionado =
+        PegarCampoTexto(ContextoLinha, {"ENVIRONMENT", "EVENT_TYPE", "AMBIENTE"}),
+
+    ProvaSelecionada =
+        PegarCampoTexto(ContextoLinha, {"PROVA", "PROOF", "EVENT_PROOF"}),
+
+    FaseSelecionadaRaw =
+        try FontePhase{0}{0} otherwise "GENERAL_PREPARATION",
+
+    FaseSelecionada =
+        TextoLimpo(FaseSelecionadaRaw),
+
+    // =========================================================
+    // FILTRAR TB_HCI PELO CONTEXTO
+    // =========================================================
+
+    HCI_Contexto =
+        Table.SelectRows(
+            FonteHCI,
+            each
+                TextoLimpo(CampoSeguro(_, "ATLETA", CampoSeguro(_, "ATHLETE", ""))) = TextoLimpo(AtletaSelecionado)
+                and TextoLimpo(CampoSeguro(_, "EVENTO", CampoSeguro(_, "EVENT", ""))) = TextoLimpo(EventoSelecionado)
+                and (
+                    EnvironmentSelecionado = ""
+                    or TextoLimpo(CampoSeguro(_, "HCI_EVENT_KIND", CampoSeguro(_, "ENVIRONMENT", CampoSeguro(_, "EVENT_TYPE", "")))) = TextoLimpo(EnvironmentSelecionado)
+                )
+                and List.Contains(
+                    {"SR1", "SR2", "SR3", "SR4", "SR5", "SR6"},
+                    TextoLimpo(CampoSeguro(_, "SERIE", ""))
+                )
+        ),
+
+    // =========================================================
+    // CALCULAR STD GLOBAL DA PROVA
+    // =========================================================
+
+    ListaTiros =
+        List.Combine(
+            List.Transform(
+                Table.ToRecords(HCI_Contexto),
+                each
+                    List.RemoveNulls(
+                        {
+                            NumeroSeguro(CampoSeguro(_, "T1", null)),
+                            NumeroSeguro(CampoSeguro(_, "T2", null)),
+                            NumeroSeguro(CampoSeguro(_, "T3", null)),
+                            NumeroSeguro(CampoSeguro(_, "T4", null)),
+                            NumeroSeguro(CampoSeguro(_, "T5", null)),
+                            NumeroSeguro(CampoSeguro(_, "T6", null)),
+                            NumeroSeguro(CampoSeguro(_, "T7", null)),
+                            NumeroSeguro(CampoSeguro(_, "T8", null)),
+                            NumeroSeguro(CampoSeguro(_, "T9", null)),
+                            NumeroSeguro(CampoSeguro(_, "T10", null))
+                        }
+                    )
+            )
+        ),
+
+    STD_GLOBAL =
+        StdPopulacional(ListaTiros),
+
+    STD_TRIGGER =
+        if STD_GLOBAL <> null and STD_GLOBAL > 0.6 then true else false,
+
+    // =========================================================
+    // PEGAR PHYSICAL DA STRUCTURE
+    // Degradação final = PHYSICAL SCORE < 10
+    // =========================================================
+
+    LinhaPhysical =
+        try
+            Table.SelectRows(
+                FonteStructure,
+                each TextoLimpo(CampoSeguro(_, "PARAMETER", "")) = "PHYSICAL"
+            ){0}
+        otherwise
+            null,
+
+    PhysicalScore =
+        if LinhaPhysical = null then
+            null
+        else
+            NumeroSeguro(CampoSeguro(LinhaPhysical, "SCORE", null)),
+
+    PhysicalLevel =
+        if LinhaPhysical = null then
+            ""
+        else
+            TextoSeguro(CampoSeguro(LinhaPhysical, "CURRENT_LEVEL", "")),
+
+    FINAL_DEGRADATION_TRIGGER =
+        if PhysicalScore <> null and PhysicalScore < 10 then true else false,
+
+    // =========================================================
+    // DEFINIR PRESCRIÇÃO HCI
+    // =========================================================
+
+    PhysicalTrainingType =
+        if STD_TRIGGER and FINAL_DEGRADATION_TRIGGER then
+            "NEUROMUSCULAR + CARDIOPULMONARY"
+        else if STD_TRIGGER then
+            "NEUROMUSCULAR"
+        else if FINAL_DEGRADATION_TRIGGER then
+            "CARDIOPULMONARY"
+        else
+            "NO_PRIORITY_PHYSICAL_PRESCRIPTION",
+
+    PackageNeeded =
+        if STD_TRIGGER and FINAL_DEGRADATION_TRIGGER then
+            "MIXED_PHYSICAL"
+        else if STD_TRIGGER then
+            "NEUROMUSCULAR"
+        else if FINAL_DEGRADATION_TRIGGER then
+            "CARDIOPULMONARY"
+        else
+            "NONE",
+
+    PhysicalStatus =
+        if PhysicalTrainingType = "NO_PRIORITY_PHYSICAL_PRESCRIPTION" then
+            "NO_PRIORITY"
+        else
+            "RECOMMENDED",
+
+    // =========================================================
+    // FUNÇÕES PARA ESCOLHER TREINO NA BI FÍSICA
+    // =========================================================
+
+    PrepararBI =
+        Table.AddColumn(
+            FontePhysicalBI,
+            "_SORT_PRIORITY",
+            each
+                let
+                    p =
+                        NumeroSeguro(CampoSeguro(_, "SUBPACKAGE_PRIORITY", null))
+                in
+                    if p = null then 999 else p,
+            Int64.Type
+        ),
+
+    FiltrarPacote = (pacote as text) as table =>
+        Table.SelectRows(
+            PrepararBI,
+            each
+                TextoLimpo(CampoSeguro(_, "PHYSICAL_PACKAGE", "")) = TextoLimpo(pacote)
+                and TextoLimpo(CampoSeguro(_, "PHYSICAL_BI_STATUS", "")) = "READY_FOR_ENGINE"
+                and (
+                    CampoSeguro(_, "OUTPUT_ELIGIBLE", true) = true
+                    or TextoLimpo(CampoSeguro(_, "OUTPUT_ELIGIBLE", "")) = "TRUE"
+                    or TextoLimpo(CampoSeguro(_, "OUTPUT_ELIGIBLE", "")) = "VERDADEIRO"
+                    or TextoLimpo(CampoSeguro(_, "OUTPUT_ELIGIBLE", "")) = "SIM"
+                )
+        ),
+
+    MelhorTreino = (pacote as text) as nullable record =>
+        let
+            candidatos =
+                FiltrarPacote(pacote),
+
+            ordenado =
+                Table.Sort(
+                    candidatos,
+                    {
+                        {"_SORT_PRIORITY", Order.Ascending},
+                        {"TRAINING_NAME_ORIGINAL", Order.Ascending}
+                    }
+                ),
+
+            registro =
+                if Table.RowCount(ordenado) = 0 then
+                    null
+                else
+                    ordenado{0}
+        in
+            registro,
+
+    TreinoNeuro =
+        MelhorTreino("NEUROMUSCULAR"),
+
+    TreinoCardio =
+        MelhorTreino("CARDIOPULMONARY"),
+
+    TreinoMixed =
+        MelhorTreino("MIXED_PHYSICAL"),
+
+    TreinoSelecionado =
+        if PackageNeeded = "MIXED_PHYSICAL" and TreinoMixed <> null then
+            TreinoMixed
+        else if PackageNeeded = "NEUROMUSCULAR" then
+            TreinoNeuro
+        else if PackageNeeded = "CARDIOPULMONARY" then
+            TreinoCardio
+        else
+            null,
+
+    NomeTreino =
+        if PhysicalTrainingType = "NEUROMUSCULAR + CARDIOPULMONARY" and TreinoMixed = null then
+            Text.Combine(
+                List.Select(
+                    {
+                        if TreinoNeuro <> null then TextoSeguro(CampoSeguro(TreinoNeuro, "NORMALIZED_EXERCISE_NAME", CampoSeguro(TreinoNeuro, "TRAINING_NAME_ORIGINAL", ""))) else null,
+                        if TreinoCardio <> null then TextoSeguro(CampoSeguro(TreinoCardio, "NORMALIZED_EXERCISE_NAME", CampoSeguro(TreinoCardio, "TRAINING_NAME_ORIGINAL", ""))) else null
+                    },
+                    each _ <> null and _ <> ""
+                ),
+                " + "
+            )
+        else if TreinoSelecionado <> null then
+            TextoSeguro(CampoSeguro(TreinoSelecionado, "NORMALIZED_EXERCISE_NAME", CampoSeguro(TreinoSelecionado, "TRAINING_NAME_ORIGINAL", "")))
+        else
+            "",
+
+    CategoriaTreino =
+        if PhysicalTrainingType = "NEUROMUSCULAR + CARDIOPULMONARY" and TreinoMixed = null then
+            "COMBINED_SELECTION"
+        else if TreinoSelecionado <> null then
+            TextoSeguro(CampoSeguro(TreinoSelecionado, "PHYSICAL_CATEGORY", ""))
+        else
+            "",
+
+    SubpacoteTreino =
+        if PhysicalTrainingType = "NEUROMUSCULAR + CARDIOPULMONARY" and TreinoMixed = null then
+            Text.Combine(
+                List.Select(
+                    {
+                        if TreinoNeuro <> null then TextoSeguro(CampoSeguro(TreinoNeuro, "PHYSICAL_SUBPACKAGE", "")) else null,
+                        if TreinoCardio <> null then TextoSeguro(CampoSeguro(TreinoCardio, "PHYSICAL_SUBPACKAGE", "")) else null
+                    },
+                    each _ <> null and _ <> ""
+                ),
+                " + "
+            )
+        else if TreinoSelecionado <> null then
+            TextoSeguro(CampoSeguro(TreinoSelecionado, "PHYSICAL_SUBPACKAGE", ""))
+        else
+            "",
+
+    // =========================================================
+    // CARGA E VOLUME POR FASE
+    // =========================================================
+
+    PhaseLoadPercent =
+        if List.Contains({"GENERAL_PREPARATION", "SPECIFIC_PREPARATION"}, FaseSelecionada) then
+            70
+        else if List.Contains({"PRE_COMPETITION", "COMPETITION"}, FaseSelecionada) then
+            50
+        else
+            70,
+
+    LoadRule =
+        if PhysicalTrainingType = "NEUROMUSCULAR" then
+            Text.From(PhaseLoadPercent) & "% reference load | controlled strength, posture and stability"
+        else if PhysicalTrainingType = "CARDIOPULMONARY" then
+            Text.From(PhaseLoadPercent) & "% reference volume | aerobic/cardiopulmonary endurance"
+        else if PhysicalTrainingType = "NEUROMUSCULAR + CARDIOPULMONARY" then
+            Text.From(PhaseLoadPercent) & "% combined reference load | split neuromuscular and cardiopulmonary stimulus"
+        else
+            "",
+
+    VolumeRule =
+        if PhysicalTrainingType = "NEUROMUSCULAR" then
+            "2-4 sets | 20-45 seconds isometry or 8-12 slow controlled repetitions"
+        else if PhysicalTrainingType = "CARDIOPULMONARY" then
+            "20-40 minutes | zone 2 or low-impact aerobic work"
+        else if PhysicalTrainingType = "NEUROMUSCULAR + CARDIOPULMONARY" then
+            "15-20 minutes neuromuscular + 15-25 minutes cardiopulmonary"
+        else
+            "",
+
+    SessionDuration =
+        if PhysicalTrainingType = "NEUROMUSCULAR" then
+            "20-30"
+        else if PhysicalTrainingType = "CARDIOPULMONARY" then
+            "20-40"
+        else if PhysicalTrainingType = "NEUROMUSCULAR + CARDIOPULMONARY" then
+            "30-45"
+        else
+            "",
+
+    Objective =
+        if PhysicalTrainingType = "NEUROMUSCULAR" then
+            "Reduce global shot variability by improving postural stability, core control and neuromuscular endurance."
+        else if PhysicalTrainingType = "CARDIOPULMONARY" then
+            "Reduce late-match degradation by improving physiological sustainability and fatigue tolerance."
+        else if PhysicalTrainingType = "NEUROMUSCULAR + CARDIOPULMONARY" then
+            "Reduce global variability and late-match degradation through combined stability and cardiopulmonary work."
+        else
+            "No priority physical prescription based on current HCI triggers.",
+
+    PrescriptionText =
+        if PhysicalTrainingType = "NO_PRIORITY_PHYSICAL_PRESCRIPTION" then
+            "No priority physical training prescription. Maintain regular physical preparation and monitor future HCI changes."
+        else
+            PhysicalTrainingType
+            & " | "
+            & Objective
+            & " | Suggested exercise: "
+            & NomeTreino
+            & " | Load: "
+            & LoadRule
+            & " | Volume: "
+            & VolumeRule,
+
+    ProfessionalValidation =
+        if PhysicalTrainingType = "NO_PRIORITY_PHYSICAL_PRESCRIPTION" then
+            "NOT_REQUIRED_FOR_NO_PRIORITY"
+        else
+            "RECOMMENDED_PROFESSIONAL_VALIDATION",
+
+    Resultado =
+        #table(
+            type table
+            [
+                ATHLETE = text,
+                EVENT = text,
+                ENVIRONMENT = text,
+                PROVA = text,
+                PERIODIZATION_PHASE = text,
+                STD_GLOBAL = nullable number,
+                STD_TRIGGER = logical,
+                PHYSICAL_SCORE = nullable number,
+                PHYSICAL_LEVEL = text,
+                FINAL_DEGRADATION_TRIGGER = logical,
+                PHYSICAL_TRAINING_TYPE = text,
+                PHYSICAL_PACKAGE_SELECTED = text,
+                TRAINING_NAME = text,
+                PHYSICAL_CATEGORY = text,
+                PHYSICAL_SUBPACKAGE = text,
+                PHASE_LOAD_PERCENT = Int64.Type,
+                SESSION_DURATION_MIN = text,
+                LOAD_RULE = text,
+                VOLUME_RULE = text,
+                PHYSICAL_TRAINING_OBJECTIVE = text,
+                PHYSICAL_TRAINING_PRESCRIPTION = text,
+                PHYSICAL_TRAINING_STATUS = text,
+                PROFESSIONAL_VALIDATION_STATUS = text
+            ],
+            {
+                {
+                    AtletaSelecionado,
+                    EventoSelecionado,
+                    EnvironmentSelecionado,
+                    ProvaSelecionada,
+                    FaseSelecionada,
+                    if STD_GLOBAL = null then null else Number.Round(STD_GLOBAL, 3),
+                    STD_TRIGGER,
+                    PhysicalScore,
+                    PhysicalLevel,
+                    FINAL_DEGRADATION_TRIGGER,
+                    PhysicalTrainingType,
+                    PackageNeeded,
+                    NomeTreino,
+                    CategoriaTreino,
+                    SubpacoteTreino,
+                    PhaseLoadPercent,
+                    SessionDuration,
+                    LoadRule,
+                    VolumeRule,
+                    Objective,
+                    PrescriptionText,
+                    PhysicalStatus,
+                    ProfessionalValidation
+                }
+            }
+        )
+in
+    Resultado;

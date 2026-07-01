@@ -1,0 +1,152 @@
+shared TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT = let
+    FonteEngine =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_PHYSICAL_TRAINING_ENGINE"]}[Content],
+
+    FontePackages =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_PHYSICAL_TRAINING_PACKAGES"]}[Content],
+
+    TextoLimpo = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    TextoSeguro = (valor as any) as text =>
+        if valor = null then "" else Text.Trim(Text.From(valor)),
+
+    NumeroSeguro = (valor as any) as nullable number =>
+        try Number.From(valor) otherwise null,
+
+    CampoSeguro = (linha as record, campo as text, optional padrao as any) as any =>
+        if Record.HasFields(linha, campo) then
+            Record.Field(linha, campo)
+        else
+            padrao,
+
+    // =========================================================
+    // LER LINHA ÚNICA DA ENGINE
+    // =========================================================
+
+    EngineLinha =
+        try FonteEngine{0} otherwise null,
+
+    PhysicalTrainingType =
+        if EngineLinha = null then
+            ""
+        else
+            TextoLimpo(CampoSeguro(EngineLinha, "PHYSICAL_TRAINING_TYPE", "")),
+
+    PackageNeeded =
+        if PhysicalTrainingType = "NEUROMUSCULAR + CARDIOPULMONARY" then
+            "MIXED_PHYSICAL"
+        else if PhysicalTrainingType = "NEUROMUSCULAR" then
+            "NEUROMUSCULAR"
+        else if PhysicalTrainingType = "CARDIOPULMONARY" then
+            "CARDIOPULMONARY"
+        else
+            "NONE",
+
+    PhaseSelected =
+        if EngineLinha = null then
+            ""
+        else
+            TextoLimpo(CampoSeguro(EngineLinha, "PERIODIZATION_PHASE", "")),
+
+    // =========================================================
+    // PREPARAR PACOTES
+    // =========================================================
+
+    PackagesComPrioridade =
+        Table.AddColumn(
+            FontePackages,
+            "_PACKAGE_PRIORITY_NUM",
+            each
+                let
+                    p = NumeroSeguro(CampoSeguro(_, "PACKAGE_PRIORITY", null))
+                in
+                    if p = null then 999 else p,
+            Int64.Type
+        ),
+
+    PacotesFiltrados =
+        Table.SelectRows(
+            PackagesComPrioridade,
+            each
+                TextoLimpo(CampoSeguro(_, "PHYSICAL_PACKAGE", "")) = PackageNeeded
+        ),
+
+    PacotesOrdenados =
+        Table.Sort(
+            PacotesFiltrados,
+            {
+                {"_PACKAGE_PRIORITY_NUM", Order.Ascending},
+                {"PACKAGE_ID", Order.Ascending}
+            }
+        ),
+
+    PacoteSelecionado =
+        if PackageNeeded = "NONE" or Table.RowCount(PacotesOrdenados) = 0 then
+            null
+        else
+            PacotesOrdenados{0},
+
+    // =========================================================
+    // CARGA POR FASE
+    // =========================================================
+
+    PhaseLoad =
+        if PacoteSelecionado = null then
+            ""
+        else if PhaseSelected = "GENERAL_PREPARATION" then
+            TextoSeguro(CampoSeguro(PacoteSelecionado, "GENERAL_PREPARATION_LOAD", ""))
+        else if PhaseSelected = "SPECIFIC_PREPARATION" then
+            TextoSeguro(CampoSeguro(PacoteSelecionado, "SPECIFIC_PREPARATION_LOAD", ""))
+        else if PhaseSelected = "PRE_COMPETITION" then
+            TextoSeguro(CampoSeguro(PacoteSelecionado, "PRE_COMPETITION_LOAD", ""))
+        else if PhaseSelected = "COMPETITION" then
+            TextoSeguro(CampoSeguro(PacoteSelecionado, "COMPETITION_LOAD", ""))
+        else
+            "",
+
+    // =========================================================
+    // SAÍDA — SEGUNDA LINHA DA OUTPUT
+    // =========================================================
+
+    Resultado =
+        #table(
+            type table
+            [
+                PACKAGE = text,
+                SESSION = text,
+                EXERCISES = text,
+                EQUIPMENT = text,
+                SETS = text,
+                REPS_TIME = text,
+                REST = text,
+                HR_TARGET = text,
+                FREQUENCY = text,
+                DURATION = text,
+                PHASE_LOAD = text,
+                OUTPUT_TEXT = text,
+                SAFETY_NOTE = text
+            ],
+            {
+                {
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "PACKAGE_ID", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "SESSION_NAME", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "EXERCISES", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "EQUIPMENT", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "SETS", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "REPS_OR_TIME", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "REST_INTERVAL", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "HEART_RATE_TARGET", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "FREQUENCY_WEEK", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "SESSION_DURATION_MIN", "")),
+                    PhaseLoad,
+                    if PacoteSelecionado = null then
+                        "No priority physical package selected."
+                    else
+                        TextoSeguro(CampoSeguro(PacoteSelecionado, "OUTPUT_TEXT", "")),
+                    if PacoteSelecionado = null then "" else TextoSeguro(CampoSeguro(PacoteSelecionado, "SAFETY_NOTE", ""))
+                }
+            }
+        )
+in
+    Resultado;

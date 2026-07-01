@@ -1,0 +1,252 @@
+shared HCI_PERF_TARGETS = let
+
+// =========================================================
+// FONTES
+// =========================================================
+
+FonteHCI =
+    Table.Buffer(
+        Excel.CurrentWorkbook(){[Name="TB_HCI_CHARTS_BUFFER"]}[Content]
+    ),
+
+Contexto =
+    Table.Buffer(
+        Excel.CurrentWorkbook(){[Name="TB_HCI_SELECTED_CONTEXT"]}[Content]
+    ),
+
+// =========================================================
+// FUNÇÕES AUXILIARES
+// =========================================================
+
+TextoLimpo = (valor as any) as text =>
+    try
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor)))
+    otherwise "",
+
+CampoNumero = (linha as nullable record, campo as text) as nullable number =>
+    try
+        if linha = null then
+            null
+        else if Record.HasFields(linha, campo) then
+            Number.From(Record.Field(linha, campo))
+        else
+            null
+    otherwise
+        null,
+
+CampoTexto = (linha as nullable record, campo as text) as text =>
+    try
+        if linha = null then
+            ""
+        else if Record.HasFields(linha, campo) then
+            Text.From(Record.Field(linha, campo))
+        else
+            ""
+    otherwise
+        "",
+    LimitarScore = (score as nullable number) as nullable number =>
+    if score = null then
+        null
+    else if score < 0 then
+        0
+    else if score > 10 then
+        10
+    else
+        Number.Round(score, 2),
+    
+    Nivel = (score as nullable number) as nullable text =>
+    if score = null then
+        null
+    else if score >= 8.5 then
+        "ELITE"
+    else if score >= 6 then
+        "ALTO RENDIMENTO"
+    else if score >= 3 then
+        "INTERMEDIÁRIO"
+    else
+        "INICIANTE",
+
+    RhythmScoreBase10 = (std as nullable number) as nullable number =>
+    if std = null then
+        null
+    else if std <= 0.42 then
+        10
+    else if std <= 0.50 then
+        LimitarScore(10 - ((std - 0.42) / (0.50 - 0.42)) * 1.5)
+    else if std <= 0.90 then
+        LimitarScore(8.5 - ((std - 0.50) / (0.90 - 0.50)) * 3.5)
+    else
+        LimitarScore(5 - ((std - 0.90) * 5)
+    ),
+
+    NivelRhythm = (std as nullable number) as nullable text =>
+    if std = null then
+        null
+    else if std <= 0.42 then
+        "ELITE"
+    else if std <= 0.50 then
+        "ALTO RENDIMENTO"
+    else if std <= 0.90 then
+        "INTERMEDIÁRIO"
+    else
+        "INICIANTE"
+    ,
+
+// =========================================================
+// CONTEXTO SELECIONADO
+// Contexto[ENVIRONMENT] corresponde a Buffer[HCI_EVENT_KIND]
+// =========================================================
+
+ContextoLinha =
+    try Contexto{0} otherwise null,
+
+AtletaSelecionado =
+    TextoLimpo(CampoTexto(ContextoLinha, "ATLETA")),
+
+EventoSelecionado =
+    TextoLimpo(CampoTexto(ContextoLinha, "EVENTO")),
+
+EnvironmentSelecionado =
+    TextoLimpo(CampoTexto(ContextoLinha, "ENVIRONMENT")),
+
+ProvaSelecionada =
+    TextoLimpo(CampoTexto(ContextoLinha, "PROVA")),
+
+// =========================================================
+// TIPAGEM MÍNIMA DA BUFFER
+// =========================================================
+
+HCI_Tipos =
+    Table.TransformColumnTypes(
+        FonteHCI,
+        {
+            {"ATLETA", type text},
+            {"EVENTO", type text},
+            {"PROVA", type text},
+            {"STATUS_EVENTO", type text},
+            {"HCI_EVENT_KIND", type text},
+            {"RESULTADO_EVENTO", type number},
+            {"HCI_OUTCOME_HCI_SCORE", type number},
+            {"HCI_PROCESS_SCORE_BASE", type number},
+            {"HCI_STD_AJUSTADO_RHYTHM", type number},
+            {"HCI_DEEPENING_SCORE_BASE", type number},
+            {"HCI_CONSISTENCY_SCORE_BASE", type number}
+        },
+        "pt-BR"
+    ),
+
+// =========================================================
+// FILTRO ROBUSTO POR CONTEXTO
+// 1. atleta
+// 2. evento, se existir
+// 3. environment em HCI_EVENT_KIND, se existir
+// 4. prova, se existir
+// =========================================================
+
+FiltroAtleta =
+    Table.SelectRows(
+        HCI_Tipos,
+        each TextoLimpo([ATLETA]) = AtletaSelecionado
+    ),
+
+FiltroEvento =
+    Table.SelectRows(
+        FiltroAtleta,
+        each
+            EventoSelecionado = ""
+            or TextoLimpo([EVENTO]) = EventoSelecionado
+    ),
+
+FiltroEnvironment =
+    Table.SelectRows(
+        FiltroEvento,
+        each
+            EnvironmentSelecionado = ""
+            or TextoLimpo([HCI_EVENT_KIND]) = EnvironmentSelecionado
+    ),
+
+FiltroProva =
+    Table.SelectRows(
+        FiltroEnvironment,
+        each
+            ProvaSelecionada = ""
+            or TextoLimpo([PROVA]) = ProvaSelecionada
+    ),
+
+ContextoEscolhido =
+    if Table.RowCount(FiltroProva) > 0 then
+        FiltroProva
+    else if Table.RowCount(FiltroEnvironment) > 0 then
+        FiltroEnvironment
+    else if Table.RowCount(FiltroEvento) > 0 then
+        FiltroEvento
+    else
+        FiltroAtleta,
+
+// =========================================================
+// ESCOLHER LINHA FINAL DO EVENTO
+// Sem recalcular nada. Apenas escolhe a linha com STATUS_EVENTO FINAL.
+// Se não houver FINAL, usa a primeira linha disponível do contexto.
+// =========================================================
+
+LinhasFinal =
+    Table.SelectRows(
+        ContextoEscolhido,
+        each TextoLimpo([STATUS_EVENTO]) = "FINAL"
+    ),
+
+LinhaBase =
+    if Table.RowCount(LinhasFinal) > 0 then
+        LinhasFinal{0}
+    else if Table.RowCount(ContextoEscolhido) > 0 then
+        ContextoEscolhido{0}
+    else
+        null,
+
+// =========================================================
+// SCORES JÁ CALCULADOS NA TB_HCI / BUFFER
+// =========================================================
+
+OutcomeScore =
+    LimitarScore(CampoNumero(LinhaBase, "HCI_OUTCOME_HCI_SCORE")),
+
+ProcessScore =
+    LimitarScore(CampoNumero(LinhaBase, "HCI_PROCESS_SCORE_BASE")),
+
+RhythmSTD =
+    CampoNumero(LinhaBase, "HCI_STD_AJUSTADO_RHYTHM"),
+
+RhythmScore =
+    RhythmScoreBase10(RhythmSTD),
+
+DeepeningScore =
+    LimitarScore(CampoNumero(LinhaBase, "HCI_DEEPENING_SCORE_BASE")),
+
+ConsistencyScore =
+    LimitarScore(CampoNumero(LinhaBase, "HCI_CONSISTENCY_SCORE_BASE")),
+
+// =========================================================
+// SAÍDA PARA GRÁFICO TARGETS
+// =========================================================
+
+Resultado =
+    #table(
+        type table
+        [
+            DISPLAY_ORDER = Int64.Type,
+            PARAMETER = text,
+            SCORE = nullable number,
+            CURRENT_LEVEL = nullable text,
+            REPORT_PROFILE = text
+        ],
+        {
+            {1, "OUTCOME", OutcomeScore, Nivel(OutcomeScore), "TARGETS"},
+            {2, "PROCESS", ProcessScore, Nivel(ProcessScore), "TARGETS"},
+            {3, "RHYTHM", RhythmScore, NivelRhythm(RhythmSTD), "TARGETS"},
+            {4, "DEEPENING", DeepeningScore, Nivel(DeepeningScore), "TARGETS"},
+            {5, "CONSISTENCY", ConsistencyScore, Nivel(ConsistencyScore), "TARGETS"}
+        }
+    )
+
+in
+Resultado;

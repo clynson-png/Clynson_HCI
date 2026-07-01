@@ -1,0 +1,5 @@
+shared TB_HCI_PARAMETERS_CONFIG = let
+    Fonte = Excel.CurrentWorkbook(){[Name="Tabela23"]}[Content],
+    #"Tipo Alterado" = Table.TransformColumnTypes(Fonte,{{"Coluna1", type text}, {"Coluna2", type text}, {"Coluna3", type logical}, {"Coluna4", type logical}, {"Coluna5", type text}, {"Coluna6", type text}, {"Coluna7", type text}, {"Coluna8", Int64.Type}, {"Coluna9", Int64.Type}, {"Coluna10", type logical}, {"Coluna11", type number}, {"Coluna12", type text}, {"Coluna13", type logical}, {"Coluna14", type text}, {"Coluna15", type any}, {"Coluna16", type any}})
+in
+    #"Tipo Alterado";

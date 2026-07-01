@@ -1,0 +1,201 @@
+shared TB_HCI_ATHLETE_PROFILE_ENGINE = let
+    Fonte_PROFILE =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_ATHLETE_PROFILE"]}[Content],
+
+    Fonte_PHASE =
+        Excel.CurrentWorkbook(){[Name="HCI_SELECTED_PERIODIZATION_PHASE"]}[Content],
+
+    TextoLimpo = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    NumeroSeguro = (valor as any) as nullable number =>
+        try Number.From(valor) otherwise null,
+
+    CampoSeguro = (linha as record, nome as text, optional padrao as any) as any =>
+        if Record.HasFields(linha, nome)
+        then Record.Field(linha, nome)
+        else padrao,
+
+    FaseSelecionada =
+        try Text.Upper(Text.Trim(Text.From(Fonte_PHASE{0}{0}))) otherwise "GENERAL_PREPARATION",
+
+    LoadPercent =
+        if FaseSelecionada = "GENERAL_PREPARATION" then 0.70
+        else if FaseSelecionada = "SPECIFIC_PREPARATION" then 0.70
+        else if FaseSelecionada = "PRE_COMPETITION" then 0.50
+        else if FaseSelecionada = "COMPETITION" then 0.50
+        else null,
+
+    AddGenreNormalized =
+        Table.AddColumn(
+            Fonte_PROFILE,
+            "GENRE_NORMALIZED",
+            each
+                let
+                    genero = TextoLimpo(CampoSeguro(_, "GENRE", ""))
+                in
+                    if genero = "F" or genero = "FEMALE" or genero = "FEMININO" then "FEMALE"
+                    else if genero = "M" or genero = "MALE" or genero = "MASCULINO" then "MALE"
+                    else "",
+            type text
+        ),
+
+    AddAgeEngine =
+        Table.AddColumn(
+            AddGenreNormalized,
+            "AGE_ENGINE",
+            each
+                let
+                    birth = CampoSeguro(_, "BIRTH DATE", null),
+                    ageFromTable = NumeroSeguro(CampoSeguro(_, "AGE", null)),
+                    ageCalculated =
+                        try
+                            Number.RoundDown(
+                                Duration.Days(Date.From(DateTime.LocalNow()) - Date.From(birth)) / 365.25
+                            )
+                        otherwise null
+                in
+                    if ageFromTable <> null then ageFromTable else ageCalculated,
+            type number
+        ),
+
+    AddFcMaxEngine =
+        Table.AddColumn(
+            AddAgeEngine,
+            "FC_MAX_ENGINE",
+            each
+                let
+                    age = NumeroSeguro(CampoSeguro(_, "AGE_ENGINE", null)),
+                    genero = TextoLimpo(CampoSeguro(_, "GENRE_NORMALIZED", ""))
+                in
+                    if age = null then null
+                    else if genero = "FEMALE" then 206 - (0.88 * age)
+                    else if genero = "MALE" then 208 - (0.7 * age)
+                    else null,
+            type number
+        ),
+
+    AddLoadPercent =
+        Table.AddColumn(
+            AddFcMaxEngine,
+            "PHYSICAL_LOAD_PERCENT",
+            each LoadPercent,
+            type number
+        ),
+
+    AddTargetFc =
+        Table.AddColumn(
+            AddLoadPercent,
+            "TARGET_FC",
+            each
+                let
+                    fc = NumeroSeguro(CampoSeguro(_, "FC_MAX_ENGINE", null)),
+                    pct = NumeroSeguro(CampoSeguro(_, "PHYSICAL_LOAD_PERCENT", null))
+                in
+                    if fc <> null and pct <> null then fc * pct else null,
+            type number
+        ),
+
+    AddBMI =
+        Table.AddColumn(
+            AddTargetFc,
+            "BMI",
+            each
+                let
+                    peso = NumeroSeguro(CampoSeguro(_, "WHEIGHT", null)),
+                    altura = NumeroSeguro(CampoSeguro(_, "HEIGHT", null))
+                in
+                    if peso <> null and altura <> null and altura > 0
+                    then peso / Number.Power(altura / 100, 2)
+                    else null,
+            type number
+        ),
+
+    AddFatMass =
+        Table.AddColumn(
+            AddBMI,
+            "FAT_MASS_KG",
+            each
+                let
+                    peso = NumeroSeguro(CampoSeguro(_, "WHEIGHT", null)),
+                    fat = NumeroSeguro(CampoSeguro(_, "% FAT", null))
+                in
+                    if peso <> null and fat <> null
+                    then
+                        if fat > 1 then peso * (fat / 100) else peso * fat
+                    else null,
+            type number
+        ),
+
+    AddLeanMass =
+        Table.AddColumn(
+            AddFatMass,
+            "ESTIMATED_LEAN_MASS_KG",
+            each
+                let
+                    peso = NumeroSeguro(CampoSeguro(_, "WHEIGHT", null)),
+                    fatMass = NumeroSeguro(CampoSeguro(_, "FAT_MASS_KG", null))
+                in
+                    if peso <> null and fatMass <> null then peso - fatMass else null,
+            type number
+        ),
+
+    AddPhysicalStatus =
+        Table.AddColumn(
+            AddLeanMass,
+            "PHYSICAL_DATA_STATUS",
+            each
+                let
+                    atleta = TextoLimpo(CampoSeguro(_, "ATHLETE", "")),
+                    genero = TextoLimpo(CampoSeguro(_, "GENRE_NORMALIZED", "")),
+                    idade = NumeroSeguro(CampoSeguro(_, "AGE_ENGINE", null)),
+                    peso = NumeroSeguro(CampoSeguro(_, "WHEIGHT", null)),
+                    altura = NumeroSeguro(CampoSeguro(_, "HEIGHT", null)),
+                    restricao = TextoLimpo(CampoSeguro(_, "PHYSICAL OBS", ""))
+                in
+                    if atleta = "" or genero = "" or idade = null or peso = null or altura = null
+                    then "DADOS_INCOMPLETOS"
+                    else if restricao <> "" and restricao <> "SEM RESTRIÇÃO" and restricao <> "SEM RESTRICAO"
+                    then "VALIDAR_RESTRICOES"
+                    else "OK",
+            type text
+        ),
+
+    AddPhase =
+        Table.AddColumn(
+            AddPhysicalStatus,
+            "SELECTED_PERIODIZATION_PHASE",
+            each FaseSelecionada,
+            type text
+        ),
+
+    ResultadoFinal =
+        Table.SelectColumns(
+            AddPhase,
+            {
+                "ATHLETE",
+                "GENRE",
+                "GENRE_NORMALIZED",
+                "BIRTH DATE",
+                "AGE",
+                "AGE_ENGINE",
+                "FC_MAX",
+                "FC_MAX_ENGINE",
+                "WHEIGHT",
+                "HEIGHT",
+                "% FAT",
+                "MUSCLE (Kg)",
+                "PHYSICAL OBS",
+                "SELECTED_PERIODIZATION_PHASE",
+                "PHYSICAL_LOAD_PERCENT",
+                "TARGET_FC",
+                "BMI",
+                "FAT_MASS_KG",
+                "ESTIMATED_LEAN_MASS_KG",
+                "PHYSICAL_DATA_STATUS"
+            },
+            MissingField.Ignore
+        )
+
+in
+    ResultadoFinal;

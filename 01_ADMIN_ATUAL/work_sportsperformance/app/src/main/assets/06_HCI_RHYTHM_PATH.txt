@@ -1,0 +1,221 @@
+shared HCI_RHYTHM_PATH = let
+    FonteHCI =
+        Excel.CurrentWorkbook(){[Name="TB_HCI"]}[Content],
+
+    FonteTimeline =
+        Excel.CurrentWorkbook(){[Name="HCI_RHYTHM_TIMELINE"]}[Content],
+
+    Contexto =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_SELECTED_CONTEXT"]}[Content],
+
+    TextoLimpo = (valor as any) as text =>
+        try
+            if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor)))
+        otherwise "",
+
+    CampoTexto = (linha as nullable record, campo as text) as text =>
+        try
+            if linha = null then
+                ""
+            else if not Record.HasFields(linha, campo) then
+                ""
+            else
+                let
+                    valor = Record.Field(linha, campo)
+                in
+                    if valor = null then "" else Text.From(valor)
+        otherwise
+            "",
+
+    NumeroSeguro = (valor as any) as nullable number =>
+        try Number.From(valor) otherwise null,
+
+    MediaSegura = (lista as list) as nullable number =>
+        let
+            vals =
+                List.RemoveNulls(
+                    List.Transform(lista, each try Number.From(_) otherwise null)
+                )
+        in
+            if List.Count(vals) = 0 then null else List.Average(vals),
+
+    ContextoLinha =
+        try Contexto{0} otherwise null,
+
+    AtletaSelecionado =
+        CampoTexto(ContextoLinha, "ATLETA"),
+
+    EventoSelecionado =
+        CampoTexto(ContextoLinha, "EVENTO"),
+
+    EnvironmentSelecionado =
+        CampoTexto(ContextoLinha, "ENVIRONMENT"),
+
+    ProvaSelecionada =
+        CampoTexto(ContextoLinha, "PROVA"),
+
+    BaseHCI =
+        Table.SelectRows(
+            FonteHCI,
+            each TextoLimpo(CampoTexto(_, "ATLETA")) <> ""
+        ),
+
+    HCI_Contexto =
+        Table.SelectRows(
+            BaseHCI,
+            each
+                TextoLimpo(CampoTexto(_, "ATLETA")) = TextoLimpo(AtletaSelecionado)
+                and TextoLimpo(CampoTexto(_, "EVENTO")) = TextoLimpo(EventoSelecionado)
+                and TextoLimpo(CampoTexto(_, "HCI_EVENT_KIND")) = TextoLimpo(EnvironmentSelecionado)
+                and (
+                    TextoLimpo(ProvaSelecionada) = ""
+                    or TextoLimpo(CampoTexto(_, "PROVA")) = TextoLimpo(ProvaSelecionada)
+                )
+                and List.Contains(
+                    {"SR1", "SR2", "SR3", "SR4", "SR5", "SR6"},
+                    TextoLimpo(CampoTexto(_, "SERIE"))
+                )
+        ),
+
+    Add_DISPLAY_ORDER_SERIE =
+        Table.AddColumn(
+            HCI_Contexto,
+            "DISPLAY_ORDER_SERIE",
+            each
+                try Number.FromText(Text.Select(CampoTexto(_, "SERIE"), {"0".."9"}))
+                otherwise null,
+            Int64.Type
+        ),
+
+    TimelineBase =
+        Table.SelectRows(
+            FonteTimeline,
+            each
+                TextoLimpo(CampoTexto(_, "ATLETA")) = TextoLimpo(AtletaSelecionado)
+                and TextoLimpo(CampoTexto(_, "EVENTO")) = TextoLimpo(EventoSelecionado)
+                and TextoLimpo(CampoTexto(_, "HCI_EVENT_KIND")) = TextoLimpo(EnvironmentSelecionado)
+                and (
+                    TextoLimpo(ProvaSelecionada) = ""
+                    or true
+                )
+        ),
+
+    MesclarTimeline =
+        Table.NestedJoin(
+            Add_DISPLAY_ORDER_SERIE,
+            {"SERIE"},
+            TimelineBase,
+            {"SERIE"},
+            "TIMELINE",
+            JoinKind.LeftOuter
+        ),
+
+    ExpandirTimeline =
+        Table.ExpandTableColumn(
+            MesclarTimeline,
+            "TIMELINE",
+            {
+                "MEDIA_SERIE",
+                "STD_SERIE",
+                "BREAK_COUNT",
+                "MAIN_DROP_DEPTH",
+                "MAIN_DROP_MARKER"
+            },
+            {
+                "MEDIA_SERIE",
+                "STD_SERIE",
+                "BREAK_COUNT",
+                "MAIN_DROP_DEPTH",
+                "MAIN_DROP_MARKER"
+            }
+        ),
+
+    Add_PARTES =
+        Table.AddColumn(
+            ExpandirTimeline,
+            "PARTES",
+            each
+                {
+                    [
+                        PART_ORDER = 1,
+                        PART_LABEL = CampoTexto(_, "SERIE") & "_P1",
+                        PART_NAME = "P1",
+                        PART_MEDIA = MediaSegura(
+                            {
+                                Record.FieldOrDefault(_, "T1", null),
+                                Record.FieldOrDefault(_, "T2", null),
+                                Record.FieldOrDefault(_, "T3", null)
+                            }
+                        )
+                    ],
+                    [
+                        PART_ORDER = 2,
+                        PART_LABEL = CampoTexto(_, "SERIE") & "_P2",
+                        PART_NAME = "P2",
+                        PART_MEDIA = MediaSegura(
+                            {
+                                Record.FieldOrDefault(_, "T4", null),
+                                Record.FieldOrDefault(_, "T5", null),
+                                Record.FieldOrDefault(_, "T6", null),
+                                Record.FieldOrDefault(_, "T7", null)
+                            }
+                        )
+                    ],
+                    [
+                        PART_ORDER = 3,
+                        PART_LABEL = CampoTexto(_, "SERIE") & "_P3",
+                        PART_NAME = "P3",
+                        PART_MEDIA = MediaSegura(
+                            {
+                                Record.FieldOrDefault(_, "T8", null),
+                                Record.FieldOrDefault(_, "T9", null),
+                                Record.FieldOrDefault(_, "T10", null)
+                            }
+                        )
+                    ]
+                }
+        ),
+
+    ExpandirPartes =
+        Table.ExpandListColumn(Add_PARTES, "PARTES"),
+
+    ExpandirRegistros =
+        Table.ExpandRecordColumn(
+            ExpandirPartes,
+            "PARTES",
+            {"PART_ORDER", "PART_LABEL", "PART_NAME", "PART_MEDIA"},
+            {"PART_ORDER", "PART_LABEL", "PART_NAME", "PART_MEDIA"}
+        ),
+
+    Add_DISPLAY_ORDER =
+        Table.AddColumn(
+            ExpandirRegistros,
+            "DISPLAY_ORDER",
+            each
+                if [DISPLAY_ORDER_SERIE] = null or [PART_ORDER] = null then
+                    null
+                else
+                    ([DISPLAY_ORDER_SERIE] - 1) * 3 + [PART_ORDER],
+            Int64.Type
+        ),
+
+    Resultado =
+        Table.SelectColumns(
+            Add_DISPLAY_ORDER,
+            {
+                "DISPLAY_ORDER",
+                "SERIE",
+                "PART_ORDER",
+                "PART_NAME",
+                "PART_LABEL",
+                "PART_MEDIA",
+                "MEDIA_SERIE",
+                "STD_SERIE",
+                "BREAK_COUNT",
+                "MAIN_DROP_DEPTH",
+                "MAIN_DROP_MARKER"
+            },
+            MissingField.UseNull
+        )
+in
+    Resultado;

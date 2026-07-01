@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>HCI Admin Desktop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d8e0ea;
+      --text: #1f2937;
+      --muted: #667085;
+      --accent: #2f65e8;
+      --ok: #0f9d58;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .shell {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar, .main {
+      padding: 20px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    h1, h2, h3 { margin: 0 0 12px; }
+    h1 { font-size: 24px; }
+    h2 { font-size: 15px; color: var(--accent); text-transform: uppercase; }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font: inherit;
+      background: #fff;
+      margin-bottom: 12px;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font: inherit;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #e8eefc;
+      color: var(--accent);
+    }
+    .list {
+      max-height: calc(100vh - 240px);
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .item {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+    }
+    .item:hover, .item.active { background: #eef4ff; }
+    .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 12px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: var(--accent);
+      font-size: 12px;
+      margin-right: 6px;
+    }
+    .status { color: var(--ok); font-weight: 600; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="card">
+        <h1>HCI Admin Desktop</h1>
+        <div class="meta">Biblioteca canônica de treinos do app.</div>
+      </div>
+
+      <div class="card">
+        <h2>Filtros</h2>
+        <label>Parâmetro</label>
+        <select id="filterParameter"></select>
+        <label>Período</label>
+        <select id="filterPhase"></select>
+        <label>Tipo</label>
+        <select id="filterType"></select>
+      </div>
+
+      <div class="card">
+        <h2>Cobertura</h2>
+        <div id="coverage" class="grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <button id="saveBtn">Salvar biblioteca</button>
+          <button id="reloadBtn" class="secondary">Recarregar</button>
+        </div>
+        <div id="status" class="status"></div>
+      </div>
+
+      <div class="list" id="entryList"></div>
+    </aside>
+
+    <main class="main">
+      <div class="card">
+        <h2>Editor</h2>
+        <div class="row">
+          <div>
+            <label>ID</label>
+            <input id="trainingId" />
+          </div>
+          <div>
+            <label>Arma</label>
+            <input id="weaponClass" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Parâmetro</label>
+            <input id="parameter" />
+          </div>
+          <div>
+            <label>Período</label>
+            <input id="phase" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Tipo</label>
+            <input id="trainingType" />
+          </div>
+          <div>
+            <label>Categoria</label>
+            <input id="category" />
+          </div>
+        </div>
+        <label>Nome</label>
+        <input id="name" />
+        <label>Objetivo</label>
+        <textarea id="objective"></textarea>
+        <label>Descrição</label>
+        <textarea id="description"></textarea>
+        <div class="row">
+          <div>
+            <label>Duração padrão (min)</label>
+            <input id="defaultTime" type="number" />
+          </div>
+          <div>
+            <label>Tiros padrão</label>
+            <input id="defaultShots" type="number" />
+          </div>
+        </div>
+        <label>Nota de carga</label>
+        <input id="loadNote" />
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let state = { version: 1, entries: [], parameters: [], phases: [] };
+    let selectedIndex = -1;
+
+    const fields = ["trainingId","weaponClass","parameter","phase","trainingType","category","name","objective","description","defaultTime","defaultShots","loadNote"];
+    const el = id => document.getElementById(id);
+
+    async function loadLibrary() {
+      const response = await fetch("/api/library");
+      state = await response.json();
+      setupFilters();
+      renderCoverage();
+      renderList();
+      if (state.entries.length) selectEntry(0);
+      el("status").textContent = "Biblioteca carregada.";
+    }
+
+    function setupFilters() {
+      fillSelect("filterParameter", ["ALL", ...state.parameters]);
+      fillSelect("filterPhase", ["ALL", ...state.phases]);
+      fillSelect("filterType", ["ALL", "TECHNICAL", "PHYSICAL"]);
+    }
+
+    function fillSelect(id, values) {
+      const select = el(id);
+      const current = select.value || "ALL";
+      select.innerHTML = values.map(v => `<option value="${v}">${v}</option>`).join("");
+      select.value = values.includes(current) ? current : "ALL";
+    }
+
+    function currentFiltered() {
+      const parameter = el("filterParameter").value;
+      const phase = el("filterPhase").value;
+      const type = el("filterType").value;
+      return state.entries.filter(entry =>
+        (parameter === "ALL" || entry.parameter === parameter) &&
+        (phase === "ALL" || entry.phase === phase) &&
+        (type === "ALL" || entry.trainingType === type)
+      );
+    }
+
+    function renderList() {
+      const list = el("entryList");
+      const filtered = currentFiltered();
+      list.innerHTML = filtered.map((entry, index) => {
+        const realIndex = state.entries.indexOf(entry);
+        return `
+          <div class="item ${realIndex === selectedIndex ? "active" : ""}" data-index="${realIndex}">
+            <div><strong>${entry.name}</strong></div>
+            <div class="meta">${entry.parameter} | ${entry.phase} | ${entry.trainingType}</div>
+          </div>
+        `;
+      }).join("");
+      list.querySelectorAll(".item").forEach(node => {
+        node.addEventListener("click", () => selectEntry(Number(node.dataset.index)));
+      });
+    }
+
+    function renderCoverage() {
+      const coverage = el("coverage");
+      const boxes = [];
+      for (const parameter of state.parameters) {
+        for (const phase of state.phases) {
+          const tech = state.entries.some(e => e.parameter === parameter && e.phase === phase && e.trainingType === "TECHNICAL");
+          const phys = state.entries.some(e => e.parameter === parameter && e.phase === phase && e.trainingType === "PHYSICAL");
+          boxes.push(`<div class="card" style="margin:0;padding:10px;"><strong>${parameter}</strong><div class="meta">${phase}</div><div><span class="badge">${tech ? "T ok" : "T falta"}</span><span class="badge">${phys ? "F ok" : "F falta"}</span></div></div>`);
+        }
+      }
+      coverage.innerHTML = boxes.join("");
+    }
+
+    function selectEntry(index) {
+      selectedIndex = index;
+      const entry = state.entries[index];
+      if (!entry) return;
+      for (const field of fields) {
+        el(field).value = entry[field] ?? "";
+      }
+      renderList();
+    }
+
+    function bindEditor() {
+      for (const field of fields) {
+        el(field).addEventListener("input", () => {
+          if (selectedIndex < 0) return;
+          const entry = state.entries[selectedIndex];
+          entry[field] = ["defaultTime", "defaultShots"].includes(field) ? Number(el(field).value || 0) : el(field).value;
+          renderList();
+          renderCoverage();
+        });
+      }
+      ["filterParameter","filterPhase","filterType"].forEach(id => el(id).addEventListener("change", renderList));
+      el("reloadBtn").addEventListener("click", loadLibrary);
+      el("saveBtn").addEventListener("click", saveLibrary);
+    }
+
+    async function saveLibrary() {
+      state.updatedAt = new Date().toISOString();
+      await fetch("/api/library", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state, null, 2)
+      });
+      el("status").textContent = "Biblioteca salva em training_library_canonical.json";
+    }
+
+    bindEditor();
+    loadLibrary();
+  </script>
+</body>
+</html>

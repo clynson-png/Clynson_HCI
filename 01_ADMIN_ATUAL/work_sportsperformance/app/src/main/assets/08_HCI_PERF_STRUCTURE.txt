@@ -1,0 +1,274 @@
+shared HCI_PERF_STRUCTURE = let
+    // =========================================================
+    // FONTES DIRETAS
+    // =========================================================
+
+    FonteHCI =
+        Excel.CurrentWorkbook(){[Name="TB_HCI"]}[Content],
+
+    Contexto =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_SELECTED_CONTEXT"]}[Content],
+
+    // =========================================================
+    // FUNÇÕES AUXILIARES
+    // =========================================================
+
+    TextoLimpo = (valor as any) as text =>
+        try
+            if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor)))
+        otherwise "",
+
+    CampoNumero = (linha as nullable record, campo as text) as nullable number =>
+        try
+            if linha = null then
+                null
+            else if Record.HasFields(linha, campo) then
+                Number.From(Record.Field(linha, campo))
+            else
+                null
+        otherwise
+            null,
+
+    CampoTexto = (linha as nullable record, campo as text) as text =>
+        try
+            if linha = null then
+            ""
+            else if not Record.HasFields(linha, campo) then
+            ""
+            else
+                let
+                valor = Record.Field(linha, campo)
+                in
+            if valor = null then "" else Text.From(valor)
+        otherwise
+        "",
+
+    LimitarScore = (score as nullable number) as nullable number =>
+        if score = null then
+            null
+        else if score < 0 then
+            0
+        else if score > 10 then
+            10
+        else
+            Number.Round(score, 2),
+
+    LimitarResilience = (score as nullable number) as nullable number =>
+        if score = null then
+            null
+        else if score < 2 then
+            2
+        else if score > 10 then
+            10
+        else
+            Number.Round(score, 2),
+
+    LimitarEmotional = (score as nullable number) as nullable number =>
+        if score = null then
+            null
+        else if score < 3 then
+            3
+        else if score > 10 then
+            10
+        else
+            Number.Round(score, 2),
+
+    Nivel = (score as nullable number) as nullable text =>
+        if score = null then
+            null
+        else if score >= 8.5 then
+            "ELITE"
+        else if score >= 6 then
+            "ALTO RENDIMENTO"
+        else if score >= 3 then
+            "INTERMEDIÁRIO"
+        else
+            "INICIANTE",
+
+    NivelTransfer = (score as nullable number, prova as nullable text) as nullable text =>
+        let
+            provaTxt =
+                TextoLimpo(prova),
+
+            ehRifle =
+                Text.Contains(provaTxt, "RIFLE") or Text.Contains(provaTxt, "CARABINA")
+        in
+            if score = null then
+                null
+            else if ehRifle then
+                if score >= 9.95 then
+                    "ELITE"
+                else if score >= 8.7 then
+                    "ALTO RENDIMENTO"
+                else if score >= 4.9 then
+                    "INTERMEDIÁRIO"
+                else
+                    "INICIANTE"
+            else
+                if score >= 9 then
+                    "ELITE"
+                else if score >= 7.4 then
+                    "ALTO RENDIMENTO"
+                else if score >= 3.4 then
+                    "INTERMEDIÁRIO"
+                else
+                    "INICIANTE",
+
+    NivelEmotional = (score as nullable number) as nullable text =>
+        if score = null then
+            null
+        else if score >= 9 then
+            "ELITE"
+        else if score >= 7 then
+            "ALTO RENDIMENTO"
+        else if score >= 5 then
+            "INTERMEDIÁRIO"
+        else
+            "INICIANTE",
+
+    // =========================================================
+    // CONTEXTO SELECIONADO
+    // ENVIRONMENT corresponde a HCI_EVENT_KIND na TB_HCI
+    // =========================================================
+
+    ContextoLinha =
+        try Contexto{0} otherwise null,
+
+    AtletaSelecionado =
+        TextoLimpo(CampoTexto(ContextoLinha, "ATLETA")),
+
+    EventoSelecionado =
+        TextoLimpo(CampoTexto(ContextoLinha, "EVENTO")),
+
+    EnvironmentSelecionado =
+        TextoLimpo(CampoTexto(ContextoLinha, "ENVIRONMENT")),
+
+    ProvaSelecionadaContexto =
+        TextoLimpo(CampoTexto(ContextoLinha, "PROVA")),
+
+    // =========================================================
+    // FILTRO PROGRESSIVO COM FALLBACK
+    // Mesmo padrão validado na TARGETS
+    // =========================================================
+
+    BaseHCI =
+        Table.SelectRows(
+            FonteHCI,
+            each TextoLimpo(CampoTexto(_, "ATLETA")) <> ""
+        ),
+
+    FiltroAtleta =
+        Table.SelectRows(
+            BaseHCI,
+            each TextoLimpo(CampoTexto(_, "ATLETA")) = AtletaSelecionado
+        ),
+
+    FiltroEvento =
+        Table.SelectRows(
+            FiltroAtleta,
+            each
+                EventoSelecionado = ""
+                or TextoLimpo(CampoTexto(_, "EVENTO")) = EventoSelecionado
+        ),
+
+    FiltroAmbiente =
+        Table.SelectRows(
+            FiltroEvento,
+            each
+                EnvironmentSelecionado = ""
+                or TextoLimpo(CampoTexto(_, "HCI_EVENT_KIND")) = EnvironmentSelecionado
+        ),
+
+    FiltroProva =
+        Table.SelectRows(
+            FiltroAmbiente,
+            each
+                ProvaSelecionadaContexto = ""
+                or TextoLimpo(CampoTexto(_, "PROVA")) = ProvaSelecionadaContexto
+        ),
+
+    ContextoEscolhido =
+    FiltroProva,
+
+    // =========================================================
+    // ESCOLHER LINHA FINAL DO EVENTO
+    // STATUS_EVENTO = FINAL
+    // =========================================================
+
+    LinhasFinal =
+        Table.SelectRows(
+            ContextoEscolhido,
+            each TextoLimpo(CampoTexto(_, "STATUS_EVENTO")) = "FINAL"
+        ),
+
+    LinhaFinal =
+        if Table.RowCount(LinhasFinal) > 0 then
+            LinhasFinal{0}
+        else if Table.RowCount(ContextoEscolhido) > 0 then
+            ContextoEscolhido{0}
+        else
+            null,
+
+    // =========================================================
+    // SCORES STRUCTURE DIRETO DA TB_HCI
+    // =========================================================
+
+    ProvaSelecionada =
+        CampoTexto(LinhaFinal, "PROVA"),
+
+    ResultadoEvento =
+        CampoNumero(LinhaFinal, "RESULTADO_EVENTO"),
+
+    OutcomeReference =
+        CampoNumero(LinhaFinal, "HCI_OUTCOME_REFERENCE"),
+
+    TransferScoreRaw =
+        CampoNumero(LinhaFinal, "HCI_TRANSFER_SCORE_BASE"),
+
+    TransferScore =
+        if TransferScoreRaw <> null then
+            LimitarScore(TransferScoreRaw)
+        else if ResultadoEvento <> null
+            and OutcomeReference <> null
+            and OutcomeReference <> 0
+        then
+            LimitarScore((((ResultadoEvento / OutcomeReference) * 10) - 9) * 10)
+        else
+            null,
+
+    ResilienceScore =
+        LimitarResilience(CampoNumero(LinhaFinal, "HCI_RESILIENCE_SCORE_BASE")),
+
+    PressureScore =
+        LimitarScore(CampoNumero(LinhaFinal, "HCI_PRESSURE_SCORE_BASE")),
+
+    EmotionalScore =
+        LimitarEmotional(CampoNumero(LinhaFinal, "HCI_EMOTIONAL_SCORE_BASE")),
+
+    PhysicalScore =
+        LimitarScore(CampoNumero(LinhaFinal, "HCI_PHYSICAL_SCORE_BASE")),
+
+    // =========================================================
+    // SAÍDA PARA RADIAL STRUCTURE
+    // =========================================================
+
+    Resultado =
+    #table(
+        type table
+        [
+            DISPLAY_ORDER = Int64.Type,
+            PARAMETER = text,
+            SCORE = nullable number,
+            CURRENT_LEVEL = nullable text,
+            REPORT_PROFILE = text
+        ],
+        {
+            {1, "TRANSFER", TransferScore, NivelTransfer(TransferScore, ProvaSelecionada), "STRUCTURE"},
+            {2, "RESILIENCE", ResilienceScore, Nivel(ResilienceScore), "STRUCTURE"},
+            {3, "PRESSURE", PressureScore, Nivel(PressureScore), "STRUCTURE"},
+            {4, "EMOTIONAL", EmotionalScore, NivelEmotional(EmotionalScore), "STRUCTURE"},
+            {5, "PHYSICAL", PhysicalScore, Nivel(PhysicalScore), "STRUCTURE"}
+        }
+    )
+in
+    Resultado;

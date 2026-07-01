@@ -1,0 +1,311 @@
+{
+  "schemaVersion": "1.0.0",
+  "assetName": "hci_happy_library_canonical",
+  "createdAt": "2026-06-24",
+  "language": "en-US",
+  "purpose": "Canonical developmental exercise library for the HAPPY/COMANDO prescription engine.",
+  "parameters": [
+    "CONFIDENCE",
+    "ORGANIZATION",
+    "MANAGEMENT",
+    "ANALYSIS",
+    "NERVE",
+    "DISCIPLINE",
+    "OPPORTUNITY",
+    "HEED",
+    "ALIGNMENT",
+    "PLAN",
+    "POWERING",
+    "YEARN"
+  ],
+  "entries": [
+    {
+      "exerciseId": "HAPPY_CONFIDENCE_001",
+      "parameter": "CONFIDENCE",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Performance Evidence Journal", "pt-BR": "Diario de Evidencias de Performance" },
+      "objective": { "en-US": "Build confidence from objective evidence.", "pt-BR": "Construir confianca a partir de evidencias objetivas." },
+      "howToDo": { "en-US": "After each session, write three concrete evidences of capability and review them before pressure sessions.", "pt-BR": "Apos cada sessao, registre tres evidencias concretas de capacidade e revise antes de sessoes de pressao." }
+    },
+    {
+      "exerciseId": "HAPPY_CONFIDENCE_002",
+      "parameter": "CONFIDENCE",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Success Replay", "pt-BR": "Replay de Sucesso" },
+      "objective": { "en-US": "Reactivate a proven competitive state.", "pt-BR": "Reativar um estado competitivo ja comprovado." },
+      "howToDo": { "en-US": "Replay one successful performance for 3 to 5 minutes with posture, breathing, focus and rhythm details.", "pt-BR": "Reviva uma performance de sucesso por 3 a 5 minutos com postura, respiracao, foco e ritmo." }
+    },
+    {
+      "exerciseId": "HAPPY_CONFIDENCE_003",
+      "parameter": "CONFIDENCE",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Confidence Anchor", "pt-BR": "Ancora de Confianca" },
+      "objective": { "en-US": "Create a fast confidence trigger.", "pt-BR": "Criar um gatilho rapido de confianca." },
+      "howToDo": { "en-US": "Recall a strong moment, pair it with a gesture and cue word, and repeat five times.", "pt-BR": "Recorde um momento forte, associe a um gesto e palavra-chave e repita cinco vezes." }
+    },
+    {
+      "exerciseId": "HAPPY_ORGANIZATION_001",
+      "parameter": "ORGANIZATION",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Training Week Map", "pt-BR": "Mapa da Semana de Treino" },
+      "objective": { "en-US": "Organize the week around the main objective.", "pt-BR": "Organizar a semana em torno do objetivo principal." },
+      "howToDo": { "en-US": "Define training days, recovery, technical focus and one non-negotiable habit at the start of the week.", "pt-BR": "Defina dias de treino, recuperacao, foco tecnico e um habito inegociavel no inicio da semana." }
+    },
+    {
+      "exerciseId": "HAPPY_ORGANIZATION_002",
+      "parameter": "ORGANIZATION",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Pre-Session Checklist", "pt-BR": "Checklist Pre-Sessao" },
+      "objective": { "en-US": "Reduce friction before practice.", "pt-BR": "Reduzir atrito antes da pratica." },
+      "howToDo": { "en-US": "Check equipment, hydration, arrival time, warm-up and recording method before every session.", "pt-BR": "Cheque equipamento, hidratacao, horario, aquecimento e metodo de registro antes de cada sessao." }
+    },
+    {
+      "exerciseId": "HAPPY_ORGANIZATION_003",
+      "parameter": "ORGANIZATION",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Routine Audit", "pt-BR": "Auditoria de Rotina" },
+      "objective": { "en-US": "Find routine breakdowns affecting consistency.", "pt-BR": "Encontrar falhas de rotina que afetam a consistencia." },
+      "howToDo": { "en-US": "Compare planned versus executed week and identify missed sessions, delays or logistics problems.", "pt-BR": "Compare a semana planejada com a executada e identifique faltas, atrasos ou problemas logisticos." }
+    },
+    {
+      "exerciseId": "HAPPY_MANAGEMENT_001",
+      "parameter": "MANAGEMENT",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Execution Contract", "pt-BR": "Contrato de Execucao" },
+      "objective": { "en-US": "Turn planning into visible execution.", "pt-BR": "Transformar planejamento em execucao visivel." },
+      "howToDo": { "en-US": "Before training, write what you will execute, measure and adjust. Review it after training.", "pt-BR": "Antes do treino, escreva o que vai executar, medir e ajustar. Revise isso apos o treino." }
+    },
+    {
+      "exerciseId": "HAPPY_MANAGEMENT_002",
+      "parameter": "MANAGEMENT",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Plan-to-Action Review", "pt-BR": "Revisao Plano para Acao" },
+      "objective": { "en-US": "Check whether planning became action.", "pt-BR": "Verificar se o planejamento virou acao." },
+      "howToDo": { "en-US": "Report what was planned, what was executed, what was skipped and what needs adjustment.", "pt-BR": "Relate o que foi planejado, executado, pulado e o que precisa de ajuste." }
+    },
+    {
+      "exerciseId": "HAPPY_MANAGEMENT_003",
+      "parameter": "MANAGEMENT",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Daily Process Score", "pt-BR": "Pontuacao Diaria de Processo" },
+      "objective": { "en-US": "Prioritize process over outcome.", "pt-BR": "Priorizar processo acima do resultado." },
+      "howToDo": { "en-US": "Score process execution from 1 to 5 and define one behavior to repeat next session.", "pt-BR": "Avalie a execucao do processo de 1 a 5 e defina um comportamento para repetir na proxima sessao." }
+    },
+    {
+      "exerciseId": "HAPPY_ANALYSIS_001",
+      "parameter": "ANALYSIS",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "After Action Review", "pt-BR": "Revisao Pos-Acao" },
+      "objective": { "en-US": "Turn training into learning.", "pt-BR": "Transformar treino em aprendizado." },
+      "howToDo": { "en-US": "Answer what was the objective, what happened, why it happened, what to repeat and what to change.", "pt-BR": "Responda qual era o objetivo, o que aconteceu, por que aconteceu, o que repetir e o que mudar." }
+    },
+    {
+      "exerciseId": "HAPPY_ANALYSIS_002",
+      "parameter": "ANALYSIS",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Error-to-Data Reframe", "pt-BR": "Erro para Dado" },
+      "objective": { "en-US": "Stop mistakes from becoming identity.", "pt-BR": "Evitar que o erro vire identidade." },
+      "howToDo": { "en-US": "Convert a mistake into trigger, rhythm, posture, arousal, focus or decision data, then choose one correction.", "pt-BR": "Converta um erro em dado de gatilho, ritmo, postura, ativacao, foco ou decisao e escolha uma correcao." }
+    },
+    {
+      "exerciseId": "HAPPY_ANALYSIS_003",
+      "parameter": "ANALYSIS",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Learning Log", "pt-BR": "Log de Aprendizagem" },
+      "objective": { "en-US": "Track recurring lessons.", "pt-BR": "Rastrear licoes recorrentes." },
+      "howToDo": { "en-US": "At the end of the week, list the three most repeated lessons and define the next priority.", "pt-BR": "Ao fim da semana, liste as tres licoes mais repetidas e defina a proxima prioridade." }
+    },
+    {
+      "exerciseId": "HAPPY_NERVE_001",
+      "parameter": "NERVE",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Pressure Reset Routine", "pt-BR": "Rotina de Reset sob Pressao" },
+      "objective": { "en-US": "Recover after an error under pressure.", "pt-BR": "Recuperar-se apos erro sob pressao." },
+      "howToDo": { "en-US": "Use one breath, one posture reset, one cue word and one process instruction before the next shot or block.", "pt-BR": "Use uma respiracao, um reset de postura, uma palavra-chave e uma instrucao de processo antes do proximo tiro ou bloco." }
+    },
+    {
+      "exerciseId": "HAPPY_NERVE_002",
+      "parameter": "NERVE",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Pressure Simulation Ladder", "pt-BR": "Escada de Simulacao de Pressao" },
+      "objective": { "en-US": "Build tolerance to competitive pressure.", "pt-BR": "Construir tolerancia a pressao competitiva." },
+      "howToDo": { "en-US": "Increase constraints gradually with score goals, time limits, public counting or final-shot scenarios.", "pt-BR": "Aumente as restricoes gradualmente com metas de pontuacao, limite de tempo, contagem publica ou cenarios de tiro final." }
+    },
+    {
+      "exerciseId": "HAPPY_NERVE_003",
+      "parameter": "NERVE",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Emotional Control Window", "pt-BR": "Janela de Controle Emocional" },
+      "objective": { "en-US": "Identify when pressure enters the sequence.", "pt-BR": "Identificar quando a pressao entra na sequencia." },
+      "howToDo": { "en-US": "Mark whether pressure appeared before the first shot, during execution, after error or at the end.", "pt-BR": "Marque se a pressao apareceu antes do primeiro tiro, durante a execucao, apos erro ou ao final." }
+    },
+    {
+      "exerciseId": "HAPPY_DISCIPLINE_001",
+      "parameter": "DISCIPLINE",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Non-Negotiable Habit", "pt-BR": "Habito Inegociavel" },
+      "objective": { "en-US": "Strengthen consistency with one daily action.", "pt-BR": "Fortalecer a consistencia com uma acao diaria." },
+      "howToDo": { "en-US": "Choose one small daily behavior linked to the objective and track it for 14 days.", "pt-BR": "Escolha um pequeno comportamento diario ligado ao objetivo e acompanhe por 14 dias." }
+    },
+    {
+      "exerciseId": "HAPPY_DISCIPLINE_002",
+      "parameter": "DISCIPLINE",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Minimum Session Rule", "pt-BR": "Regra da Sessao Minima" },
+      "objective": { "en-US": "Protect continuity on low-motivation days.", "pt-BR": "Proteger a continuidade em dias de baixa motivacao." },
+      "howToDo": { "en-US": "On difficult days, execute a minimum version of the session instead of breaking the chain.", "pt-BR": "Em dias dificeis, execute uma versao minima da sessao em vez de quebrar a sequencia." }
+    },
+    {
+      "exerciseId": "HAPPY_DISCIPLINE_003",
+      "parameter": "DISCIPLINE",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Commitment Review", "pt-BR": "Revisao de Compromisso" },
+      "objective": { "en-US": "Reconnect behavior to the declared objective.", "pt-BR": "Reconectar comportamento ao objetivo declarado." },
+      "howToDo": { "en-US": "Once per week, compare goal, completed sessions, missed actions and define one correction.", "pt-BR": "Uma vez por semana, compare meta, sessoes realizadas, acoes perdidas e defina uma correcao." }
+    },
+    {
+      "exerciseId": "HAPPY_OPPORTUNITY_001",
+      "parameter": "OPPORTUNITY",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Feedback Utilization Log", "pt-BR": "Log de Uso do Feedback" },
+      "objective": { "en-US": "Ensure coach feedback becomes action.", "pt-BR": "Garantir que o feedback do coach vire acao." },
+      "howToDo": { "en-US": "Write the feedback, the next drill where it will be used and the evidence of improvement.", "pt-BR": "Escreva o feedback, o proximo treino onde sera usado e a evidencia de melhora." }
+    },
+    {
+      "exerciseId": "HAPPY_OPPORTUNITY_002",
+      "parameter": "OPPORTUNITY",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Opportunity Scan", "pt-BR": "Varredura de Oportunidades" },
+      "objective": { "en-US": "Recognize growth chances in the environment.", "pt-BR": "Reconhecer chances de crescimento no ambiente." },
+      "howToDo": { "en-US": "List weekly opportunities such as coach feedback, video, competition, recovery or data review, then choose one.", "pt-BR": "Liste semanalmente oportunidades como feedback, video, competicao, recuperacao ou revisao de dados e escolha uma." }
+    },
+    {
+      "exerciseId": "HAPPY_OPPORTUNITY_003",
+      "parameter": "OPPORTUNITY",
+      "sourceSystem": "COMANDO",
+      "name": { "en-US": "Coach Question Practice", "pt-BR": "Pratica de Pergunta ao Coach" },
+      "objective": { "en-US": "Increase active learning.", "pt-BR": "Aumentar o aprendizado ativo." },
+      "howToDo": { "en-US": "Before coach review, prepare one specific question about technique, pressure, routine or execution.", "pt-BR": "Antes da revisao com o coach, prepare uma pergunta especifica sobre tecnica, pressao, rotina ou execucao." }
+    },
+    {
+      "exerciseId": "HAPPY_HEED_001",
+      "parameter": "HEED",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Arousal Awareness Log", "pt-BR": "Log de Consciencia de Ativacao" },
+      "objective": { "en-US": "Improve awareness of competitive arousal.", "pt-BR": "Melhorar a consciencia da ativacao competitiva." },
+      "howToDo": { "en-US": "Rate arousal from 1 to 5 before, during and after training and compare it with rhythm and pressure.", "pt-BR": "Avalie a ativacao de 1 a 5 antes, durante e depois do treino e compare com ritmo e pressao." }
+    },
+    {
+      "exerciseId": "HAPPY_HEED_002",
+      "parameter": "HEED",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Optimal Competitive Arousal Routine", "pt-BR": "Rotina de Ativacao Competitiva Ideal" },
+      "objective": { "en-US": "Reach the athlete optimal arousal zone.", "pt-BR": "Alcancar a zona ideal de ativacao do atleta." },
+      "howToDo": { "en-US": "Adjust breathing, posture, visual focus and cue before training or competition, then rate readiness.", "pt-BR": "Ajuste respiracao, postura, foco visual e pista mental antes do treino ou competicao e depois avalie a prontidao." }
+    },
+    {
+      "exerciseId": "HAPPY_HEED_003",
+      "parameter": "HEED",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Pre/Post Check-In", "pt-BR": "Check-In Pre e Pos" },
+      "objective": { "en-US": "Connect internal state to performance evidence.", "pt-BR": "Conectar estado interno a evidencia de performance." },
+      "howToDo": { "en-US": "Before and after training, answer arousal, focus, confidence, tension and readiness in a quick log.", "pt-BR": "Antes e depois do treino, responda ativacao, foco, confianca, tensao e prontidao em um log rapido." }
+    },
+    {
+      "exerciseId": "HAPPY_ALIGNMENT_001",
+      "parameter": "ALIGNMENT",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Coach-Athlete Alignment Session", "pt-BR": "Sessao de Alinhamento Coach-Atleta" },
+      "objective": { "en-US": "Clarify what the athlete must do to approach the objective.", "pt-BR": "Esclarecer o que o atleta deve fazer para se aproximar do objetivo." },
+      "howToDo": { "en-US": "Once per week, define the main objective, why it matters, the key action and the success metric.", "pt-BR": "Uma vez por semana, defina objetivo principal, por que importa, acao-chave e metrica de sucesso." }
+    },
+    {
+      "exerciseId": "HAPPY_ALIGNMENT_002",
+      "parameter": "ALIGNMENT",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Training Direction Card", "pt-BR": "Cartao de Direcao do Treino" },
+      "objective": { "en-US": "Convert strategy into a simple instruction.", "pt-BR": "Converter estrategia em uma instrucao simples." },
+      "howToDo": { "en-US": "For each session, define one sentence with the priority and the reason, then ask the athlete to repeat it.", "pt-BR": "Para cada sessao, defina uma frase com a prioridade e o motivo e peca ao atleta que a repita." }
+    },
+    {
+      "exerciseId": "HAPPY_ALIGNMENT_003",
+      "parameter": "ALIGNMENT",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Misalignment Flag", "pt-BR": "Sinal de Desalinhamento" },
+      "objective": { "en-US": "Detect when the athlete does not understand the plan.", "pt-BR": "Detectar quando o atleta nao entende o plano." },
+      "howToDo": { "en-US": "If alignment or plan is 2 or below, ask the athlete to write what is unclear and resolve it with one measurable criterion.", "pt-BR": "Se alinhamento ou plano estiver em 2 ou menos, peca ao atleta para escrever o que esta confuso e resolva com um criterio mensuravel." }
+    },
+    {
+      "exerciseId": "HAPPY_PLAN_001",
+      "parameter": "PLAN",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Plan Fit Review", "pt-BR": "Revisao de Ajuste do Plano" },
+      "objective": { "en-US": "Check whether the plan fits the athlete reality.", "pt-BR": "Verificar se o plano encaixa na realidade do atleta." },
+      "howToDo": { "en-US": "At the end of the week, rate plan fit from 1 to 5 and identify barriers such as time, fatigue or clarity.", "pt-BR": "No fim da semana, avalie o encaixe do plano de 1 a 5 e identifique barreiras como tempo, fadiga ou clareza." }
+    },
+    {
+      "exerciseId": "HAPPY_PLAN_002",
+      "parameter": "PLAN",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Plan Adherence Sheet", "pt-BR": "Ficha de Adesao ao Plano" },
+      "objective": { "en-US": "Measure adherence without blame.", "pt-BR": "Medir adesao sem culpa." },
+      "howToDo": { "en-US": "Mark each planned session as completed, partial, missed or modified with one reason and one next action.", "pt-BR": "Marque cada sessao planejada como concluida, parcial, perdida ou modificada com um motivo e uma proxima acao." }
+    },
+    {
+      "exerciseId": "HAPPY_PLAN_003",
+      "parameter": "PLAN",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Plan Confidence Check", "pt-BR": "Checagem de Confianca no Plano" },
+      "objective": { "en-US": "Detect resistance to the process.", "pt-BR": "Detectar resistencia ao processo." },
+      "howToDo": { "en-US": "Answer if the plan is understood, believed and executable this week. Scores below 3 trigger coach conversation.", "pt-BR": "Responda se o plano e entendido, acreditado e executavel nesta semana. Pontuacoes abaixo de 3 acionam conversa com o coach." }
+    },
+    {
+      "exerciseId": "HAPPY_POWERING_001",
+      "parameter": "POWERING",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Energy Investment Score", "pt-BR": "Pontuacao de Investimento de Energia" },
+      "objective": { "en-US": "Measure how much useful energy the athlete applies.", "pt-BR": "Medir quanta energia util o atleta aplica." },
+      "howToDo": { "en-US": "Rate energy before and after training and compare it with physical degradation, rhythm and pressure.", "pt-BR": "Avalie a energia antes e depois do treino e compare com degradacao fisica, ritmo e pressao." }
+    },
+    {
+      "exerciseId": "HAPPY_POWERING_002",
+      "parameter": "POWERING",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Activation Block", "pt-BR": "Bloco de Ativacao" },
+      "objective": { "en-US": "Raise energy without losing precision.", "pt-BR": "Elevar energia sem perder precisao." },
+      "howToDo": { "en-US": "Use a short warm-up with posture, breathing, mobility, visualization and one technical dry-run.", "pt-BR": "Use um aquecimento curto com postura, respiracao, mobilidade, visualizacao e um ensaio tecnico em seco." }
+    },
+    {
+      "exerciseId": "HAPPY_POWERING_003",
+      "parameter": "POWERING",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Effort Quality Review", "pt-BR": "Revisao da Qualidade do Esforco" },
+      "objective": { "en-US": "Separate effort from useful effort.", "pt-BR": "Separar esforco de esforco util." },
+      "howToDo": { "en-US": "After training, answer whether the energy was directed to the right task and what to adjust next.", "pt-BR": "Apos o treino, responda se a energia foi direcionada para a tarefa certa e o que ajustar depois." }
+    },
+    {
+      "exerciseId": "HAPPY_YEARN_001",
+      "parameter": "YEARN",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Goal Contract", "pt-BR": "Contrato de Meta" },
+      "objective": { "en-US": "Convert long-term desire into visible commitment.", "pt-BR": "Converter desejo de longo prazo em compromisso visivel." },
+      "howToDo": { "en-US": "Write the season objective, why it matters, required sacrifices and weekly minimum behaviors.", "pt-BR": "Escreva o objetivo da temporada, por que importa, sacrificios necessarios e comportamentos minimos semanais." }
+    },
+    {
+      "exerciseId": "HAPPY_YEARN_002",
+      "parameter": "YEARN",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Time Audit", "pt-BR": "Auditoria de Tempo" },
+      "objective": { "en-US": "Compare ambition with actual time investment.", "pt-BR": "Comparar ambicao com investimento real de tempo." },
+      "howToDo": { "en-US": "For seven days, record time spent on training, recovery, analysis, physical work and distraction.", "pt-BR": "Por sete dias, registre o tempo gasto com treino, recuperacao, analise, fisico e distracao." }
+    },
+    {
+      "exerciseId": "HAPPY_YEARN_003",
+      "parameter": "YEARN",
+      "sourceSystem": "HAPPY",
+      "name": { "en-US": "Champion Mindset Statement", "pt-BR": "Declaracao de Mentalidade Campea" },
+      "objective": { "en-US": "Make the objective emotionally clear.", "pt-BR": "Tornar o objetivo emocionalmente claro." },
+      "howToDo": { "en-US": "Write what you are pursuing, why it matters, what to do when motivation is low and what to stop doing.", "pt-BR": "Escreva o que esta buscando, por que importa, o que fazer quando a motivacao cair e o que parar de fazer." }
+    }
+  ]
+}

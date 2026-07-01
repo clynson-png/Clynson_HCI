@@ -1,0 +1,282 @@
+shared HCI_KNOWLEDGE_PLAN = let
+    FonteTargets =
+        Excel.CurrentWorkbook(){[Name="HCI_PERF_TARGETS"]}[Content],
+
+    FonteStructure =
+        Excel.CurrentWorkbook(){[Name="HCI_PERF_STRUCTURE"]}[Content],
+
+    TargetsTipos =
+        Table.TransformColumnTypes(
+            FonteTargets,
+            {
+                {"PARAMETER", type text},
+                {"SCORE", type number},
+                {"CURRENT_LEVEL", type text},
+                {"REPORT_PROFILE", type text}
+            },
+            "pt-BR"
+        ),
+
+    StructureTipos =
+        Table.TransformColumnTypes(
+            FonteStructure,
+            {
+                {"PARAMETER", type text},
+                {"SCORE", type number},
+                {"CURRENT_LEVEL", type text},
+                {"REPORT_PROFILE", type text}
+            },
+            "pt-BR"
+        ),
+
+    JuntarMotores =
+        Table.Combine({TargetsTipos, StructureTipos}),
+
+    RemoverNulos =
+        Table.SelectRows(
+            JuntarMotores,
+            each [SCORE] <> null and [PARAMETER] <> null and Text.Trim(Text.From([PARAMETER])) <> ""
+        ),
+
+    Add_PRIORITY_SCORE =
+        Table.AddColumn(
+            RemoverNulos,
+            "PRIORITY_SCORE",
+            each
+                if [PARAMETER] = "PHYSICAL_DEGRADATION" then
+                    10 - [SCORE]
+                else
+                    [SCORE],
+            type number
+        ),
+
+    OrdenarPrioridade =
+        Table.Sort(
+            Add_PRIORITY_SCORE,
+            {
+                {"PRIORITY_SCORE", Order.Ascending},
+                {"PARAMETER", Order.Ascending}
+            }
+        ),
+
+    Add_PARAMETER_RANK =
+        Table.AddIndexColumn(
+            OrdenarPrioridade,
+            "PARAMETER_RANK",
+            1,
+            1,
+            Int64.Type
+        ),
+
+    NivelTexto = (nivel as nullable text) as text =>
+        if nivel = null or Text.Trim(Text.From(nivel)) = "" then
+            "Not available"
+        else
+            Text.From(nivel),
+
+    // =========================================================
+    // Criar pares rankeáveis sem limitar aos 4 primeiros
+    // =========================================================
+
+    BaseA =
+        Table.RenameColumns(
+            Table.SelectColumns(
+                Add_PARAMETER_RANK,
+                {
+                    "PARAMETER",
+                    "CURRENT_LEVEL",
+                    "SCORE",
+                    "PRIORITY_SCORE",
+                    "PARAMETER_RANK",
+                    "REPORT_PROFILE"
+                }
+            ),
+            {
+                {"PARAMETER", "PARAMETER_1"},
+                {"CURRENT_LEVEL", "LEVEL_1"},
+                {"SCORE", "SCORE_1"},
+                {"PRIORITY_SCORE", "PRIORITY_SCORE_1"},
+                {"PARAMETER_RANK", "PARAMETER_RANK_1"},
+                {"REPORT_PROFILE", "REPORT_PROFILE_1"}
+            }
+        ),
+
+    BaseB =
+        Table.RenameColumns(
+            Table.SelectColumns(
+                Add_PARAMETER_RANK,
+                {
+                    "PARAMETER",
+                    "CURRENT_LEVEL",
+                    "SCORE",
+                    "PRIORITY_SCORE",
+                    "PARAMETER_RANK",
+                    "REPORT_PROFILE"
+                }
+            ),
+            {
+                {"PARAMETER", "PARAMETER_2"},
+                {"CURRENT_LEVEL", "LEVEL_2"},
+                {"SCORE", "SCORE_2"},
+                {"PRIORITY_SCORE", "PRIORITY_SCORE_2"},
+                {"PARAMETER_RANK", "PARAMETER_RANK_2"},
+                {"REPORT_PROFILE", "REPORT_PROFILE_2"}
+            }
+        ),
+
+    AddKeyA =
+        Table.AddColumn(
+            BaseA,
+            "_KEY",
+            each 1,
+            Int64.Type
+        ),
+
+    AddKeyB =
+        Table.AddColumn(
+            BaseB,
+            "_KEY",
+            each 1,
+            Int64.Type
+        ),
+
+    JoinPares =
+        Table.NestedJoin(
+            AddKeyA,
+            {"_KEY"},
+            AddKeyB,
+            {"_KEY"},
+            "PARES",
+            JoinKind.Inner
+        ),
+
+    ExpandPares =
+        Table.ExpandTableColumn(
+            JoinPares,
+            "PARES",
+            {
+                "PARAMETER_2",
+                "LEVEL_2",
+                "SCORE_2",
+                "PRIORITY_SCORE_2",
+                "PARAMETER_RANK_2",
+                "REPORT_PROFILE_2"
+            },
+            {
+                "PARAMETER_2",
+                "LEVEL_2",
+                "SCORE_2",
+                "PRIORITY_SCORE_2",
+                "PARAMETER_RANK_2",
+                "REPORT_PROFILE_2"
+            }
+        ),
+
+    RemoverDuplicadosInvertidos =
+        Table.SelectRows(
+            ExpandPares,
+            each [PARAMETER_RANK_1] < [PARAMETER_RANK_2]
+        ),
+
+    Add_PAIR_PRIORITY_SCORE =
+        Table.AddColumn(
+            RemoverDuplicadosInvertidos,
+            "PAIR_PRIORITY_SCORE",
+            each [PARAMETER_RANK_1] + [PARAMETER_RANK_2],
+            Int64.Type
+        ),
+
+    Add_PAIR_SCORE_SUM =
+        Table.AddColumn(
+            Add_PAIR_PRIORITY_SCORE,
+            "PAIR_SCORE_SUM",
+            each [PRIORITY_SCORE_1] + [PRIORITY_SCORE_2],
+            type number
+        ),
+
+    Add_PAIR_SCORE_AVG =
+        Table.AddColumn(
+            Add_PAIR_SCORE_SUM,
+            "PAIR_SCORE_AVG",
+            each ([PRIORITY_SCORE_1] + [PRIORITY_SCORE_2]) / 2,
+            type number
+        ),
+
+    Add_INSIGHT =
+        Table.AddColumn(
+            Add_PAIR_SCORE_AVG,
+            "INSIGHT",
+            each
+                Text.From([PARAMETER_1]) &
+                " and " &
+                Text.From([PARAMETER_2]) &
+                " are current limiting factors. " &
+                Text.From([PARAMETER_1]) &
+                " is at " &
+                NivelTexto([LEVEL_1]) &
+                " level, while " &
+                Text.From([PARAMETER_2]) &
+                " is at " &
+                NivelTexto([LEVEL_2]) &
+                " level. Training should prioritize the interaction between these two demands.",
+            type text
+        ),
+
+    Add_TO_DO =
+        Table.AddColumn(
+            Add_INSIGHT,
+            "TO_DO",
+            each
+                "Attack bottleneck in " &
+                Text.From([PARAMETER_1]) &
+                " and " &
+                Text.From([PARAMETER_2]) &
+                ": convert diagnosis into targeted training blocks with measurable progression.",
+            type text
+        ),
+
+    OrdenarPares =
+        Table.Sort(
+            Add_TO_DO,
+            {
+                {"PAIR_PRIORITY_SCORE", Order.Ascending},
+                {"PAIR_SCORE_SUM", Order.Ascending},
+                {"PARAMETER_RANK_1", Order.Ascending},
+                {"PARAMETER_RANK_2", Order.Ascending},
+                {"PARAMETER_1", Order.Ascending},
+                {"PARAMETER_2", Order.Ascending}
+            }
+        ),
+
+    Add_RANK =
+        Table.AddIndexColumn(
+            OrdenarPares,
+            "RANK",
+            1,
+            1,
+            Int64.Type
+        ),
+
+    Resultado =
+        Table.SelectColumns(
+            Add_RANK,
+            {
+                "RANK",
+                "PARAMETER_1",
+                "LEVEL_1",
+                "PARAMETER_2",
+                "LEVEL_2",
+                "INSIGHT",
+                "TO_DO",
+                "PARAMETER_RANK_1",
+                "PARAMETER_RANK_2",
+                "PRIORITY_SCORE_1",
+                "PRIORITY_SCORE_2",
+                "PAIR_PRIORITY_SCORE",
+                "PAIR_SCORE_SUM",
+                "PAIR_SCORE_AVG"
+            }
+        )
+
+in
+    Resultado;

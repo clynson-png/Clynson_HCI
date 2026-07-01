@@ -1,0 +1,19 @@
+﻿
+06-01 12:48:57.020  2922  3788 I NullBinder: NullBinder for android.net.action.RECOMMEND_NETWORKS triggering remote 
+TransactionTooLargeException due to Service without Chimera impl, calling uid: 1000, calling pid: 0
+06-01 12:48:57.039  9987 10067 W BulkCursor: Remote process exception when closing
+06-01 12:48:57.805 10665 10665 D nativeloader: Configuring clns-9 for other apk 
+/data/app/~~iMDbzyoXTUCkvV7ue-gvNw==/com.example.sportsperformance-_fFEO_RElq2gVHm7IKzGuA==/base.apk. 
+target_sdk_version=37, uses_libraries=, library_path=/data/app/~~iMDbzyoXTUCkvV7ue-gvNw==/com.example.sportsperformance
+-_fFEO_RElq2gVHm7IKzGuA==/lib/x86_64:/data/app/~~iMDbzyoXTUCkvV7ue-gvNw==/com.example.sportsperformance-_fFEO_RElq2gVHm
+7IKzGuA==/base.apk!/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/com.example.sportsperformance
+06-01 12:48:57.883 10665 10665 V GraphicsEnvironment: com.example.sportsperformance is not listed in per-application 
+setting
+06-01 12:48:58.484 10650 10650 E FeatureFlagsImplExport: android.os.flagging.AconfigStorageReadException: 
+ERROR_PACKAGE_NOT_FOUND: package android.xr cannot be found on the device
+06-01 12:49:00.197   786  2738 D CoreBackPreview: Window{637753b u0 
+com.example.sportsperformance/com.example.sportsperformance.MainActivity}: Setting back callback 
+OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@c9e2a17, mPriority=-1, 
+mIsAnimationCallback=false, mOverrideBehavior=0}
+
+

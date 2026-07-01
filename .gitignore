@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.gradle/
+*.apk
+*.aab
+
+# Local/editor state
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Temporary/checkpoint artifacts
+checkpoints/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Android generated files
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+

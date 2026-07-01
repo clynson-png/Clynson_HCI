@@ -1,0 +1,340 @@
+shared TB_HCI_TRAINING_BI_CLASSIFIED = let
+    Fonte_TRAINING_BI =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_TRAINING_BI"]}[Content],
+
+    TextoLimpo = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    CampoSeguro = (linha as record, nome as text, optional padrao as any) as any =>
+        if Record.HasFields(linha, nome)
+        then Record.Field(linha, nome)
+        else padrao,
+
+    AddPlanCodeList =
+        Table.AddColumn(
+            Fonte_TRAINING_BI,
+            "PLAN_CODE_LIST",
+            each
+                let
+                    dominio = TextoLimpo(CampoSeguro(_, "TRAINING_DOMAIN", "")),
+                    familia = TextoLimpo(CampoSeguro(_, "TRAINING_FAMILY", "")),
+                    componente = TextoLimpo(CampoSeguro(_, "TRAINING_COMPONENT", "")),
+                    componentDomain = TextoLimpo(CampoSeguro(_, "COMPONENT_DOMAIN", "")),
+                    parametro = TextoLimpo(CampoSeguro(_, "HCI_PARAMETER", "")),
+                    package = TextoLimpo(CampoSeguro(_, "PACKAGE_TYPE", "")),
+                    nome = TextoLimpo(CampoSeguro(_, "TRAINING_NAME_ORIGINAL", "")),
+                    nomeEN = TextoLimpo(CampoSeguro(_, "TRAINING_NAME_EN", "")),
+                    objetivo = TextoLimpo(CampoSeguro(_, "OBJECTIVE_ORIGINAL", "")),
+                    descricao = TextoLimpo(CampoSeguro(_, "EXERCISE_DESCRIPTION_ORIGINAL", "")),
+                    observacao = TextoLimpo(CampoSeguro(_, "OBSERVATION_ORIGINAL", "")),
+
+                    textoGeral =
+                        Text.Combine(
+                            {
+                                dominio,
+                                familia,
+                                componente,
+                                componentDomain,
+                                parametro,
+                                package,
+                                nome,
+                                nomeEN,
+                                objetivo,
+                                descricao,
+                                observacao
+                            },
+                            " "
+                        ),
+
+                    codesRaw =
+                        {
+                            if Text.Contains(parametro, "RHYTHM")
+                                or Text.Contains(familia, "RHYTHM")
+                                or Text.Contains(componente, "RHYTHM")
+                                or Text.Contains(nome, "RHYTHM")
+                                or Text.Contains(textoGeral, "RITMO")
+                            then "RT" else null,
+
+                            if Text.Contains(parametro, "DEEPENING")
+                                or Text.Contains(familia, "DEEPENING")
+                                or Text.Contains(componente, "DEEPENING")
+                                or Text.Contains(nome, "DEEPENING")
+                                or Text.Contains(textoGeral, "DEEP")
+                                or Text.Contains(textoGeral, "APROFUND")
+                            then "D" else null,
+
+                            if Text.Contains(familia, "AIM")
+                                or Text.Contains(familia, "AIMING")
+                                or Text.Contains(familia, "TRIGGER")
+                                or Text.Contains(familia, "TRIGGERING")
+                                or Text.Contains(componente, "AIM")
+                                or Text.Contains(componente, "AIMING")
+                                or Text.Contains(componente, "TRIGGER")
+                                or Text.Contains(componente, "TRIGGERING")
+                                or Text.Contains(textoGeral, "AIM")
+                                or Text.Contains(textoGeral, "MIRA")
+                                or Text.Contains(textoGeral, "TRIGGER")
+                                or Text.Contains(textoGeral, "GATILHO")
+                            then "AT" else null,
+
+                            if Text.Contains(familia, "POSITION")
+                                or Text.Contains(componente, "POSITION")
+                                or Text.Contains(familia, "POSTURE")
+                                or Text.Contains(componente, "POSTURE")
+                                or Text.Contains(textoGeral, "POSITION")
+                                or Text.Contains(textoGeral, "POSIÇÃO")
+                                or Text.Contains(textoGeral, "POSICAO")
+                                or Text.Contains(textoGeral, "POSTURE")
+                                or Text.Contains(textoGeral, "POSTURA")
+                            then "PT" else null,
+
+                            if Text.Contains(familia, "PRECISION")
+                                or Text.Contains(componente, "PRECISION")
+                                or Text.Contains(nome, "PRECISION")
+                                or Text.Contains(objetivo, "PRECISION")
+                                or Text.Contains(textoGeral, "PRECISÃO")
+                                or Text.Contains(textoGeral, "PRECISAO")
+                            then "P" else null,
+
+                            if Text.Contains(parametro, "PROCESS")
+                                or Text.Contains(familia, "QUALITY")
+                                or Text.Contains(componente, "QUALITY")
+                                or Text.Contains(nome, "QUALITY")
+                                or Text.Contains(objetivo, "QUALITY")
+                                or Text.Contains(descricao, "QUALITY")
+                                or Text.Contains(textoGeral, "QUALIDADE")
+                                or Text.Contains(textoGeral, "PROCESS")
+                                or Text.Contains(textoGeral, "PROCESSO")
+                            then "Q" else null,
+
+                            if Text.Contains(familia, "WRIST")
+                                or Text.Contains(componente, "WRIST")
+                                or Text.Contains(nome, "WRIST")
+                                or Text.Contains(descricao, "WRIST")
+                                or Text.Contains(textoGeral, "PUNHO")
+                            then "W" else null,
+
+                            if Text.Contains(dominio, "COMPETITION")
+                                or Text.Contains(package, "PROVA")
+                                or Text.Contains(package, "COMPETITION")
+                                or Text.Contains(nome, "RESULTS CONTROL")
+                                or Text.Contains(nome, "TEST EVENT")
+                                or Text.Contains(objetivo, "RESULT")
+                                or Text.Contains(textoGeral, "RESULTADO")
+                                or Text.Contains(textoGeral, "CONTROLE DE RESULTADO")
+                            then "COM" else null,
+
+                            if Text.Contains(nome, "SIMULATED COMPETITION")
+                                or Text.Contains(nome, "SIMULATION")
+                                or Text.Contains(nome, "SIMULA")
+                                or Text.Contains(parametro, "RECOVERY")
+                                or Text.Contains(familia, "CONTINGENCY")
+                                or Text.Contains(componente, "CONTINGENCY")
+                                or Text.Contains(objetivo, "CONTINGENCY")
+                                or Text.Contains(textoGeral, "RECOVERY")
+                                or Text.Contains(textoGeral, "RECUPERA")
+                                or Text.Contains(textoGeral, "CONTING")
+                            then "SC" else null,
+
+                            if Text.Contains(nome, "COMPETITION DAY")
+                                or Text.Contains(nome, "MATCH DAY")
+                                or Text.Contains(dominio, "COMPETITION_DAY")
+                                or Text.Contains(componente, "COMPETITION_DAY")
+                                or Text.Contains(textoGeral, "DIA DE competicao")
+                                or Text.Contains(textoGeral, "DIA DE COMPETICAO")
+                            then "COMPET" else null,
+
+                            if Text.Contains(dominio, "MENTAL")
+                                or Text.Contains(familia, "MENTAL")
+                                or Text.Contains(componente, "MENTAL")
+                                or Text.Contains(familia, "WINNING_MINDSET")
+                                or Text.Contains(familia, "MINDSHOOTING")
+                                or Text.Contains(nome, "RITUAL")
+                                or Text.Contains(nome, "RIT")
+                                or Text.Contains(textoGeral, "MENTAL")
+                                or Text.Contains(textoGeral, "MIND")
+                            then "RIT" else null
+                        },
+
+                    codes =
+                        List.Distinct(List.RemoveNulls(codesRaw)),
+
+                    resultado =
+                        Text.Combine(codes, ";")
+                in
+                    resultado,
+            type text
+        ),
+
+    AddPlanCodeCount =
+        Table.AddColumn(
+            AddPlanCodeList,
+            "PLAN_CODE_COUNT",
+            each
+                let
+                    lista = TextoLimpo(CampoSeguro(_, "PLAN_CODE_LIST", "")),
+                    itens =
+                        if lista = ""
+                        then {}
+                        else Text.Split(lista, ";")
+                in
+                    List.Count(List.Select(itens, each Text.Trim(_) <> "")),
+            Int64.Type
+        ),
+
+    AddTrainingBlockType =
+        Table.AddColumn(
+            AddPlanCodeCount,
+            "TRAINING_BLOCK_TYPE",
+            each
+                let
+                    qtd = CampoSeguro(_, "PLAN_CODE_COUNT", 0)
+                in
+                    if qtd = 0 then "UNMAPPED"
+                    else if qtd = 1 then "PURE"
+                    else if qtd = 2 then "BLOCK_2"
+                    else "BLOCK_3_PLUS",
+            type text
+        ),
+
+    AddPlanCodePrimary =
+        Table.AddColumn(
+            AddTrainingBlockType,
+            "PLAN_CODE_PRIMARY",
+            each
+                let
+                    codes = TextoLimpo(CampoSeguro(_, "PLAN_CODE_LIST", "")),
+                    ordem = {"COM", "COMPET", "SC", "RT", "D", "AT", "PT", "P", "Q", "W", "RIT"},
+                    encontrados =
+                        List.Select(
+                            ordem,
+                            each Text.Contains(codes, _)
+                        )
+                in
+                    if List.Count(encontrados) > 0
+                    then encontrados{0}
+                    else "UNMAPPED",
+            type text
+        ),
+
+    AddPlanCodeSort =
+        Table.AddColumn(
+            AddPlanCodePrimary,
+            "PLAN_CODE_SORT",
+            each
+                let
+                    code = TextoLimpo(CampoSeguro(_, "PLAN_CODE_PRIMARY", ""))
+                in
+                    if code = "COM" then 10
+                    else if code = "COMPET" then 20
+                    else if code = "SC" then 30
+                    else if code = "RT" then 40
+                    else if code = "D" then 50
+                    else if code = "AT" then 60
+                    else if code = "PT" then 70
+                    else if code = "P" then 80
+                    else if code = "Q" then 90
+                    else if code = "W" then 100
+                    else if code = "RIT" then 110
+                    else 999,
+            Int64.Type
+        ),
+
+    AddPhaseSort =
+        Table.AddColumn(
+            AddPlanCodeSort,
+            "PHASE_SORT",
+            each
+                let
+                    fase = TextoLimpo(CampoSeguro(_, "PERIODIZATION_PHASE", "")),
+                    gp = CampoSeguro(_, "PHASE_GENERAL_PREPARATION", false),
+                    sp = CampoSeguro(_, "PHASE_SPECIFIC_PREPARATION", false),
+                    pc = CampoSeguro(_, "PHASE_PRE_COMPETITION", false),
+                    co = CampoSeguro(_, "PHASE_COMPETITION", false)
+                in
+                    if Text.Contains(fase, "GENERAL_PREPARATION") or gp = true then 10
+                    else if Text.Contains(fase, "SPECIFIC_PREPARATION") or sp = true then 20
+                    else if Text.Contains(fase, "PRE_COMPETITION") or pc = true then 30
+                    else if Text.Contains(fase, "COMPETITION") or co = true then 40
+                    else 999,
+            Int64.Type
+        ),
+
+    AddBlockSort =
+        Table.AddColumn(
+            AddPhaseSort,
+            "BLOCK_SORT",
+            each
+                let
+                    tipo = TextoLimpo(CampoSeguro(_, "TRAINING_BLOCK_TYPE", ""))
+                in
+                    if tipo = "PURE" then 1
+                    else if tipo = "BLOCK_2" then 2
+                    else if tipo = "BLOCK_3_PLUS" then 3
+                    else 9,
+            Int64.Type
+        ),
+
+    AddClassificationStatus =
+        Table.AddColumn(
+            AddBlockSort,
+            "PLAN_CODE_CLASSIFICATION_STATUS",
+            each
+                if TextoLimpo(CampoSeguro(_, "PLAN_CODE_PRIMARY", "")) = "UNMAPPED"
+                then "NEEDS_REVIEW"
+                else "CLASSIFIED",
+            type text
+        ),
+
+        TrainingBIClassified =
+        Table.Sort(
+            AddClassificationStatus,
+            {
+                {"PLAN_CODE_SORT", Order.Ascending},
+                {"PHASE_SORT", Order.Ascending},
+                {"BLOCK_SORT", Order.Ascending},
+                {"RECOMMENDATION_PRIORITY", Order.Ascending},
+                {"PLAN_CODE_PRIMARY", Order.Ascending},
+                {"TRAINING_NAME_ORIGINAL", Order.Ascending}
+            }
+        ),
+
+            RemoverColunasInuteis =
+        Table.RemoveColumns(
+            TrainingBIClassified,
+            List.Combine(
+                {
+                    {
+                        "BI_ROW_ID",
+                        "CANONICAL_TRAINING_ID",
+                        "SOURCE_TRAINING_ID"
+                    },
+                    List.Transform({1..11}, each "Column" & Text.From(_)),
+                    List.Transform({1..11}, each "Coluna" & Text.From(_)),
+                    List.Transform({1..11}, each Text.From(_))
+                }
+            ),
+            MissingField.Ignore
+        ),
+        
+        ReordenarColunas =
+        Table.ReorderColumns(
+            RemoverColunasInuteis,
+            List.Combine(
+                {
+                    {
+                        "TRAINING_NAME_ORIGINAL"
+                    },
+                    List.RemoveItems(
+                        Table.ColumnNames(RemoverColunasInuteis),
+                        {
+                            "TRAINING_NAME_ORIGINAL"
+                        }
+                    )
+                }
+            ),
+            MissingField.Ignore
+        )
+
+in
+    ReordenarColunas;

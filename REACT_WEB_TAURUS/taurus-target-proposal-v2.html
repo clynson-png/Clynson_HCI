@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TAURUS TARGET Proposal</title>
+  <style>
+    :root {
+      --bg: #08111f;
+      --panel: #0f1c31;
+      --panel-2: #132544;
+      --line: rgba(255,255,255,0.08);
+      --text: #edf4ff;
+      --muted: #94a8c9;
+      --gold: #ffb020;
+      --orange: #ff7a1a;
+      --blue: #2f6bff;
+      --blue-soft: rgba(47,107,255,0.16);
+      --shadow: 0 20px 50px rgba(0,0,0,0.35);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(47,107,255,0.18), transparent 28%),
+        radial-gradient(circle at top left, rgba(255,176,32,0.12), transparent 24%),
+        linear-gradient(180deg, #07101d 0%, #0a1526 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 26px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr 0.95fr;
+      gap: 22px;
+      margin-bottom: 26px;
+    }
+
+    .hero-main,
+    .hero-side,
+    .panel,
+    .metric-card,
+    .field,
+    .card {
+      background: linear-gradient(180deg, rgba(19,37,68,0.96), rgba(12,23,42,0.96));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-main {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 220px;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(30px, 4vw, 38px);
+      line-height: 1.06;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--orange));
+      color: #07101d;
+    }
+
+    .btn-secondary {
+      background: var(--blue-soft);
+      color: var(--text);
+      border: 1px solid rgba(47,107,255,0.35);
+    }
+
+    .hero-side {
+      padding: 22px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .headline-metric {
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+    }
+
+    .headline-metric small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    .headline-metric strong {
+      font-size: 24px;
+      line-height: 1.2;
+      color: #fff;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .tab {
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--blue), #173e8f);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 0.95fr 1.15fr;
+      gap: 22px;
+    }
+
+    .panel {
+      padding: 24px;
+    }
+
+    .panel h2 {
+      margin: 0 0 18px;
+      font-size: 22px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255,176,32,0.14);
+      color: #ffd88a;
+      border: 1px solid rgba(255,176,32,0.18);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .entry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .field {
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      background: #091220;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .field textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .target-stage {
+      min-height: 620px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
+        #0a1425;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .target-stage .placeholder {
+      width: 80%;
+      max-width: 680px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.8;
+      padding: 24px;
+      border-radius: 20px;
+      border: 1px dashed rgba(255,255,255,0.18);
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .metric-card {
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+    }
+
+    .metric-card small {
+      display: block;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+
+    .metric-card strong {
+      font-size: 28px;
+      color: #fff;
+      line-height: 1.1;
+    }
+
+    .analysis {
+      display: grid;
+      grid-template-columns: 1.16fr 0.84fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .list li {
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .list li strong {
+      color: #fff;
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .alert {
+      border-left: 4px solid var(--gold);
+      background: linear-gradient(90deg, rgba(255,176,32,0.12), rgba(255,255,255,0.02));
+    }
+
+    .training-card {
+      background: linear-gradient(135deg, rgba(47,107,255,0.18), rgba(255,122,26,0.09));
+    }
+
+    .footer-strip {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    @media (max-width: 1100px) {
+      .hero,
+      .workspace,
+      .analysis,
+      .footer-strip {
+        grid-template-columns: 1fr;
+      }
+      .report-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: 18px; }
+      h1 { font-size: 28px; }
+      .target-stage { min-height: 520px; }
+      .entry-grid,
+      .report-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="hero-main">
+        <div>
+          <div class="eyebrow">TAURUS • HCI TARGET</div>
+          <h1>Transformar marcação manual em leitura técnica e treino acionável</h1>
+          <div class="hero-copy">
+            A aba Taurus Target deixa de ser apenas um lançador de dados. Ela se torna
+            uma central visual que orienta o coach pelos padrões de impacto, compara modais
+            e entrega recomendações de treino no mesmo fluxo.
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary">Nova sessão Taurus</button>
+          <button class="btn btn-secondary">Abrir histórico</button>
+          <button class="btn btn-secondary">Exportar relatório</button>
+        </div>
+      </div>
+
+      <aside class="hero-side">
+        <div class="headline-metric">
+          <small>Atleta</small>
+          <strong>João Silva</strong>
+        </div>
+        <div class="headline-metric">
+          <small>Modo ativo</small>
+          <strong>Humanoide / Cartões / Duelo 20</strong>
+        </div>
+        <div class="headline-metric">
+          <small>Valor agregado</small>
+          <strong>Leitura HCI pronta para coach</strong>
+        </div>
+      </aside>
+    </section>
+
+    <nav class="tabs">
+      <div class="tab active">Entrada</div>
+      <div class="tab">Saída</div>
+      <div class="tab">Smart Chart</div>
+      <div class="tab">Histórico</div>
+    </nav>
+
+    <section class="workspace">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Entrada de Dados</h2>
+          <div class="pill">Manual • Coach control</div>
+        </div>
+
+        <div class="entry-grid">
+          <div class="field">
+            <label>Atleta ativo</label>
+            <select>
+              <option>João Silva</option>
+              <option>Ana Pereira</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tipo de sessão</label>
+            <select>
+              <option>Humanoide</option>
+              <option>Cartões Coloridos</option>
+              <option>Duelo 20</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Disparos registrados</label>
+            <input value="20" />
+          </div>
+          <div class="field">
+            <label>Máximo de disparos</label>
+            <input value="20" />
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 14px;">
+          <small>Lógica do modo ativo</small>
+          <p>
+            No Humanoide, o coach marca impactos por zona Alfa, Charlie e Delta.
+            O motor Taurus interpreta esse padrão e entrega a leitura técnica
+            com foco no ponto mais fraco do conjunto.
+          </p>
+        </div>
+
+        <div class="entry-grid">
+          <div class="field"><label>Alpha cabeça</label><input value="4" /></div>
+          <div class="field"><label>Alpha tórax</label><input value="7" /></div>
+          <div class="field"><label>Charlie esquerda</label><input value="2" /></div>
+          <div class="field"><label>Charlie centro</label><input value="3" /></div>
+          <div class="field"><label>Charlie direita</label><input value="1" /></div>
+          <div class="field"><label>Delta esquerda</label><input value="1" /></div>
+          <div class="field"><label>Delta direita</label><input value="1" /></div>
+          <div class="field"><label>Delta inferior</label><input value="1" /></div>
+        </div>
+
+        <div class="field">
+          <label>Notas do coach</label>
+          <textarea>Oscilação no follow-through e tendência de puxar para a esquerda.</textarea>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Visualização e Relatório</h2>
+          <div class="pill">Saída HCI • PDF ready</div>
+        </div>
+
+        <div class="target-stage">
+          <div class="placeholder">
+            Visual do alvo adaptável ao modo ativo.
+            <br /><br />
+            Humanoide: foto real com overlays Alpha / Charlie / Delta.
+            <br />
+            Cartões Coloridos: pizza de cores com distribuição.
+            <br />
+            Duelo 20: gráfico octogonal e resumo ponto a ponto.
+          </div>
+        </div>
+
+        <div class="report-grid">
+          <div class="metric-card">
+            <small>Disparos</small>
+            <strong>20 / 20</strong>
+          </div>
+          <div class="metric-card">
+            <small>Alpha</small>
+            <strong>11 • 55%</strong>
+          </div>
+          <div class="metric-card">
+            <small>Charlie</small>
+            <strong>6 • 30%</strong>
+          </div>
+          <div class="metric-card">
+            <small>Delta</small>
+            <strong>3 • 15%</strong>
+          </div>
+        </div>
+
+        <div class="analysis">
+          <div class="card">
+            <div class="eyebrow" style="margin-bottom: 10px;">Leitura do motor</div>
+            <h3 style="margin: 0 0 12px; font-size: 24px; color: #fff;">Humanoide — foco em visada e follow-through</h3>
+            <div class="pill" style="margin-bottom: 14px;">Pior resultado: visada</div>
+            <ul class="list">
+              <li class="alert">
+                <strong>Insight principal</strong>
+                A dispersão periférica indica falta de controle de linha e finalização.
+              </li>
+              <li>
+                <strong>Recomendação</strong>
+                Praticar séries de 5 disparos com visão estável da linha de mira.
+              </li>
+              <li>
+                <strong>Impacto</strong>
+                O coach ganha saída objetiva para justificar ajuste técnico.
+              </li>
+            </ul>
+          </div>
+
+          <div class="card training-card">
+            <div class="eyebrow" style="margin-bottom: 10px;">Treino recomendado</div>
+            <h3 style="margin: 0 0 12px; font-size: 20px; color: #fff;">Treino de estabilização e confirmação</h3>
+            <ul class="list">
+              <li><strong>Objetivo</strong> Estabilizar a linha de tiro e reduzir dispersão periférica.</li>
+              <li><strong>Execução</strong> 5m + 7m • 4 séries de 5 • foco em follow-through.</li>
+              <li><strong>Nota</strong> Reavalie após 2 sessões para ajustar carga.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="footer-strip">
+      <div class="card">
+        <small>Coleta</small>
+        <strong>Entrada brutal + insights</strong>
+      </div>
+      <div class="card">
+        <small>Processo</small>
+        <strong>Marcador → motor → gráfico</strong>
+      </div>
+      <div class="card">
+        <small>Entrega</small>
+        <strong>Plano de treino imediato</strong>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

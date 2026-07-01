@@ -1,0 +1,160 @@
+shared TB_BASELINE = let
+    // Fonte: consulta INPUT já existente
+    Fonte = #"INPUT",
+
+    // Padroniza nomes das colunas
+    ColunasLimpas =
+        Table.TransformColumnNames(
+            Fonte,
+            each Text.Trim(Text.Upper(_))
+        ),
+
+    // Remove Coluna1 da INPUT, pois ela não será usada
+    RemoverColuna1 =
+        if Table.HasColumns(ColunasLimpas, "COLUNA1") then
+            Table.RemoveColumns(ColunasLimpas, {"COLUNA1"})
+        else
+            ColunasLimpas,
+
+    // Função para garantir que uma coluna exista
+    GarantirColuna = (tabela as table, nomeColuna as text, tipoColuna as type) as table =>
+        if Table.HasColumns(tabela, nomeColuna) then
+            tabela
+        else
+            Table.AddColumn(tabela, nomeColuna, each null, tipoColuna),
+
+    // Garante todas as colunas de identificação
+    Add_DATA_COLETA = GarantirColuna(RemoverColuna1, "DATA_COLETA", type date),
+    Add_PROVA = GarantirColuna(Add_DATA_COLETA, "PROVA", type text),
+    Add_ATLETA = GarantirColuna(Add_PROVA, "ATLETA", type text),
+    Add_EVENTO = GarantirColuna(Add_ATLETA, "EVENTO", type text),
+    Add_SESSAO = GarantirColuna(Add_EVENTO, "SESSÃO", type text),
+    Add_ID_BLOCO = GarantirColuna(Add_SESSAO, "ID_BLOCO", type text),
+    Add_STATUS_EVENTO = GarantirColuna(Add_ID_BLOCO, "STATUS_EVENTO", type text),
+    Add_TEMPO_MIN = GarantirColuna(Add_STATUS_EVENTO, "TEMPO_MIN", type number),
+    Add_SERIE = GarantirColuna(Add_TEMPO_MIN, "SERIE", type text),
+
+    // Garante T1 até T10
+    Add_T1 = GarantirColuna(Add_SERIE, "T1", type number),
+    Add_T2 = GarantirColuna(Add_T1, "T2", type number),
+    Add_T3 = GarantirColuna(Add_T2, "T3", type number),
+    Add_T4 = GarantirColuna(Add_T3, "T4", type number),
+    Add_T5 = GarantirColuna(Add_T4, "T5", type number),
+    Add_T6 = GarantirColuna(Add_T5, "T6", type number),
+    Add_T7 = GarantirColuna(Add_T6, "T7", type number),
+    Add_T8 = GarantirColuna(Add_T7, "T8", type number),
+    Add_T9 = GarantirColuna(Add_T8, "T9", type number),
+    Add_T10 = GarantirColuna(Add_T9, "T10", type number),
+
+    // Remove colunas calculadas antigas, se existirem
+    RemoverCalculadasAntigas =
+        Table.RemoveColumns(
+            Add_T10,
+            List.Intersect(
+                {
+                    Table.ColumnNames(Add_T10),
+                    {
+                        "TOTAL_SERIE",
+                        "RESULTADO_EVENTO",
+                        "MED_RESULTADO",
+                        "CHAVE_SERIE",
+                        "HCI_SEQ_9_10_QTD",
+                        "HCI_SEQ_9_10_MAX",
+                        "HCI_SEQ_9_QTD",
+                        "HCI_SEQ_9_MAX",
+                        "HCI_SEQ_10_QTD",
+                        "HCI_SEQ_10_MAX",
+                        "MED_HCI_SEQ_9_10_QTD",
+                        "MED_HCI_SEQ_9_10_MAX",
+                        "MED_HCI_SEQ_9_QTD",
+                        "MED_HCI_SEQ_9_MAX",
+                        "MED_HCI_SEQ_10_QTD",
+                        "MED_HCI_SEQ_10_MAX"
+                    }
+                }
+            )
+        ),
+
+    // Ajusta tipos
+    Tipos =
+        Table.TransformColumnTypes(
+            RemoverCalculadasAntigas,
+            {
+                {"DATA_COLETA", type date},
+                {"PROVA", type text},
+                {"ATLETA", type text},
+                {"EVENTO", type text},
+                {"SESSÃO", type text},
+                {"ID_BLOCO", type text},
+                {"STATUS_EVENTO", type text},
+                {"TEMPO_MIN", type number},
+                {"SERIE", type text},
+                {"T1", type number},
+                {"T2", type number},
+                {"T3", type number},
+                {"T4", type number},
+                {"T5", type number},
+                {"T6", type number},
+                {"T7", type number},
+                {"T8", type number},
+                {"T9", type number},
+                {"T10", type number}
+            },
+            "pt-BR"
+        ),
+
+    // Remove linhas totalmente vazias
+    LinhasValidas =
+        Table.SelectRows(
+            Tipos,
+            each
+                let
+                    serie = try Text.Trim(Text.From([SERIE])) otherwise "",
+                    tiros =
+                        List.RemoveNulls(
+                            {
+                                try [T1] otherwise null,
+                                try [T2] otherwise null,
+                                try [T3] otherwise null,
+                                try [T4] otherwise null,
+                                try [T5] otherwise null,
+                                try [T6] otherwise null,
+                                try [T7] otherwise null,
+                                try [T8] otherwise null,
+                                try [T9] otherwise null,
+                                try [T10] otherwise null
+                            }
+                        )
+                in
+                    serie <> "" or List.Count(tiros) > 0
+        ),
+
+    // Reorganiza na sequência oficial da BASELINE
+    Resultado =
+        Table.SelectColumns(
+            LinhasValidas,
+            {
+                "DATA_COLETA",
+                "PROVA",
+                "ATLETA",
+                "EVENTO",
+                "SESSÃO",
+                "ID_BLOCO",
+                "STATUS_EVENTO",
+                "TEMPO_MIN",
+                "SERIE",
+                "T1",
+                "T2",
+                "T3",
+                "T4",
+                "T5",
+                "T6",
+                "T7",
+                "T8",
+                "T9",
+                "T10"
+            },
+            MissingField.UseNull
+        )
+in
+    Resultado;

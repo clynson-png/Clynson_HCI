@@ -1,0 +1,142 @@
+shared TB_HCI_TRAINING_CONSULTATION = let
+    Fonte_FINAL =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_TRAINING_ENGINE_FINAL"]}[Content],
+
+    TextoLimpo = (valor as any) as text =>
+        if valor = null then "" else Text.Trim(Text.From(valor)),
+
+    TextoBusca = (valor as any) as text =>
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor))),
+
+    CampoSeguro = (linha as record, nome as text, optional padrao as any) as any =>
+        if Record.HasFields(linha, nome)
+        then Record.Field(linha, nome)
+        else padrao,
+
+   BaseValida =
+    Fonte_FINAL,
+
+        AddTrainingKey =
+        Table.AddColumn(
+        BaseValida,
+        "_TRAINING_KEY",
+        each
+            let
+                id = TextoLimpo(CampoSeguro(_, "TRAINING_ID", "")),
+                nome = TextoLimpo(CampoSeguro(_, "TRAINING_NAME", ""))
+            in
+                if id <> "" then id
+                else if nome <> "" then nome
+                else null,
+        type text
+    ),
+
+RemoveTrainingKeyVazia =
+    Table.SelectRows(
+        AddTrainingKey,
+        each [_TRAINING_KEY] <> null and [_TRAINING_KEY] <> ""
+    ),
+
+   OrdenarAntesAgrupar =
+        Table.Sort(
+            RemoveTrainingKeyVazia,
+            {
+                {"OUTPUT_RANK", Order.Ascending},
+                {"TRAINING_PRIORITY", Order.Ascending},
+                {"TRAINING_NAME", Order.Ascending}
+            }
+        ),
+
+    AgruparPorTreino =
+        Table.Group(
+            OrdenarAntesAgrupar,
+            {"_TRAINING_KEY"},
+            {
+                {
+                    "CONSULTATION_OUTPUT_RANK",
+                    each List.Min(List.Transform([OUTPUT_RANK], each try Number.From(_) otherwise 999999)),
+                    type number
+                },
+                {
+                    "DIAGNOSTICS_COVERED",
+                    each Text.Combine(List.Distinct(List.Transform([DIAGNOSIS_KEY], each TextoLimpo(_))), "; "),
+                    type text
+                },
+                {
+                    "PARAMETERS_COVERED",
+                    each Text.Combine(List.Distinct(List.Transform([TRAINING_PARAMETER_COVERED], each TextoLimpo(_))), "; "),
+                    type text
+                },
+                {
+                    "SOURCE_RANKS_COVERED",
+                    each Text.Combine(List.Distinct(List.Transform([OUTPUT_RANK], each TextoLimpo(_))), "; "),
+                    type text
+                },
+                {
+                    "FIRST_ROW",
+                    each Table.FirstN(
+                        Table.Sort(
+                            _,
+                            {
+                                {"OUTPUT_RANK", Order.Ascending},
+                                {"TRAINING_PRIORITY", Order.Ascending},
+                                {"TRAINING_NAME", Order.Ascending}
+                            }
+                        ),
+                        1
+                    ),
+                    type table
+                }
+            }
+        ),
+
+    ExpandirPrimeiraLinha =
+        Table.ExpandTableColumn(
+            AgruparPorTreino,
+            "FIRST_ROW",
+            List.RemoveItems(
+                Table.ColumnNames(OrdenarAntesAgrupar),
+                {"_TRAINING_KEY"}
+            )
+        ),
+
+    AddConsultationStatus =
+        Table.AddColumn(
+            ExpandirPrimeiraLinha,
+            "TRAINING_CONSULTATION_STATUS",
+            each "READY_TO_CONSULT",
+            type text
+        ),
+
+           AddExecutionSummary =
+        Table.AddColumn(
+            AddConsultationStatus,
+            "EXECUTION_SUMMARY",
+            each
+                Text.Combine(
+                    List.Select(
+                        {
+                            if TextoLimpo(CampoSeguro(_, "TRAINING_NAME", "")) <> "" then "Treino: " & TextoLimpo(CampoSeguro(_, "TRAINING_NAME", "")) else null,
+                            if TextoLimpo(CampoSeguro(_, "TRAINING_OBJECTIVE", "")) <> "" then "Objetivo: " & TextoLimpo(CampoSeguro(_, "TRAINING_OBJECTIVE", "")) else null,
+                            if TextoLimpo(CampoSeguro(_, "WHEN_TO_USE", "")) <> "" then "Quando usar: " & TextoLimpo(CampoSeguro(_, "WHEN_TO_USE", "")) else null,
+                            if TextoLimpo(CampoSeguro(_, "TRAINING_DESCRIPTION", "")) <> "" then "Execução: " & TextoLimpo(CampoSeguro(_, "TRAINING_DESCRIPTION", "")) else null
+                        },
+                        each _ <> null and _ <> ""
+                    ),
+                    " | "
+                ),
+            type text
+        ),
+
+    ResultadoFinal =
+        Table.Sort(
+            AddExecutionSummary,
+            {
+                {"CONSULTATION_OUTPUT_RANK", Order.Ascending},
+                {"TRAINING_PRIORITY", Order.Ascending},
+                {"TRAINING_NAME", Order.Ascending}
+            }
+        )
+
+in
+    ResultadoFinal;

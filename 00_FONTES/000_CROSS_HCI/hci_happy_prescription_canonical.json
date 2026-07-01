@@ -1,0 +1,619 @@
+{
+  "schemaVersion": "1.0.0",
+  "assetName": "hci_happy_prescription_canonical",
+  "createdAt": "2026-06-24",
+  "language": "en-US",
+  "purpose": "Canonical prescription matrix for the HAPPY Engine. It connects HAPPY/COMANDO gaps to the HAPPY exercise library and cross-validates prescription using HCI performance evidence.",
+  "sourceLibrary": "hci_happy_library_canonical.json",
+  "enginePrinciple": "The engine prescribes by GAP, not by absolute score. Lowest dimension -> critical parameter -> cross-evidence -> exercise prescription -> reassessment.",
+  "severityBands": {
+    "CRITICAL": {
+      "range": "< 2.0",
+      "meaning": "Immediate development priority"
+    },
+    "ATTENTION": {
+      "range": "2.0 - 2.99",
+      "meaning": "Needs focused intervention"
+    },
+    "STABLE": {
+      "range": "3.0 - 3.99",
+      "meaning": "Monitor and consolidate"
+    },
+    "HIGH_PERFORMANCE": {
+      "range": "4.0 - 4.49",
+      "meaning": "Maintain and refine"
+    },
+    "ELITE": {
+      "range": "4.5 - 5.0",
+      "meaning": "Reference behavior"
+    }
+  },
+  "selectionFlow": [
+    "Calculate 5 HAPPY dimensions from subjective indicators.",
+    "Identify the lowest dimension and Top 3 dimensional gaps.",
+    "Open the lowest dimension and identify the parameter with the largest negative contribution.",
+    "Cross-check the parameter with HCI evidence: TARGETS, STRUCTURE, RHYTHM, RESULT.",
+    "Classify severity.",
+    "Select exercises from hci_happy_library_canonical.json.",
+    "Generate coach prescription and athlete-safe development plan.",
+    "Reassess after the prescribed block."
+  ],
+  "rules": [
+    {
+      "ruleId": "HAPPY_RX_CONFIDENCE_GAP",
+      "parameter": "CONFIDENCE",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "OUTCOME",
+        "secondaryHciEvidence": [
+          "CONSISTENCY",
+          "PRESSURE"
+        ],
+        "reading": "Confidence is real when it is supported by score, repetition, and pressure stability."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_CONFIDENCE_001",
+            "HAPPY_CONFIDENCE_002",
+            "HAPPY_CONFIDENCE_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_CONFIDENCE_001",
+            "HAPPY_CONFIDENCE_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_CONFIDENCE_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Confidence"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_ORGANIZATION_GAP",
+      "parameter": "ORGANIZATION",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "CONSISTENCY",
+        "secondaryHciEvidence": [
+          "RHYTHM",
+          "PHYSICAL"
+        ],
+        "reading": "Routine quality appears as stable repetition, rhythm, and physical availability."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_ORGANIZATION_001",
+            "HAPPY_ORGANIZATION_002",
+            "HAPPY_ORGANIZATION_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_ORGANIZATION_001",
+            "HAPPY_ORGANIZATION_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_ORGANIZATION_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Organization"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_MANAGEMENT_GAP",
+      "parameter": "MANAGEMENT",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "PROCESS",
+        "secondaryHciEvidence": [
+          "TRANSFER",
+          "CONSISTENCY"
+        ],
+        "reading": "The plan becomes performance when the athlete executes the technical process repeatedly."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_MANAGEMENT_001",
+            "HAPPY_MANAGEMENT_002",
+            "HAPPY_MANAGEMENT_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_MANAGEMENT_001",
+            "HAPPY_MANAGEMENT_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_MANAGEMENT_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Management"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_ANALYSIS_GAP",
+      "parameter": "ANALYSIS",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "DEEPENING",
+        "secondaryHciEvidence": [
+          "PROCESS",
+          "RHYTHM"
+        ],
+        "reading": "Learning is present when the athlete turns data and sensations into process adjustments."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_ANALYSIS_001",
+            "HAPPY_ANALYSIS_002",
+            "HAPPY_ANALYSIS_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_ANALYSIS_001",
+            "HAPPY_ANALYSIS_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_ANALYSIS_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Analysis"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_NERVE_GAP",
+      "parameter": "NERVE",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "PRESSURE",
+        "secondaryHciEvidence": [
+          "EMOTIONAL",
+          "RHYTHM"
+        ],
+        "reading": "Pressure control is validated when emotional stability and rhythm hold under demand."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_NERVE_001",
+            "HAPPY_NERVE_002",
+            "HAPPY_NERVE_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_NERVE_001",
+            "HAPPY_NERVE_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_NERVE_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Nerve"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_DISCIPLINE_GAP",
+      "parameter": "DISCIPLINE",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "CONSISTENCY",
+        "secondaryHciEvidence": [
+          "PROCESS",
+          "PHYSICAL"
+        ],
+        "reading": "Discipline shows up as repeated process quality, not as intention alone."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_DISCIPLINE_001",
+            "HAPPY_DISCIPLINE_002",
+            "HAPPY_DISCIPLINE_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_DISCIPLINE_001",
+            "HAPPY_DISCIPLINE_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_DISCIPLINE_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Discipline"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_OPPORTUNITY_GAP",
+      "parameter": "OPPORTUNITY",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "TRANSFER",
+        "secondaryHciEvidence": [
+          "DEEPENING",
+          "OUTCOME"
+        ],
+        "reading": "Opportunity is used when prescribed training transfers into actual performance."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_OPPORTUNITY_001",
+            "HAPPY_OPPORTUNITY_002",
+            "HAPPY_OPPORTUNITY_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_OPPORTUNITY_001",
+            "HAPPY_OPPORTUNITY_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_OPPORTUNITY_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Opportunity"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_HEED_GAP",
+      "parameter": "HEED",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "RHYTHM",
+        "secondaryHciEvidence": [
+          "EMOTIONAL",
+          "PRESSURE"
+        ],
+        "reading": "Arousal awareness is validated when rhythm and emotional behavior remain regulated."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_HEED_001",
+            "HAPPY_HEED_002",
+            "HAPPY_HEED_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_HEED_001",
+            "HAPPY_HEED_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_HEED_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Heed"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_ALIGNMENT_GAP",
+      "parameter": "ALIGNMENT",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "TRANSFER",
+        "secondaryHciEvidence": [
+          "PROCESS",
+          "OUTCOME"
+        ],
+        "reading": "Coach-athlete clarity is validated when training direction transfers to execution and score."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_ALIGNMENT_001",
+            "HAPPY_ALIGNMENT_002",
+            "HAPPY_ALIGNMENT_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_ALIGNMENT_001",
+            "HAPPY_ALIGNMENT_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_ALIGNMENT_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Alignment"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_PLAN_GAP",
+      "parameter": "PLAN",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "PROCESS",
+        "secondaryHciEvidence": [
+          "CONSISTENCY",
+          "TRANSFER"
+        ],
+        "reading": "Plan fit is validated by adherence, process execution, and transfer."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_PLAN_001",
+            "HAPPY_PLAN_002",
+            "HAPPY_PLAN_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_PLAN_001",
+            "HAPPY_PLAN_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_PLAN_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Plan"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_POWERING_GAP",
+      "parameter": "POWERING",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "PHYSICAL",
+        "secondaryHciEvidence": [
+          "RHYTHM",
+          "PRESSURE"
+        ],
+        "reading": "Energy investment is useful only when it sustains rhythm, body quality, and pressure behavior."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_POWERING_001",
+            "HAPPY_POWERING_002",
+            "HAPPY_POWERING_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_POWERING_001",
+            "HAPPY_POWERING_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_POWERING_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Powering"
+      }
+    },
+    {
+      "ruleId": "HAPPY_RX_YEARN_GAP",
+      "parameter": "YEARN",
+      "trigger": {
+        "condition": "parameter is the lowest contributor inside the lowest HAPPY dimension OR appears in Top 3 gaps",
+        "criticalIf": "score < 2.0",
+        "attentionIf": "2.0 <= score < 3.0",
+        "monitorIf": "3.0 <= score < 4.0"
+      },
+      "hciCrossEvidence": {
+        "primaryHciEvidence": "CONSISTENCY",
+        "secondaryHciEvidence": [
+          "OUTCOME",
+          "PHYSICAL"
+        ],
+        "reading": "Long-term desire is validated by consistency, frequency, and sustained physical availability."
+      },
+      "prescriptionLogic": {
+        "critical": {
+          "dosage": "3 exercises / 2 weeks / coach follow-up required",
+          "exerciseIds": [
+            "HAPPY_YEARN_001",
+            "HAPPY_YEARN_002",
+            "HAPPY_YEARN_003"
+          ],
+          "coachAction": "Create a short intervention block and reassess after 2 weeks."
+        },
+        "attention": {
+          "dosage": "2 exercises / 2 weeks / athlete report + coach review",
+          "exerciseIds": [
+            "HAPPY_YEARN_001",
+            "HAPPY_YEARN_002"
+          ],
+          "coachAction": "Assign focused exercises and verify adherence."
+        },
+        "monitor": {
+          "dosage": "1 exercise / 1 week / self-report",
+          "exerciseIds": [
+            "HAPPY_YEARN_001"
+          ],
+          "coachAction": "Monitor trend and prevent regression."
+        }
+      },
+      "athleteOutput": {
+        "tone": "developmental, non-judgmental, action-oriented",
+        "label": "Current development focus: Yearn"
+      }
+    }
+  ]
+}

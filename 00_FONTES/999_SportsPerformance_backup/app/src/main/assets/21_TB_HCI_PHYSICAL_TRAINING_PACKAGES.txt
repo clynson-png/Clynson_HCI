@@ -1,0 +1,60 @@
+shared TB_HCI_PHYSICAL_TRAINING_PACKAGES = let
+    Fonte = Excel.CurrentWorkbook(){[Name="TB_HCI_PHYSICAL_TRAINING_PACKAGES"]}[Content],
+
+    ColunasEsperadas = {
+        "PACKAGE_ID",
+        "PHYSICAL_PACKAGE",
+        "PHYSICAL_CATEGORY",
+        "PHYSICAL_SUBPACKAGE",
+        "SESSION_NAME",
+        "EXERCISES",
+        "EQUIPMENT",
+        "SETS",
+        "REPS_OR_TIME",
+        "REST_INTERVAL",
+        "HEART_RATE_TARGET",
+        "FREQUENCY_WEEK",
+        "SESSION_DURATION_MIN",
+        "GENERAL_PREPARATION_LOAD",
+        "SPECIFIC_PREPARATION_LOAD",
+        "PRE_COMPETITION_LOAD",
+        "COMPETITION_LOAD",
+        "OUTPUT_TEXT",
+        "SAFETY_NOTE",
+        "PACKAGE_PRIORITY"
+    },
+
+    #"Colunas Mantidas" = Table.SelectColumns(
+        Fonte,
+        ColunasEsperadas,
+        MissingField.Ignore
+    ),
+
+    #"Tipo Alterado" = Table.TransformColumnTypes(
+        #"Colunas Mantidas",
+        {
+            {"PACKAGE_ID", type text},
+            {"PHYSICAL_PACKAGE", type text},
+            {"PHYSICAL_CATEGORY", type text},
+            {"PHYSICAL_SUBPACKAGE", type text},
+            {"SESSION_NAME", type text},
+            {"EXERCISES", type text},
+            {"EQUIPMENT", type text},
+            {"SETS", type any},
+            {"REPS_OR_TIME", type text},
+            {"REST_INTERVAL", type text},
+            {"HEART_RATE_TARGET", type text},
+            {"FREQUENCY_WEEK", type text},
+            {"SESSION_DURATION_MIN", type any},
+            {"GENERAL_PREPARATION_LOAD", type text},
+            {"SPECIFIC_PREPARATION_LOAD", type text},
+            {"PRE_COMPETITION_LOAD", type text},
+            {"COMPETITION_LOAD", type text},
+            {"OUTPUT_TEXT", type text},
+            {"SAFETY_NOTE", type text},
+            {"PACKAGE_PRIORITY", Int64.Type}
+        },
+        "pt-BR"
+    )
+in
+    #"Tipo Alterado";

@@ -1,0 +1,222 @@
+MAPA INTEGRADO DOS MOTORES POWER QUERY — HCI_V18_VBA_ESTAVEL
+==============================================================================
+Arquivo fonte: HCI_V18_VBA_ESTAVEL.xlsm
+Consultas com código M extraídas do DataMashup: 23
+Gerado em: 2026-05-31 14:44:05
+
+ARQUITETURA FUNCIONAL RESUMIDA
+------------------------------------------------------------------------------
+INPUT -> TB_HCI -> (TARGETS / STRUCTURE / RHYTHM_TIMELINE / RHYTHM_PATH) -> OUTPUT/DASHBOARD
+TB_HCI -> HCI_KNOWLEDGE_PLAN -> TB_HCI_OUTPUT_DECISION_ENGINE -> OUTPUT / RELATORIO
+TB_HCI_OUTPUT_DECISION_ENGINE + bibliotecas -> TB_HCI_TRAINING_ENGINE_FINAL -> TB_HCI_TRAINING_CONSULTATION
+Perfil/Physical BI -> TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT -> OUTPUT / RELATORIO
+
+MAPA SEQUENCIAL E ARQUIVOS GERADOS
+------------------------------------------------------------------------------
+01. INPUT
+    Arquivo: 01_INPUT.txt
+    Papel: Consulta/tabela de entrada carregada do workbook; base bruta de séries e tiros.
+    Depende de consultas: —
+    Lê tabelas/nomes do Excel: INPUT
+    Linhas de código M: 5
+
+02. TB_BASELINE
+    Arquivo: 02_TB_BASELINE.txt
+    Papel: Base de referência/baseline usada por motores HCI.
+    Depende de consultas: INPUT
+    Lê tabelas/nomes do Excel: —
+    Linhas de código M: 160
+
+03. TB_HCI
+    Arquivo: 03_TB_HCI.txt
+    Papel: Motor central: transforma INPUT em métricas, resultados, scores HCI, trava FINAL e agregados por atleta/prova/evento.
+    Depende de consultas: INPUT
+    Lê tabelas/nomes do Excel: INPUT
+    Linhas de código M: 1726
+
+04. TB_HCI_CHARTS_BUFFER
+    Arquivo: 04_TB_HCI_CHARTS_BUFFER.txt
+    Papel: Buffer legado/apoio de gráficos; espelha colunas da TB_HCI para consultas visuais.
+    Depende de consultas: TB_HCI
+    Lê tabelas/nomes do Excel: TB_HCI
+    Linhas de código M: 113
+
+05. HCI_RHYTHM_TIMELINE
+    Arquivo: 05_HCI_RHYTHM_TIMELINE.txt
+    Papel: Motor de timeline por série: médias, STD, quebras, queda principal e ação de ritmo.
+    Depende de consultas: TB_HCI
+    Lê tabelas/nomes do Excel: TB_HCI, TB_HCI_SELECTED_CONTEXT
+    Linhas de código M: 327
+
+06. HCI_RHYTHM_PATH
+    Arquivo: 06_HCI_RHYTHM_PATH.txt
+    Papel: Motor de caminho do ritmo: quebra cada série em P1/P2/P3 para gráfico de linha/área.
+    Depende de consultas: TB_HCI, HCI_RHYTHM_TIMELINE
+    Lê tabelas/nomes do Excel: HCI_RHYTHM_TIMELINE, TB_HCI, TB_HCI_SELECTED_CONTEXT
+    Linhas de código M: 221
+
+07. HCI_PERF_TARGETS
+    Arquivo: 07_HCI_PERF_TARGETS.txt
+    Papel: Motor radial TARGETS: OUTCOME, PROCESS, RHYTHM, DEEPENING, CONSISTENCY.
+    Depende de consultas: TB_HCI, TB_HCI_CHARTS_BUFFER
+    Lê tabelas/nomes do Excel: TB_HCI_CHARTS_BUFFER, TB_HCI_SELECTED_CONTEXT
+    Linhas de código M: 252
+
+08. HCI_PERF_STRUCTURE
+    Arquivo: 08_HCI_PERF_STRUCTURE.txt
+    Papel: Motor radial STRUCTURE: TRANSFER, RESILIENCE, PRESSURE, EMOTIONAL, PHYSICAL.
+    Depende de consultas: TB_HCI
+    Lê tabelas/nomes do Excel: TB_HCI, TB_HCI_SELECTED_CONTEXT
+    Linhas de código M: 274
+
+09. HCI_KNOWLEDGE_PLAN
+    Arquivo: 09_HCI_KNOWLEDGE_PLAN.txt
+    Papel: Motor mestre de diagnóstico e conhecimento qualitativo.
+    Depende de consultas: HCI_PERF_TARGETS, HCI_PERF_STRUCTURE
+    Lê tabelas/nomes do Excel: HCI_PERF_STRUCTURE, HCI_PERF_TARGETS
+    Linhas de código M: 282
+
+10. TB_HCI_OUTPUT_DECISION_ENGINE
+    Arquivo: 10_TB_HCI_OUTPUT_DECISION_ENGINE.txt
+    Papel: Motor de decisão final para OUTPUT; depura e prioriza diagnósticos/recomendações.
+    Depende de consultas: HCI_KNOWLEDGE_PLAN
+    Lê tabelas/nomes do Excel: HCI_KNOWLEDGE_PLAN
+    Linhas de código M: 218
+
+11. TB_HCI_OUTPUT_DECISION_ENGINE_INTEGRATED
+    Arquivo: 11_TB_HCI_OUTPUT_DECISION_ENGINE_INTEGRATED.txt
+    Papel: Versão integrada/apoio do motor de decisão.
+    Depende de consultas: TB_HCI_OUTPUT_DECISION_ENGINE
+    Lê tabelas/nomes do Excel: HCI_SELECTED_PERIODIZATION_PHASE, TB_HCI_OUTPUT_DECISION_ENGINE, TB_HCI_TRAINING_BI
+    Linhas de código M: 484
+
+12. HCI_OUTPUT_QUALITATIVE_INTELLIGENCE
+    Arquivo: 12_HCI_OUTPUT_QUALITATIVE_INTELLIGENCE.txt
+    Papel: Camada qualitativa final para OUTPUT/relatório.
+    Depende de consultas: HCI_PERF_TARGETS, HCI_PERF_STRUCTURE
+    Lê tabelas/nomes do Excel: HCI_PERF_STRUCTURE, HCI_PERF_TARGETS
+    Linhas de código M: 370
+
+13. TB_HCI_TRAINING_ENGINE
+    Arquivo: 13_TB_HCI_TRAINING_ENGINE.txt
+    Papel: Motor de treino técnico/estratégico base.
+    Depende de consultas: TB_HCI, HCI_PERF_STRUCTURE, TB_HCI_PHYSICAL_TRAINING_BI
+    Lê tabelas/nomes do Excel: HCI_PERF_STRUCTURE, HCI_SELECTED_PERIODIZATION_PHASE, TB_HCI, TB_HCI_PHYSICAL_TRAINING_BI, TB_HCI_SELECTED_CONTEXT
+    Linhas de código M: 449
+
+14. TB_HCI_TRAINING_ENGINE_FINAL
+    Arquivo: 14_TB_HCI_TRAINING_ENGINE_FINAL.txt
+    Papel: Motor final de treino técnico: cruza decisão, fase, modalidade e biblioteca.
+    Depende de consultas: INPUT, TB_HCI_OUTPUT_DECISION_ENGINE
+    Lê tabelas/nomes do Excel: HCI_SELECTED_PERIODIZATION_PHASE, INPUT, TB_HCI_OUTPUT_DECISION_ENGINE, TB_HCI_SELECTED_CONTEXT, TB_HCI_TRAINING_BI
+    Linhas de código M: 593
+
+15. TB_HCI_TRAINING_CONSULTATION
+    Arquivo: 15_TB_HCI_TRAINING_CONSULTATION.txt
+    Papel: Consulta final de execução de treinos técnicos/estratégicos.
+    Depende de consultas: TB_HCI_TRAINING_ENGINE_FINAL
+    Lê tabelas/nomes do Excel: TB_HCI_TRAINING_ENGINE_FINAL
+    Linhas de código M: 142
+
+16. TB_HCI_TRAINING_BI_CLASSIFIED
+    Arquivo: 16_TB_HCI_TRAINING_BI_CLASSIFIED.txt
+    Papel: Biblioteca/classificação BI de treinos.
+    Depende de consultas: —
+    Lê tabelas/nomes do Excel: TB_HCI_TRAINING_BI
+    Linhas de código M: 340
+
+17. TB_HCI_PARAMETERS_CONFIG
+    Arquivo: 17_TB_HCI_PARAMETERS_CONFIG.txt
+    Papel: Configuração de parâmetros HCI.
+    Depende de consultas: —
+    Lê tabelas/nomes do Excel: Tabela23
+    Linhas de código M: 5
+
+18. TB_HCI_PARAMETERS_EXPLANATIONS
+    Arquivo: 18_TB_HCI_PARAMETERS_EXPLANATIONS.txt
+    Papel: Explicações dos parâmetros HCI.
+    Depende de consultas: —
+    Lê tabelas/nomes do Excel: TB_HCI_PARAMETERS_EXPLANATIONS
+    Linhas de código M: 5
+
+19. TB_HCI_ATHLETE_PROFILE_ENGINE
+    Arquivo: 19_TB_HCI_ATHLETE_PROFILE_ENGINE.txt
+    Papel: Motor de perfil do atleta para treino físico.
+    Depende de consultas: —
+    Lê tabelas/nomes do Excel: HCI_SELECTED_PERIODIZATION_PHASE, TB_HCI_ATHLETE_PROFILE
+    Linhas de código M: 201
+
+20. TB_HCI_PHYSICAL_TRAINING_BI
+    Arquivo: 20_TB_HCI_PHYSICAL_TRAINING_BI.txt
+    Papel: Motor/BI de treino físico.
+    Depende de consultas: —
+    Lê tabelas/nomes do Excel: TB_HCI_TRAINING_BI
+    Linhas de código M: 614
+
+21. TB_HCI_PHYSICAL_TRAINING_PACKAGES
+    Arquivo: 21_TB_HCI_PHYSICAL_TRAINING_PACKAGES.txt
+    Papel: Biblioteca/pacotes de treino físico.
+    Depende de consultas: —
+    Lê tabelas/nomes do Excel: TB_HCI_PHYSICAL_TRAINING_PACKAGES
+    Linhas de código M: 60
+
+22. TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT
+    Arquivo: 22_TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT.txt
+    Papel: Saída consolidada do pacote físico para OUTPUT.
+    Depende de consultas: TB_HCI_PHYSICAL_TRAINING_PACKAGES
+    Lê tabelas/nomes do Excel: TB_HCI_PHYSICAL_TRAINING_ENGINE, TB_HCI_PHYSICAL_TRAINING_PACKAGES
+    Linhas de código M: 152
+
+23. RELATORIO
+    Arquivo: 23_RELATORIO.txt
+    Papel: Camada de relatório completo do coach.
+    Depende de consultas: HCI_RHYTHM_TIMELINE, HCI_RHYTHM_PATH, HCI_PERF_TARGETS, HCI_PERF_STRUCTURE, TB_HCI_OUTPUT_DECISION_ENGINE, HCI_OUTPUT_QUALITATIVE_INTELLIGENCE, TB_HCI_TRAINING_ENGINE_FINAL, TB_HCI_TRAINING_CONSULTATION
+    Lê tabelas/nomes do Excel: HCI_OUTPUT_QUALITATIVE_INTELLIGENCE, HCI_PERF_STRUCTURE, HCI_PERF_TARGETS, HCI_RHYTHM_PATH, HCI_RHYTHM_TIMELINE, TB_HCI_OUTPUT_DECISION_ENGINE, TB_HCI_SELECTED_CONTEXT, TB_HCI_TRAINING_CONSULTATION, TB_HCI_TRAINING_ENGINE_FINAL
+    Linhas de código M: 739
+
+CADEIA 1 — ENTRADA E MOTOR CENTRAL
+------------------------------------------------------------------------------
+01_INPUT / tabela INPUT -> 03_TB_HCI
+03_TB_HCI calcula TOTAL_SERIE, RESULTADO_EVENTO, médias, sequências, scores HCI e trava FINAL.
+Trava FINAL esperada na TB_HCI: HCI_SERIE_ORDER, HCI_FINAL_SERIE_ORDER, HCI_EVENT_ROW_VALID.
+
+CADEIA 2 — GRÁFICOS E DASHBOARD
+------------------------------------------------------------------------------
+03_TB_HCI -> 07_HCI_PERF_TARGETS -> CHART_TARGETS_OUTPUT
+03_TB_HCI -> 08_HCI_PERF_STRUCTURE -> CHART_STRUCTURE_OUTPUT
+03_TB_HCI -> 05_HCI_RHYTHM_TIMELINE -> 06_HCI_RHYTHM_PATH -> CHART_RHYTHM_OUTPUT
+Os gráficos na OUTPUT são copiados por VBA para APP_DASHBOARD_VBA.
+
+CADEIA 3 — DIAGNÓSTICO, DECISÃO E OUTPUT
+------------------------------------------------------------------------------
+03_TB_HCI -> 09_HCI_KNOWLEDGE_PLAN -> 10_TB_HCI_OUTPUT_DECISION_ENGINE
+10_TB_HCI_OUTPUT_DECISION_ENGINE -> 12_HCI_OUTPUT_QUALITATIVE_INTELLIGENCE -> OUTPUT/RELATORIO
+OUTPUT deve ser camada de leitura; decisões ficam nos motores.
+
+CADEIA 4 — TREINAMENTO TÉCNICO
+------------------------------------------------------------------------------
+10_TB_HCI_OUTPUT_DECISION_ENGINE + 16_TB_HCI_TRAINING_BI_CLASSIFIED/config/contexto/fase -> 14_TB_HCI_TRAINING_ENGINE_FINAL
+14_TB_HCI_TRAINING_ENGINE_FINAL -> 15_TB_HCI_TRAINING_CONSULTATION -> OUTPUT/RELATORIO
+Regra aprovada: Consultation não deve exibir treino físico nem mental puro.
+
+CADEIA 5 — TREINAMENTO FÍSICO
+------------------------------------------------------------------------------
+19_TB_HCI_ATHLETE_PROFILE_ENGINE -> 20_TB_HCI_PHYSICAL_TRAINING_BI -> 21_TB_HCI_PHYSICAL_TRAINING_PACKAGES -> 22_TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT
+22_TB_HCI_PHYSICAL_TRAINING_PACKAGE_OUTPUT alimenta card físico da OUTPUT.
+
+CONEXÕES NO WORKBOOK SEM CÓDIGO M EXTRAÍDO EM Section1.m
+------------------------------------------------------------------------------
+- HCI_ENGINE_V6
+- HCI_Intelligence_Matrix
+- HCI_INTERVENTION
+- HCI_OUTPUT_ACTION_PLAN
+- HCI_OUTPUT_KNOWLEDGE
+- INPUT(1)
+- TB_BASELINE(1)
+- TB_CURRENT_HCI_LEVELS
+- TB_HCI(1)
+
+OBSERVAÇÃO
+------------------------------------------------------------------------------
+Os arquivos TXT numerados contêm o código M completo de cada consulta shared encontrada no DataMashup do workbook.
+O arquivo 00_Section1_COMPLETO.txt contém a seção M completa, sem separação.

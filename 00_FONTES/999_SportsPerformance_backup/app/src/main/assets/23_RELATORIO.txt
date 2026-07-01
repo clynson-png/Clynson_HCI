@@ -1,0 +1,739 @@
+shared RELATORIO = let
+    // =========================================================
+    // FONTES
+    // =========================================================
+
+FonteContext =
+    Table.Buffer(Excel.CurrentWorkbook(){[Name="TB_HCI_SELECTED_CONTEXT"]}[Content]),
+
+FonteTargets =
+    Table.Buffer(Excel.CurrentWorkbook(){[Name="HCI_PERF_TARGETS"]}[Content]),
+
+FonteStructure =
+    Table.Buffer(Excel.CurrentWorkbook(){[Name="HCI_PERF_STRUCTURE"]}[Content]),
+
+FonteQualitative =
+    Table.Buffer(Excel.CurrentWorkbook(){[Name="HCI_OUTPUT_QUALITATIVE_INTELLIGENCE"]}[Content]),
+
+FonteDecision =
+    Table.Buffer(Excel.CurrentWorkbook(){[Name="TB_HCI_OUTPUT_DECISION_ENGINE"]}[Content]),
+
+FonteTraining =
+    Table.Buffer(Excel.CurrentWorkbook(){[Name="TB_HCI_TRAINING_ENGINE_FINAL"]}[Content]),
+
+FonteConsultation =
+    Table.Buffer(Excel.CurrentWorkbook(){[Name="TB_HCI_TRAINING_CONSULTATION"]}[Content]),
+
+FonteRhythmTimeline =
+    Table.Buffer(Excel.CurrentWorkbook(){[Name="HCI_RHYTHM_TIMELINE"]}[Content]),
+
+FonteRhythmPath =
+    Table.Buffer(Excel.CurrentWorkbook(){[Name="HCI_RHYTHM_PATH"]}[Content]),
+
+FonteTrainingLite =
+    Table.SelectColumns(
+        FonteTraining,
+        {
+            "OUTPUT_RANK",
+            "RANK",
+            "DIAGNOSIS",
+            "PARAMETER",
+            "TRAINING",
+            "PACKAGE",
+            "PHASE",
+            "WHEN_TO_USE",
+            "WHEN TO USE",
+            "TO_DO",
+            "TO DO",
+            "TRAINING_PRIORITY",
+            "PRIORITY",
+            "TRAINING_COVERAGE_STATUS"
+        },
+        MissingField.UseNull
+    ),
+
+FonteConsultationLite =
+    Table.SelectColumns(
+        FonteConsultation,
+        {
+            "TRAINING_CONSULTATION_STATUS",
+            "TRAINING_NAME_ORIGINAL",
+            "PARAMETERS_COVERED",
+            "DIAGNOSTICS_COVERED",
+            "OBJECTIVE_ORIGINAL",
+            "WHEN_TO_USE_EN",
+            "TOTAL_TIME_MIN",
+            "SERIES_COUNT",
+            "SHOTS_PER_SERIES",
+            "EXECUTION_SUMMARY",
+            "OBSERVATION_ORIGINAL"
+        },
+        MissingField.UseNull
+    ),
+
+FonteRhythmTimelineLite =
+    Table.SelectColumns(
+        FonteRhythmTimeline,
+        {
+            "SERIE",
+            "MEDIA_SERIE",
+            "STD_SERIE",
+            "BREAK_COUNT",
+            "MAIN_DROP_DEPTH",
+            "MAIN_BREAKING_POINT",
+            "MAIN_TO_DO"
+        },
+        MissingField.UseNull
+    ),
+
+FonteRhythmPathLite =
+    Table.SelectColumns(
+        FonteRhythmPath,
+        {
+            "DISPLAY_ORDER",
+            "SERIE",
+            "PART_NAME",
+            "PART_LABEL",
+            "PART_MEDIA",
+            "MEDIA_SERIE",
+            "STD_SERIE",
+            "MAIN_DROP_DEPTH"
+        },
+        MissingField.UseNull
+    ),
+
+
+    // =========================================================
+    // FUNÇÕES
+    // =========================================================
+
+    TextoSeguro = (valor as any) as text =>
+        try
+        if valor = null then "" else Text.Trim(Text.From(valor))
+        otherwise "",
+        
+    TextoLimpo = (valor as any) as text =>
+    try
+        if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor)))
+    otherwise "",
+
+    NumeroTexto = (valor as any) as text =>
+        try
+        Text.From(Number.Round(Number.From(valor), 3))
+        otherwise "",
+
+    CampoSeguro = (linha as record, campo as text, optional padrao as any) as any =>
+        try
+        if Record.HasFields(linha, campo) then
+            Record.Field(linha, campo)
+        else
+            padrao
+        otherwise
+        padrao,
+
+    AddBlocoPadrao = (
+        tabela as table,
+        bloco as text,
+        ordemInicial as number,
+        campoNome as text,
+        campoValor as text,
+        fonte as text,
+        descricao as text,
+        regra as text
+    ) as table =>
+        let
+            ComIndice =
+                Table.AddIndexColumn(
+                    tabela,
+                    "ORDEM",
+                    ordemInicial,
+                    1,
+                    Int64.Type
+                ),
+
+            AddBloco =
+                Table.AddColumn(
+                    ComIndice,
+                    "BLOCO",
+                    each bloco,
+                    type text
+                ),
+
+            AddCampo =
+                Table.AddColumn(
+                    AddBloco,
+                    "CAMPO",
+                    each TextoSeguro(Record.FieldOrDefault(_, campoNome, "")),
+                    type text
+                ),
+
+            AddValor =
+                Table.AddColumn(
+                    AddCampo,
+                    "VALOR",
+                    each TextoSeguro(Record.FieldOrDefault(_, campoValor, "")),
+                    type text
+                ),
+
+            AddFonte =
+                Table.AddColumn(
+                    AddValor,
+                    "FONTE_MOTOR",
+                    each fonte,
+                    type text
+                ),
+
+            AddDescricao =
+                Table.AddColumn(
+                    AddFonte,
+                    "DESCRICAO",
+                    each descricao,
+                    type text
+                ),
+
+            AddRegra =
+                Table.AddColumn(
+                    AddDescricao,
+                    "REGRA_EXIBICAO",
+                    each regra,
+                    type text
+                ),
+
+            Resultado =
+                Table.SelectColumns(
+                    AddRegra,
+                    {
+                        "BLOCO",
+                        "ORDEM",
+                        "CAMPO",
+                        "VALOR",
+                        "FONTE_MOTOR",
+                        "DESCRICAO",
+                        "REGRA_EXIBICAO"
+                    }
+                )
+        in
+            Resultado,
+
+    // =========================================================
+    // CONTEXT
+    // =========================================================
+
+    ContextLinha =
+        try FonteContext{0} otherwise null,
+
+    ContextTable =
+        #table(
+            type table
+            [
+                BLOCO = text,
+                ORDEM = Int64.Type,
+                CAMPO = text,
+                VALOR = text,
+                FONTE_MOTOR = text,
+                DESCRICAO = text,
+                REGRA_EXIBICAO = text
+            ],
+            {
+                {
+                    "CONTEXT",
+                    1,
+                    "ATHLETE",
+                    if ContextLinha = null then "" else TextoSeguro(CampoSeguro(ContextLinha, "ATHLETE", CampoSeguro(ContextLinha, "ATLETA", ""))),
+                    "TB_HCI_SELECTED_CONTEXT",
+                    "Atleta selecionado na OUTPUT.",
+                    "Exibir sempre"
+                },
+                {
+                    "CONTEXT",
+                    2,
+                    "EVENT",
+                    if ContextLinha = null then "" else TextoSeguro(CampoSeguro(ContextLinha, "EVENT", CampoSeguro(ContextLinha, "EVENTO", ""))),
+                    "TB_HCI_SELECTED_CONTEXT",
+                    "Evento selecionado na OUTPUT.",
+                    "Exibir sempre"
+                },
+                {
+                    "CONTEXT",
+                    3,
+                    "ENVIRONMENT",
+                    if ContextLinha = null then "" else TextoSeguro(CampoSeguro(ContextLinha, "ENVIRONMENT", CampoSeguro(ContextLinha, "EVENT_TYPE", ""))),
+                    "TB_HCI_SELECTED_CONTEXT",
+                    "Ambiente da prova: COMPETICAO, SIMULADO ou TREINO.",
+                    "Exibir sempre"
+                },
+                {
+                    "CONTEXT",
+                    4,
+                    "PROVA",
+                    if ContextLinha = null then "" else TextoSeguro(CampoSeguro(ContextLinha, "PROVA", "")),
+                    "TB_HCI_SELECTED_CONTEXT",
+                    "Modalidade/prova identificada automaticamente.",
+                    "Exibir sempre"
+                }
+            }
+        ),
+
+    // =========================================================
+    // HCI SUMMARY — TARGETS + STRUCTURE
+    // =========================================================
+
+    TargetsTipos =
+        Table.TransformColumnTypes(
+            FonteTargets,
+            {
+                {"DISPLAY_ORDER", Int64.Type},
+                {"PARAMETER", type text},
+                {"SCORE", type number},
+                {"CURRENT_LEVEL", type text},
+                {"REPORT_PROFILE", type text}
+            },
+            "pt-BR"
+        ),
+
+    StructureTipos =
+        Table.TransformColumnTypes(
+            FonteStructure,
+            {
+                {"DISPLAY_ORDER", Int64.Type},
+                {"PARAMETER", type text},
+                {"SCORE", type number},
+                {"CURRENT_LEVEL", type text},
+                {"REPORT_PROFILE", type text}
+            },
+            "pt-BR"
+        ),
+
+    PerfUnificado =
+        Table.Combine({TargetsTipos, StructureTipos}),
+
+    AddPerfValor =
+        Table.AddColumn(
+            PerfUnificado,
+            "VALOR_RELATORIO",
+            each
+                TextoSeguro([PARAMETER])
+                & " | SCORE: "
+                & NumeroTexto([SCORE])
+                & " | LEVEL: "
+                & TextoSeguro([CURRENT_LEVEL])
+                & " | PROFILE: "
+                & TextoSeguro([REPORT_PROFILE]),
+            type text
+        ),
+
+    PerfRelatorio =
+        AddBlocoPadrao(
+            AddPerfValor,
+            "HCI_SUMMARY",
+            10,
+            "PARAMETER",
+            "VALOR_RELATORIO",
+            "HCI_PERF_TARGETS / HCI_PERF_STRUCTURE",
+            "Resumo dos dez parâmetros HCI com score, nível e perfil.",
+            "Exibir sempre"
+        ),
+
+    // =========================================================
+    // QUALITATIVE
+    // =========================================================
+
+    QualiTipos =
+        Table.TransformColumnTypes(
+            FonteQualitative,
+            {
+                {"OUTPUT_DISPLAY_ORDER", Int64.Type},
+                {"OUTPUT_LABEL", type text},
+                {"PARAMETER", type text},
+                {"REPORT_PROFILE", type text},
+                {"SCORE", type number},
+                {"CURRENT_LEVEL", type text},
+                {"OUTPUT_TEXT", type text}
+            },
+            "pt-BR"
+        ),
+
+    QualiOrdenado =
+        Table.Sort(
+            QualiTipos,
+            {{"OUTPUT_DISPLAY_ORDER", Order.Ascending}}
+        ),
+
+    QualiComCampo =
+        Table.AddColumn(
+            QualiOrdenado,
+            "CAMPO_RELATORIO",
+            each TextoSeguro([PARAMETER]) & "_TEXT",
+            type text
+        ),
+
+    QualiRelatorio =
+        AddBlocoPadrao(
+            QualiComCampo,
+            "QUALITATIVE",
+            30,
+            "CAMPO_RELATORIO",
+            "OUTPUT_TEXT",
+            "HCI_OUTPUT_QUALITATIVE_INTELLIGENCE",
+            "Texto qualitativo compatível com score e nível atual.",
+            "Exibir sempre"
+        ),
+
+    // =========================================================
+    // KNOWLEDGE
+    // =========================================================
+
+    DecisionFiltrado =
+        Table.SelectRows(
+            FonteDecision,
+            each TextoLimpo(CampoSeguro(_, "DISPLAY_STATUS", "")) = "SHOW"
+        ),
+
+    DecisionOrdenado =
+        Table.Sort(
+            DecisionFiltrado,
+            {{"OUTPUT_RANK", Order.Ascending}}
+        ),
+
+    DecisionComValor =
+        Table.AddColumn(
+            DecisionOrdenado,
+            "VALOR_RELATORIO",
+            each
+                "RANK: "
+                & TextoSeguro(CampoSeguro(_, "OUTPUT_RANK", ""))
+                & " | "
+                & TextoSeguro(CampoSeguro(_, "PARAMETER_1", ""))
+                & " ("
+                & TextoSeguro(CampoSeguro(_, "LEVEL_1", ""))
+                & ") + "
+                & TextoSeguro(CampoSeguro(_, "PARAMETER_2", ""))
+                & " ("
+                & TextoSeguro(CampoSeguro(_, "LEVEL_2", ""))
+                & ") | INSIGHT: "
+                & TextoSeguro(CampoSeguro(_, "OUTPUT_INSIGHT", CampoSeguro(_, "INSIGHT", "")))
+                & " | ACTION: "
+                & TextoSeguro(CampoSeguro(_, "OUTPUT_ACTION", CampoSeguro(_, "KNOWLEDGE_TO_DO", ""))),
+            type text
+        ),
+
+    DecisionComCampo =
+        Table.AddColumn(
+            DecisionComValor,
+            "CAMPO_RELATORIO",
+            each "DIAGNOSIS_" & TextoSeguro(CampoSeguro(_, "OUTPUT_RANK", "")),
+            type text
+        ),
+
+    KnowledgeRelatorio =
+        AddBlocoPadrao(
+            DecisionComCampo,
+            "KNOWLEDGE",
+            50,
+            "CAMPO_RELATORIO",
+            "VALOR_RELATORIO",
+            "TB_HCI_OUTPUT_DECISION_ENGINE",
+            "Diagnósticos depurados da Knowledge, incluindo pares, insight e ação.",
+            "Exibir todos os DISPLAY_STATUS = SHOW"
+        ),
+
+    // =========================================================
+    // TRAINING
+    // =========================================================
+
+    TrainingValido =
+        Table.SelectRows(
+            FonteTrainingLite,
+            each
+                TextoLimpo(CampoSeguro(_, "TRAINING_COVERAGE_STATUS", "")) = "DIRECT_TRAINING_FOUND"
+                or TextoLimpo(CampoSeguro(_, "TRAINING_COVERAGE_STATUS", "")) = "SHOW"
+                or TextoSeguro(CampoSeguro(_, "TRAINING", "")) <> ""
+        ),
+
+    TrainingComValor =
+        Table.AddColumn(
+            TrainingValido,
+            "VALOR_RELATORIO",
+            each
+                "RANK: "
+                & TextoSeguro(CampoSeguro(_, "OUTPUT_RANK", CampoSeguro(_, "RANK", "")))
+                & " | DIAGNOSIS: "
+                & TextoSeguro(CampoSeguro(_, "DIAGNOSIS", ""))
+                & " | PARAMETER: "
+                & TextoSeguro(CampoSeguro(_, "PARAMETER", ""))
+                & " | TRAINING: "
+                & TextoSeguro(CampoSeguro(_, "TRAINING", ""))
+                & " | PACKAGE: "
+                & TextoSeguro(CampoSeguro(_, "PACKAGE", ""))
+                & " | PHASE: "
+                & TextoSeguro(CampoSeguro(_, "PHASE", ""))
+                & " | WHEN: "
+                & TextoSeguro(CampoSeguro(_, "WHEN TO USE", CampoSeguro(_, "WHEN_TO_USE", "")))
+                & " | TO DO: "
+                & TextoSeguro(CampoSeguro(_, "TO DO", CampoSeguro(_, "TO_DO", "")))
+                & " | PRIORITY: "
+                & TextoSeguro(CampoSeguro(_, "TRAINING_PRIORITY", CampoSeguro(_, "PRIORITY", ""))),
+            type text
+        ),
+
+    TrainingComCampo =
+        Table.AddColumn(
+            TrainingComValor,
+            "CAMPO_RELATORIO",
+            each "TRAINING_" & TextoSeguro(CampoSeguro(_, "OUTPUT_RANK", CampoSeguro(_, "RANK", ""))),
+            type text
+        ),
+
+    TrainingRelatorio =
+        AddBlocoPadrao(
+            TrainingComCampo,
+            "TRAINING",
+            70,
+            "CAMPO_RELATORIO",
+            "VALOR_RELATORIO",
+            "TB_HCI_TRAINING_ENGINE_FINAL",
+            "Recomendações de treino válidas respeitando cobertura, modalidade e fase.",
+            "Exibir recomendações válidas"
+        ),
+
+    // =========================================================
+    // CONSULTATION
+    // =========================================================
+
+    ConsultationValida =
+        Table.SelectRows(
+            FonteConsultationLite,
+            each TextoLimpo(CampoSeguro(_, "TRAINING_CONSULTATION_STATUS", "")) = "READY_TO_CONSULT"
+        ),
+
+    ConsultationComValor =
+        Table.AddColumn(
+            ConsultationValida,
+            "VALOR_RELATORIO",
+            each
+                "TRAINING: "
+                & TextoSeguro(CampoSeguro(_, "TRAINING_NAME_ORIGINAL", ""))
+                & " | PARAMETERS: "
+                & TextoSeguro(CampoSeguro(_, "PARAMETERS_COVERED", ""))
+                & " | DIAGNOSIS: "
+                & TextoSeguro(CampoSeguro(_, "DIAGNOSTICS_COVERED", ""))
+                & " | OBJECTIVE: "
+                & TextoSeguro(CampoSeguro(_, "OBJECTIVE_ORIGINAL", ""))
+                & " | WHEN: "
+                & TextoSeguro(CampoSeguro(_, "WHEN_TO_USE_EN", ""))
+                & " | TIME: "
+                & TextoSeguro(CampoSeguro(_, "TOTAL_TIME_MIN", ""))
+                & " | SERIES: "
+                & TextoSeguro(CampoSeguro(_, "SERIES_COUNT", ""))
+                & " | SHOTS/SERIES: "
+                & TextoSeguro(CampoSeguro(_, "SHOTS_PER_SERIES", ""))
+                & " | EXECUTION: "
+                & TextoSeguro(CampoSeguro(_, "EXECUTION_SUMMARY", ""))
+                & " | OBSERVATION: "
+                & TextoSeguro(CampoSeguro(_, "OBSERVATION_ORIGINAL", "")),
+            type text
+        ),
+
+    ConsultationComCampo =
+        Table.AddIndexColumn(
+            ConsultationComValor,
+            "CONSULTATION_INDEX",
+            1,
+            1,
+            Int64.Type
+        ),
+
+    ConsultationCampo =
+        Table.AddColumn(
+            ConsultationComCampo,
+            "CAMPO_RELATORIO",
+            each "CONSULTATION_" & Text.From([CONSULTATION_INDEX]),
+            type text
+        ),
+
+    ConsultationRelatorio =
+        AddBlocoPadrao(
+            ConsultationCampo,
+            "CONSULTATION",
+            90,
+            "CAMPO_RELATORIO",
+            "VALOR_RELATORIO",
+            "TB_HCI_TRAINING_CONSULTATION",
+            "Consulta prática de execução dos treinos.",
+            "Exibir TRAINING_CONSULTATION_STATUS = READY_TO_CONSULT"
+        ),
+
+    // =========================================================
+    // RHYTHM TIMELINE
+    // =========================================================
+
+    RhythmTimelineComValor =
+        Table.AddColumn(
+            FonteRhythmTimelineLite,
+            "VALOR_RELATORIO",
+           each try
+             "SERIE: "
+            & TextoSeguro(CampoSeguro(_, "SERIE", ""))
+            & " | MEDIA_SERIE: "
+            & NumeroTexto(CampoSeguro(_, "MEDIA_SERIE", ""))
+            & " | STD_SERIE: "
+            & NumeroTexto(CampoSeguro(_, "STD_SERIE", ""))
+            & " | BREAK_COUNT: "
+            & NumeroTexto(CampoSeguro(_, "BREAK_COUNT", ""))
+            & " | MAIN_DROP_DEPTH: "
+            & NumeroTexto(CampoSeguro(_, "MAIN_DROP_DEPTH", ""))
+            & " | MAIN_BREAKING_POINT: "
+            & TextoSeguro(CampoSeguro(_, "MAIN_BREAKING_POINT", ""))
+            & " | MAIN_TO_DO: "
+            & TextoSeguro(CampoSeguro(_, "MAIN_TO_DO", ""))
+            otherwise ""
+        ,
+            type text
+        ),
+
+    RhythmTimelineCampo =
+        Table.AddColumn(
+            RhythmTimelineComValor,
+            "CAMPO_RELATORIO",
+            each "RHYTHM_TIMELINE_" & TextoSeguro(CampoSeguro(_, "SERIE", "")),
+            type text
+        ),
+
+    RhythmTimelineRelatorio =
+        AddBlocoPadrao(
+            RhythmTimelineCampo,
+            "RHYTHM_TIMELINE",
+            110,
+            "CAMPO_RELATORIO",
+            "VALOR_RELATORIO",
+            "HCI_RHYTHM_TIMELINE",
+            "Resumo série a série da estabilidade e das quedas de ritmo.",
+            "Exibir sempre; null quando não houver ocorrência"
+        ),
+
+    // =========================================================
+    // RHYTHM PATH
+    // =========================================================
+
+    RhythmPathComValor =
+        Table.AddColumn(
+            FonteRhythmPathLite,
+            "VALOR_RELATORIO",
+            each try
+                 "ORDER: "
+                & NumeroTexto(CampoSeguro(_, "DISPLAY_ORDER", ""))
+                & " | SERIE: "
+                & TextoSeguro(CampoSeguro(_, "SERIE", ""))
+                & " | PART: "
+                & TextoSeguro(CampoSeguro(_, "PART_NAME", ""))
+                & " | LABEL: "
+                & TextoSeguro(CampoSeguro(_, "PART_LABEL", ""))
+                & " | PART_MEDIA: "
+                & NumeroTexto(CampoSeguro(_, "PART_MEDIA", ""))
+                & " | MEDIA_SERIE: "
+                & NumeroTexto(CampoSeguro(_, "MEDIA_SERIE", ""))
+                & " | STD_SERIE: "
+                & NumeroTexto(CampoSeguro(_, "STD_SERIE", ""))
+                & " | MAIN_DROP_DEPTH: "
+                & NumeroTexto(CampoSeguro(_, "MAIN_DROP_DEPTH", ""))
+            otherwise "",
+            type text
+        ),
+
+    RhythmPathCampo =
+        Table.AddColumn(
+            RhythmPathComValor,
+            "CAMPO_RELATORIO",
+            each "RHYTHM_PATH_" & TextoSeguro(CampoSeguro(_, "PART_LABEL", "")),
+            type text
+        ),
+
+    RhythmPathRelatorio =
+        AddBlocoPadrao(
+            RhythmPathCampo,
+            "RHYTHM_PATH",
+            130,
+            "CAMPO_RELATORIO",
+            "VALOR_RELATORIO",
+            "HCI_RHYTHM_PATH",
+            "Caminho interno do ritmo por blocos P1, P2 e P3.",
+            "Exibir sempre"
+        ),
+
+    // =========================================================
+    // AUDIT
+    // =========================================================
+
+    AuditTable =
+        #table(
+            type table
+            [
+                BLOCO = text,
+                ORDEM = Int64.Type,
+                CAMPO = text,
+                VALOR = text,
+                FONTE_MOTOR = text,
+                DESCRICAO = text,
+                REGRA_EXIBICAO = text
+            ],
+            {
+                {
+                    "AUDIT",
+                    150,
+                    "OUTPUT_RULE",
+                    "OUTPUT does not recalculate. OUTPUT only displays consolidated engine results.",
+                    "PIPELINE",
+                    "Regra estrutural da OUTPUT.",
+                    "Nota fixa"
+                },
+                {
+                    "AUDIT",
+                    151,
+                    "REPORT_SCOPE_RULE",
+                    "RELATORIO shows expanded coach analysis and should not hide information only because OUTPUT prioritised another item.",
+                    "PIPELINE",
+                    "Regra estrutural do relatório.",
+                    "Nota fixa"
+                },
+                {
+                    "AUDIT",
+                    152,
+                    "MANDATORY_LOCKS",
+                    "Keep excluded anything blocked by modality, phase, invalid status or missing mapping.",
+                    "PIPELINE",
+                    "Travas obrigatórias.",
+                    "Nota fixa"
+                }
+            }
+        ),
+
+    // =========================================================
+    // CONSOLIDAÇÃO FINAL
+    // =========================================================
+
+    RelatorioConsolidado =
+        Table.Combine(
+            {
+                ContextTable,
+                PerfRelatorio,
+                QualiRelatorio,
+                KnowledgeRelatorio,
+                TrainingRelatorio,
+                ConsultationRelatorio,
+                RhythmTimelineRelatorio,
+                RhythmPathRelatorio,
+                AuditTable
+            }
+        ),
+
+    ResultadoFinal =
+        Table.Sort(
+            RelatorioConsolidado,
+            {
+                {"ORDEM", Order.Ascending},
+                {"BLOCO", Order.Ascending},
+                {"CAMPO", Order.Ascending}
+            }
+        )
+in
+    ResultadoFinal;

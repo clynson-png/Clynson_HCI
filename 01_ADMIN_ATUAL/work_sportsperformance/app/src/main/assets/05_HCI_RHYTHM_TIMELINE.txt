@@ -1,0 +1,327 @@
+shared HCI_RHYTHM_TIMELINE = let
+    // =========================================================
+    // FONTES DIRETAS
+    // =========================================================
+
+    Fonte =
+        Excel.CurrentWorkbook(){[Name="TB_HCI"]}[Content],
+
+    Contexto =
+        Excel.CurrentWorkbook(){[Name="TB_HCI_SELECTED_CONTEXT"]}[Content],
+
+    // =========================================================
+    // FUNÇÕES AUXILIARES
+    // =========================================================
+
+    TextoLimpo = (valor as any) as text =>
+        try
+            if valor = null then "" else Text.Upper(Text.Trim(Text.From(valor)))
+        otherwise "",
+
+    CampoTexto = (linha as nullable record, campo as text) as text =>
+        try
+            if linha = null then
+                ""
+            else if not Record.HasFields(linha, campo) then
+                ""
+            else
+                let
+                    valor = Record.Field(linha, campo)
+                in
+                    if valor = null then "" else Text.From(valor)
+        otherwise
+            "",
+
+    NumeroSeguro = (valor as any) as nullable number =>
+        try Number.From(valor) otherwise null,
+
+    StdPopulacional = (lista as list) as nullable number =>
+        let
+            vals =
+                List.RemoveNulls(
+                    List.Transform(lista, each try Number.From(_) otherwise null)
+                ),
+
+            n =
+                List.Count(vals),
+
+            media =
+                if n = 0 then null else List.Average(vals),
+
+            variancia =
+                if n = 0 then
+                    null
+                else
+                    List.Sum(
+                        List.Transform(
+                            vals,
+                            each Number.Power(_ - media, 2)
+                        )
+                    ) / n
+        in
+            if variancia = null then null else Number.Sqrt(variancia),
+
+    // =========================================================
+    // CONTEXTO SELECIONADO
+    // ENVIRONMENT corresponde a HCI_EVENT_KIND na TB_HCI
+    // =========================================================
+
+    ContextoLinha =
+        try Contexto{0} otherwise null,
+
+    ContextoAtleta =
+        CampoTexto(ContextoLinha, "ATLETA"),
+
+    ContextoEvento =
+        CampoTexto(ContextoLinha, "EVENTO"),
+
+    ContextoEventType =
+        CampoTexto(ContextoLinha, "ENVIRONMENT"),
+
+    ContextoProva =
+        CampoTexto(ContextoLinha, "PROVA"),
+
+    // =========================================================
+    // BASE LIMPA
+    // =========================================================
+
+    BaseHCI =
+        Table.SelectRows(
+            Fonte,
+            each TextoLimpo(CampoTexto(_, "ATLETA")) <> ""
+        ),
+
+    // =========================================================
+    // FILTRO DIRETO DE CONTEXTO
+    // =========================================================
+
+    FiltrarContexto =
+        Table.SelectRows(
+            BaseHCI,
+            each
+                TextoLimpo(CampoTexto(_, "ATLETA")) = TextoLimpo(ContextoAtleta)
+                and TextoLimpo(CampoTexto(_, "EVENTO")) = TextoLimpo(ContextoEvento)
+                and TextoLimpo(CampoTexto(_, "HCI_EVENT_KIND")) = TextoLimpo(ContextoEventType)
+                and (
+                    TextoLimpo(ContextoProva) = ""
+                    or TextoLimpo(CampoTexto(_, "PROVA")) = TextoLimpo(ContextoProva)
+                )
+                and List.Contains(
+                    {"SR1", "SR2", "SR3", "SR4", "SR5", "SR6"},
+                    TextoLimpo(CampoTexto(_, "SERIE"))
+                )
+        ),
+
+    // =========================================================
+    // ORDEM DA SÉRIE
+    // =========================================================
+
+    Add_DISPLAY_ORDER =
+        Table.AddColumn(
+            FiltrarContexto,
+            "DISPLAY_ORDER",
+            each
+                try Number.FromText(Text.Select(CampoTexto(_, "SERIE"), {"0".."9"}))
+                otherwise null,
+            Int64.Type
+        ),
+
+    Ordenar =
+        Table.Sort(
+            Add_DISPLAY_ORDER,
+            {{"DISPLAY_ORDER", Order.Ascending}}
+        ),
+
+    // =========================================================
+    // MÉDIA DA SÉRIE
+    // =========================================================
+
+    Add_MEDIA_SERIE =
+        Table.AddColumn(
+            Ordenar,
+            "MEDIA_SERIE",
+            each
+                let
+                    total = NumeroSeguro(Record.FieldOrDefault(_, "TOTAL_SERIE", null))
+                in
+                    if total <> null then
+                        Number.Round(total / 10, 3)
+                    else
+                        null,
+            type nullable number
+        ),
+
+    // =========================================================
+    // STD DA SÉRIE
+    // =========================================================
+
+    Add_STD_SERIE =
+        Table.AddColumn(
+            Add_MEDIA_SERIE,
+            "STD_SERIE",
+            each
+                let
+                    tiros =
+                        {
+                            NumeroSeguro(Record.FieldOrDefault(_, "T1", null)),
+                            NumeroSeguro(Record.FieldOrDefault(_, "T2", null)),
+                            NumeroSeguro(Record.FieldOrDefault(_, "T3", null)),
+                            NumeroSeguro(Record.FieldOrDefault(_, "T4", null)),
+                            NumeroSeguro(Record.FieldOrDefault(_, "T5", null)),
+                            NumeroSeguro(Record.FieldOrDefault(_, "T6", null)),
+                            NumeroSeguro(Record.FieldOrDefault(_, "T7", null)),
+                            NumeroSeguro(Record.FieldOrDefault(_, "T8", null)),
+                            NumeroSeguro(Record.FieldOrDefault(_, "T9", null)),
+                            NumeroSeguro(Record.FieldOrDefault(_, "T10", null))
+                        }
+                in
+                    StdPopulacional(tiros),
+            type nullable number
+        ),
+
+    // =========================================================
+    // MÉDIA DA SÉRIE ANTERIOR
+    // =========================================================
+
+    Add_PREV_MEDIA =
+        Table.AddColumn(
+            Add_STD_SERIE,
+            "PREV_MEDIA_SERIE",
+            each
+                let
+                    ordem = [DISPLAY_ORDER],
+                    anteriores =
+                        Table.SelectRows(
+                            Add_STD_SERIE,
+                            each [DISPLAY_ORDER] = ordem - 1
+                        )
+                in
+                    if ordem = null or Table.RowCount(anteriores) = 0 then
+                        null
+                    else
+                        anteriores{0}[MEDIA_SERIE],
+            type nullable number
+        ),
+
+    // =========================================================
+    // QUEBRA DE RITMO
+    // =========================================================
+
+    Add_BREAK_COUNT =
+        Table.AddColumn(
+            Add_PREV_MEDIA,
+            "BREAK_COUNT",
+            each
+                if [PREV_MEDIA_SERIE] = null or [MEDIA_SERIE] = null then
+                    0
+                else if [MEDIA_SERIE] < [PREV_MEDIA_SERIE] then
+                    1
+                else
+                    0,
+            Int64.Type
+        ),
+
+    Add_MAIN_DROP_DEPTH =
+        Table.AddColumn(
+            Add_BREAK_COUNT,
+            "MAIN_DROP_DEPTH",
+            each
+                let
+                    prev = try Number.From([PREV_MEDIA_SERIE]) otherwise null,
+                    atual = try Number.From([MEDIA_SERIE]) otherwise null,
+                    queda =
+                        if prev = null or atual = null then
+                            null
+                        else
+                            prev - atual
+                in
+                    if queda = null or queda <= 0 then
+                        null
+                    else
+                        Number.Round(queda, 3),
+            type nullable number
+        ),
+
+    Add_MAIN_DROP_MARKER =
+        Table.AddColumn(
+            Add_MAIN_DROP_DEPTH,
+            "MAIN_DROP_MARKER",
+            each
+                let
+                    queda = try Number.From([MAIN_DROP_DEPTH]) otherwise null,
+                    media = try Number.From([MEDIA_SERIE]) otherwise null
+                in
+                    if queda <> null and queda > 0 then
+                        media
+                    else
+                        null,
+            type nullable number
+        ),
+
+    ListaQuedas =
+        List.Select(
+            List.RemoveNulls(Add_MAIN_DROP_DEPTH[MAIN_DROP_DEPTH]),
+            each _ > 0
+        ),
+
+    MaiorQueda =
+        if List.Count(ListaQuedas) = 0 then
+            null
+        else
+            List.Max(ListaQuedas),
+
+    Add_MAIN_BREAKING_POINT =
+        Table.AddColumn(
+            Add_MAIN_DROP_MARKER,
+            "MAIN_BREAKING_POINT",
+            each
+                let
+                    queda = try Number.From([MAIN_DROP_DEPTH]) otherwise null
+                in
+                    if queda <> null
+                        and MaiorQueda <> null
+                        and queda = MaiorQueda
+                    then
+                        "YES"
+                    else
+                        null,
+            type nullable text
+        ),
+
+    Add_MAIN_TO_DO =
+        Table.AddColumn(
+            Add_MAIN_BREAKING_POINT,
+            "MAIN_TO_DO",
+            each
+                if [MAIN_BREAKING_POINT] = "YES" then
+                    "STABILIZE RHYTHM AFTER " & CampoTexto(_, "SERIE")
+                else
+                    null,
+            type nullable text
+        ),
+
+    // =========================================================
+    // SAÍDA FINAL
+    // =========================================================
+
+    Resultado =
+        Table.SelectColumns(
+            Add_MAIN_TO_DO,
+            {
+                "ATLETA",
+                "EVENTO",
+                "HCI_EVENT_KIND",
+                "SERIE",
+                "MEDIA_SERIE",
+                "STD_SERIE",
+                "BREAK_COUNT",
+                "MAIN_DROP_DEPTH",
+                "MAIN_DROP_MARKER",
+                "MAIN_BREAKING_POINT",
+                "MAIN_TO_DO",
+                "DISPLAY_ORDER"
+            },
+            MissingField.UseNull
+        )
+in
+    Resultado;

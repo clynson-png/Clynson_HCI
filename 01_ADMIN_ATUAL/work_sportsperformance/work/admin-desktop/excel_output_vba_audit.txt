@@ -1,0 +1,196 @@
+
+SHEET OUTPUT rows=91 cols=38
+2:  | H.A.P.P.Y. CONSISTENCY INDEX (HCI)  - PERFORMANCE DASHBOARD |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+6:  | ATHLETE | GENRE | OVERALL | DATA | PROVA | EVENT | ENVIRONMENT | PREDICTIONS |  | PERIODIZATION_PHASE |  |  |  |  |  |  | 
+7:  | CAMPOS, FÁBIO LUCIANO DE | =IFERROR(_xlfn.XLOOKUP(B7,TB_HCI_ATHLETE_PROFILE[ATHLETE],TB_HCI_ATHLETE_PROFILE[GENRE],""),"") | =REPT("█",ROUND(G11,0))&REPT("░",10-ROUND(G11,0)) | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998AA49FD0> | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998C444E10> | EV1 | COMPETICAO |  |  | COMPETITION |  |  |  |  |  |  | 
+10:  | OUTCOME |  | MEDIAN OVERALL | MEDIAN COMPETITION |  | HCI | COMPETITIVENESS |  |  |  |  |  |  |  |  |  | 
+11:  | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998C444F50> |  | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998AA4F360> | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998AA4E8B0> |  | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998AAE7410> | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998AA9B020> |  |  |  |  |  |  |  |  |  | 
+14:  | QUALITATIVE COMPETITIVE HCI INTELIGENCE |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+18:  | RHYTHM | DEEPENING | CONSISTENCY |  | RESILIENCE |  | TRANSFER | HCI OVERALL |  |  |  |  |  |  |  |  | 
+19:  | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998AA9AF10> | • DEEPENING — ELITE: High capacity to produce deep shots in sequence. | • CONSISTENCY — HIGH PERFORMANCE: Good series repeatability with small variation. |  | • RESILIENCE — ELITE: Immediate return to normal pattern after atypical low shots. |  | • TRANSFER — INTERMEDIATE: Selected competition result shows partial competitive transfer. | =IFERROR(_xlfn.XLOOKUP("HCI_OVERALL",HCI_OUTPUT_QUALITATIVE_INTELLIGENCE[PARAMETER],HCI_OUTPUT_QUALITATIVE_INTELLIGENCE[OUTPUT_TEXT]),"") |  |  |  |  |  |  |  |  | 
+FORMULAS:
+C7==IFERROR(_xlfn.XLOOKUP(B7,TB_HCI_ATHLETE_PROFILE[ATHLETE],TB_HCI_ATHLETE_PROFILE[GENRE],""),"")
+D7==REPT("█",ROUND(G11,0))&REPT("░",10-ROUND(G11,0))
+I19==IFERROR(_xlfn.XLOOKUP("HCI_OVERALL",HCI_OUTPUT_QUALITATIVE_INTELLIGENCE[PARAMETER],HCI_OUTPUT_QUALITATIVE_INTELLIGENCE[OUTPUT_TEXT]),"")
+
+SHEET APP_DASHBOARD_VBA rows=54 cols=80
+2:  | DASHBOARD ATUALIZADO COM SUCESSO |  |  | DASHBOARD ATUALIZADO COM SUCESSO |  |  |  |  |  |  |  |  |  |  |  |  | 
+3:  | Última atualização: 30/05/2026 14:02:37 |  |  | Última atualização: 28/05/2026 12:57:11 |  |  |  |  |  |  |  |  |  |  |  |  | 
+
+SHEET ANALISE_OUTPUT rows=172 cols=15
+1: 📊 Análise Executiva do Dashboard HCI |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+2: ="Atleta: "&OUTPUT!$B$7&" | Prova: "&HCI_SELECTED_CONTEXT!$B$2&" | Evento: "&OUTPUT!$G$7&" | Ambiente: "&OUTPUT!$H$7 |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+3: Leitura inicial da planilha OUTPUT com foco em performance, gargalos, prescrição e qualidade dos dados. |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+5: HCI Geral | Resultado Final | Mediana | Competitividade | Foco nº 1 | Foco nº 2 |  |  | 🧠 Principais descobertas |  |  |  |  |  | 
+6: =OUTPUT!$G$11 | =OUTPUT!$B$11 | =OUTPUT!$D$11 | =OUTPUT!$H$11 | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998C540EF0> | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998C5FC250> |  |  | 1 | ="O HCI geral de "&TEXT(OUTPUT!$G$11,"0,00")&" confirma perfil competitivo "&IF(OUTPUT!$G$11>=9,"elite e no topo da régua.",IF(OUTPUT!$G$11>=7,"forte e próximo do teto da régua.",IF(OUTPUT!$G$11>=5,"intermediário com potencial de evolução.","em desenvolvimento."))) |  |  |  |  | 
+7:  |  |  |  |  |  |  |  | 2 | =_xlfn.LET(_xlpm.maxScore,MAX(HCI_PERF_TARGETS[SCORE],HCI_PERF_STRUCTURE[SCORE]),_xlpm.maxParam,IF(_xlfn.XLOOKUP(_xlpm.maxScore,HCI_PERF_TARGETS[SCORE],HCI_PERF_TARGETS[PARAMETER],"X")<>"X",_xlfn.XLOOKUP(_xlpm.maxScore,HCI_PERF_TARGETS[SCORE],HCI_PERF_TARGETS[PARAMETER]),_xlfn.XLOOKUP(_xlpm.maxScore,HCI_PERF_STRUCTURE[SCORE],HCI_PERF_STRUCTURE[PARAMETER])),_xlpm.maxParam&" = "&TEXT(_xlpm.maxScore,"0")&" é o principal ativo: "&IF(_xlpm.maxParam="PROCESS","a técnica está sustentada e confiável.",IF(_xlpm.maxParam="RHYTHM","o ritmo temporal está muito estável.",IF(_xlpm.maxParam="DEEPENING","a profundidade de tiro está excelente.","ponto forte identificado.")))) |  |  |  |  | 
+8:  |  |  |  |  |  |  |  | 3 | =_xlfn.LET(_xlpm.minScore,MIN(HCI_PERF_TARGETS[SCORE],HCI_PERF_STRUCTURE[SCORE]),_xlpm.minParam,IF(_xlfn.XLOOKUP(_xlpm.minScore,HCI_PERF_TARGETS[SCORE],HCI_PERF_TARGETS[PARAMETER],"X")<>"X",_xlfn.XLOOKUP(_xlpm.minScore,HCI_PERF_TARGETS[SCORE],HCI_PERF_TARGETS[PARAMETER]),_xlfn.XLOOKUP(_xlpm.minScore,HCI_PERF_STRUCTURE[SCORE],HCI_PERF_STRUCTURE[PARAMETER])),_xlpm.minParam&" = "&TEXT(_xlpm.minScore,"0")&" é o gargalo crítico e explica "&IF(_xlpm.minParam="RESILIENCE","vulnerabilidade após erros pontuais.",IF(_xlpm.minParam="CONSISTENCY","instabilidade entre séries.",IF(_xlpm.minParam="EMOTIONAL","interferência emocional na execução.","área prioritária de intervenção.")))) |  |  |  |  | 
+9:  |  |  |  |  |  |  |  | 4 | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998CF758D0> |  |  |  |  | 
+10: ORDEM | PARÂMETRO | PERFIL | SCORE | NÍVEL | LEITURA INICIAL | DISTÂNCIA P/ 10 |  | 5 | ="Há coerência entre o painel qualitativo e a prescrição: o pacote físico mira "&IF(_xlfn.XLOOKUP("PHYSICAL",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[SCORE],0)<7,"degradação final e variabilidade global.","manutenção da base física já consolidada.") |  |  |  |  | 
+11: =1 | ="OUTCOME" | =_xlfn.XLOOKUP("OUTCOME",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("OUTCOME",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[SCORE],0) | =_xlfn.XLOOKUP("OUTCOME",HCI_PERF_TARGETS[PARAMETER],#REF!,"") | =IF(D11>=9,"Entrega competitiva muito forte e já em padrão internacional.",IF(D11>=7,"Boa entrega competitiva, próximo do nível elite.",IF(D11>=5,"Entrega intermediária, com espaço para evolução.","Entrega abaixo do esperado para competição."))) | =10-D11 |  | 6 | Existem fórmulas com referência quebrada em L11:Q11 no dashboard original, sugerindo atenção à qualidade técnica do arquivo. |  |  |  |  | 
+12: =2 | ="PROCESS" | =_xlfn.XLOOKUP("PROCESS",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("PROCESS",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[SCORE],0) | =_xlfn.XLOOKUP("PROCESS",HCI_PERF_TARGETS[PARAMETER],#REF!,"") | =IF(D12>=9,"Ponto mais forte do painel; processo técnico sustentado no máximo da escala.",IF(D12>=7,"Bom processo técnico, com continuidade consistente.",IF(D12>=5,"Processo técnico intermediário, com oscilações.","Processo técnico instável, necessita atenção."))) | =10-D12 |  |  |  |  |  |  |  | 
+13: =3 | ="RHYTHM" | =_xlfn.XLOOKUP("RHYTHM",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("RHYTHM",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[SCORE],0) | =_xlfn.XLOOKUP("RHYTHM",HCI_PERF_TARGETS[PARAMETER],#REF!,"") | =IF(D13>=9,"Ritmo muito estável dentro do padrão técnico do atleta.",IF(D13>=7,"Boa estabilidade, mas ainda com oscilação moderada no padrão temporal.",IF(D13>=5,"Ritmo intermediário, com variações perceptíveis.","Ritmo instável, afetando a consistência."))) | =10-D13 |  |  |  |  |  |  |  | 
+14: =4 | ="DEEPENING" | =_xlfn.XLOOKUP("DEEPENING",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("DEEPENING",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[SCORE],0) | =_xlfn.XLOOKUP("DEEPENING",HCI_PERF_TARGETS[PARAMETER],#REF!,"") | =IF(D14>=9,"Alta profundidade de tiro, sequências de elite sustentadas.",IF(D14>=7,"Boa profundidade de tiro, com espaço para ampliar sequências de elite.",IF(D14>=5,"Profundidade intermediária, sequências curtas.","Dificuldade em manter profundidade de tiro."))) | =10-D14 |  |  |  |  |  |  |  | 
+15: =5 | ="CONSISTENCY" | =_xlfn.XLOOKUP("CONSISTENCY",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("CONSISTENCY",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[SCORE],0) | =_xlfn.XLOOKUP("CONSISTENCY",HCI_PERF_TARGETS[PARAMETER],#REF!,"") | =IF(D15>=9,"Excelente repetibilidade das séries, padrão elite.",IF(D15>=7,"Boa consistência, com pequenas variações entre séries.",IF(D15>=5,"Repetibilidade das séries ainda instável para sustentar elite contínua.","Consistência baixa, alta variação entre séries."))) | =10-D15 |  |  |  |  |  |  |  | 
+16: =6 | ="TRANSFER" | =_xlfn.XLOOKUP("TRANSFER",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("TRANSFER",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[SCORE],0) | =_xlfn.XLOOKUP("TRANSFER",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[CURRENT_LEVEL],"") | =IF(D16>=9,"Excelente transferência do treino para a competição.",IF(D16>=7,"Boa transferência do treino para a competição selecionada.",IF(D16>=5,"Transferência moderada, há perda entre treino e competição.","Baixa transferência, necessita trabalho específico."))) | =10-D16 |  |  |  |  |  |  |  | 
+17: =7 | ="RESILIENCE" | =_xlfn.XLOOKUP("RESILIENCE",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("RESILIENCE",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[SCORE],0) | =_xlfn.XLOOKUP("RESILIENCE",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[CURRENT_LEVEL],"") | =IF(D17>=9,"Alta capacidade de recuperação após erros.",IF(D17>=7,"Boa resiliência, recupera bem após tiros ruins.",IF(D17>=5,"Resiliência moderada, demora a se recuperar.","Maior gargalo: baixa recuperação após tiros atípicos ou quedas de padrão."))) | =10-D17 |  |  |  |  |  |  |  | 
+18: =8 | ="PRESSURE" | =_xlfn.XLOOKUP("PRESSURE",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("PRESSURE",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[SCORE],0) | =_xlfn.XLOOKUP("PRESSURE",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[CURRENT_LEVEL],"") | =IF(D18>=9,"Excelente resposta sob pressão competitiva.",IF(D18>=7,"Boa resposta sob pressão competitiva.",IF(D18>=5,"Resposta moderada à pressão, com oscilações.","Dificuldade sob pressão competitiva."))) | =10-D18 |  |  |  |  |  |  |  | 
+19: =9 | ="EMOTIONAL" | =_xlfn.XLOOKUP("EMOTIONAL",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("EMOTIONAL",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[SCORE],0) | =_xlfn.XLOOKUP("EMOTIONAL",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[CURRENT_LEVEL],"") | =IF(D19>=9,"Excelente controle emocional durante a prova.",IF(D19>=7,"Bom controle emocional, pequenas variações.",IF(D19>=5,"Contaminação emocional moderada reduz execução abaixo do padrão real.","Alta interferência emocional na performance."))) | =10-D19 |  |  |  |  |  |  |  | 
+20: =10 | ="PHYSICAL" | =_xlfn.XLOOKUP("PHYSICAL",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[REPORT_PROFILE],"") | =_xlfn.XLOOKUP("PHYSICAL",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[SCORE],0) | =_xlfn.XLOOKUP("PHYSICAL",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[CURRENT_LEVEL],"") | =IF(D20>=9,"Base física excelente, sem degradação no final.",IF(D20>=7,"Base física boa, pequena degradação final.",IF(D20>=5,"Base física funcional, mas com sinais de degradação no final da prova.","Degradação física significativa afetando o final da prova."))) | =10-D20 |  |  |  |  |  |  |  | 
+FORMULAS:
+A2=="Atleta: "&OUTPUT!$B$7&" | Prova: "&HCI_SELECTED_CONTEXT!$B$2&" | Evento: "&OUTPUT!$G$7&" | Ambiente: "&OUTPUT!$H$7
+A6==OUTPUT!$G$11
+B6==OUTPUT!$B$11
+C6==OUTPUT!$D$11
+D6==OUTPUT!$H$11
+J6=="O HCI geral de "&TEXT(OUTPUT!$G$11,"0,00")&" confirma perfil competitivo "&IF(OUTPUT!$G$11>=9,"elite e no topo da régua.",IF(OUTPUT!$G$11>=7,"forte e próximo do teto da régua.",IF(OUTPUT!$G$11>=5,"intermediário com potencial de evolução.","em desenvolvimento.")))
+J7==_xlfn.LET(_xlpm.maxScore,MAX(HCI_PERF_TARGETS[SCORE],HCI_PERF_STRUCTURE[SCORE]),_xlpm.maxParam,IF(_xlfn.XLOOKUP(_xlpm.maxScore,HCI_PERF_TARGETS[SCORE],HCI_PERF_TARGETS[PARAMETER],"X")<>"X",_xlfn.XLOOKUP(_xlpm.maxScore,HCI_PERF_TARGETS[SCORE],HCI_PERF_TARGETS[PARAMETER]),_xlfn.XLOOKUP(_xlpm.maxScore,HCI_PERF_STRUCTURE[SCORE],HCI_PERF_STRUCTURE[PARAMETER])),_xlpm.maxParam&" = "&TEXT(_xlpm.maxScore,"0")&" é o principal ativo: "&IF(_xlpm.maxParam="PROCESS","a técnica está sustentada e confiável.",IF(_xlpm.maxParam="RHYTHM","o ritmo temporal está muito estável.",IF(_xlpm.maxParam="DEEPENING","a profundidade de tiro está excelente.","ponto forte identificado."))))
+J8==_xlfn.LET(_xlpm.minScore,MIN(HCI_PERF_TARGETS[SCORE],HCI_PERF_STRUCTURE[SCORE]),_xlpm.minParam,IF(_xlfn.XLOOKUP(_xlpm.minScore,HCI_PERF_TARGETS[SCORE],HCI_PERF_TARGETS[PARAMETER],"X")<>"X",_xlfn.XLOOKUP(_xlpm.minScore,HCI_PERF_TARGETS[SCORE],HCI_PERF_TARGETS[PARAMETER]),_xlfn.XLOOKUP(_xlpm.minScore,HCI_PERF_STRUCTURE[SCORE],HCI_PERF_STRUCTURE[PARAMETER])),_xlpm.minParam&" = "&TEXT(_xlpm.minScore,"0")&" é o gargalo crítico e explica "&IF(_xlpm.minParam="RESILIENCE","vulnerabilidade após erros pontuais.",IF(_xlpm.minParam="CONSISTENCY","instabilidade entre séries.",IF(_xlpm.minParam="EMOTIONAL","interferência emocional na execução.","área prioritária de intervenção."))))
+J10=="Há coerência entre o painel qualitativo e a prescrição: o pacote físico mira "&IF(_xlfn.XLOOKUP("PHYSICAL",HCI_PERF_STRUCTURE[PARAMETER],HCI_PERF_STRUCTURE[SCORE],0)<7,"degradação final e variabilidade global.","manutenção da base física já consolidada.")
+A11==1
+B11=="OUTCOME"
+C11==_xlfn.XLOOKUP("OUTCOME",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[REPORT_PROFILE],"")
+D11==_xlfn.XLOOKUP("OUTCOME",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[SCORE],0)
+E11==_xlfn.XLOOKUP("OUTCOME",HCI_PERF_TARGETS[PARAMETER],#REF!,"")
+F11==IF(D11>=9,"Entrega competitiva muito forte e já em padrão internacional.",IF(D11>=7,"Boa entrega competitiva, próximo do nível elite.",IF(D11>=5,"Entrega intermediária, com espaço para evolução.","Entrega abaixo do esperado para competição.")))
+G11==10-D11
+A12==2
+B12=="PROCESS"
+C12==_xlfn.XLOOKUP("PROCESS",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[REPORT_PROFILE],"")
+D12==_xlfn.XLOOKUP("PROCESS",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[SCORE],0)
+E12==_xlfn.XLOOKUP("PROCESS",HCI_PERF_TARGETS[PARAMETER],#REF!,"")
+F12==IF(D12>=9,"Ponto mais forte do painel; processo técnico sustentado no máximo da escala.",IF(D12>=7,"Bom processo técnico, com continuidade consistente.",IF(D12>=5,"Processo técnico intermediário, com oscilações.","Processo técnico instável, necessita atenção.")))
+G12==10-D12
+A13==3
+B13=="RHYTHM"
+C13==_xlfn.XLOOKUP("RHYTHM",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[REPORT_PROFILE],"")
+D13==_xlfn.XLOOKUP("RHYTHM",HCI_PERF_TARGETS[PARAMETER],HCI_PERF_TARGETS[SCORE],0)
+E13==_xlfn.XLOOKUP("RHYTHM",HCI_PERF_TARGETS[PARAMETER],#REF!,"")
+F13==IF(D13>=9,"Ritmo muito estável dentro do padrão técnico do atleta.",IF(D13>=7,"Boa estabilidade, mas ainda com oscilação moderada no padrão temporal.",IF(D13>=5,"Ritmo intermediário, com variações perceptíveis.","Ritmo instável, afetando a consistência.")))
+G13==10-D13
+
+SHEET HCI_RHYTHM_TIMELINE rows=7 cols=12
+1: ATLETA | EVENTO | HCI_EVENT_KIND | SERIE | MEDIA_SERIE | STD_SERIE | BREAK_COUNT | MAIN_DROP_DEPTH | MAIN_DROP_MARKER | MAIN_BREAKING_POINT | MAIN_TO_DO | DISPLAY_ORDER
+2: CAMPOS, FÁBIO LUCIANO DE | EV1 | COMPETICAO | SR1 | 10.42 | 0.2599999999999998 | 0 |  |  |  |  | 1
+3: CAMPOS, FÁBIO LUCIANO DE | EV1 | COMPETICAO | SR2 | 10.22 | 0.29257477676655563 | 1 | 0.2 | 10.22 |  |  | 2
+4: CAMPOS, FÁBIO LUCIANO DE | EV1 | COMPETICAO | SR3 | 10.44 | 0.1907878402833889 | 0 |  |  |  |  | 3
+5: CAMPOS, FÁBIO LUCIANO DE | EV1 | COMPETICAO | SR4 | 10.13 | 0.2934280150224241 | 1 | 0.31 | 10.13 | YES | STABILIZE RHYTHM AFTER SR4 | 4
+6: CAMPOS, FÁBIO LUCIANO DE | EV1 | COMPETICAO | SR5 | 10.28 | 0.38935844667863584 | 0 |  |  |  |  | 5
+7: CAMPOS, FÁBIO LUCIANO DE | EV1 | COMPETICAO | SR6 | 10.25 | 0.310644491340181 | 1 | 0.03 | 10.25 |  |  | 6
+
+SHEET PREDICTION_BI rows=192 cols=13
+1: WORLD CUPS FEMININO - RESUMO PARA BI |  |  |  |  |  |  |  |  |  |  |  | 
+2: Base oficial ISSF | Atualizado em 21/05/2026 |  |  |  |  |  |  |  |  |  |  |  | 
+4: TB_PREDICTION_SUMMARY - Resumo por Modalidade |  |  |  |  |  |  |  |  |  |  |  | 
+5: MODALIDADE | RECORTE_PONTUACAO | MEDIANA_COLOCACAO_RECORTE | MEDIANA_15_LUGAR | MEDIANA_8_LUGAR | TOTAL_WORLD_CUPS | PERIODO |  |  |  |  |  | 
+6: Pistola de Ar Feminino | 563 | 61 | 574 | 577 | 9 | 2024-2026 |  |  |  |  |  | 
+7: Carabina de Ar Feminino | 624.6 | 69 | 630.6 | 632.6 | 9 | 2024-2026 |  |  |  |  |  | 
+10: TB_PREDICTION_DETAILS - Detalhes por Prova (Normalizado para BI) |  |  |  |  |  |  |  |  |  |  |  | 
+11: BI_ROW_ID | MODALIDADE | PROVA | ANO | SELECIONADA | RECORTE_BASE | COLOCACOES_NO_RECORTE | QTD_ATLETAS_RECORTE | PONTUACAO_15_LUGAR | PONTUACAO_8_LUGAR | FONTE_ISSF |  | 
+12: PISTOL_01 | Pistola de Ar Feminino | Cairo 2024 | 2024 | Sim | 563 | Não houve | 0 | 573 | 577 | https://www.issf-sports.org/competitions/results?catId=1&compId=3207&ec=APW&view=rsList&y=2024 |  | 
+13: PISTOL_02 | Pistola de Ar Feminino | Granada 2024 | 2024 | Sim | 563 | 40, 41, 42 | 3 | 571 | 580 | https://www.issf-sports.org/competitions/results?catId=1&compId=3210&ec=APW&view=rsList&y=2024 |  | 
+14: PISTOL_03 | Pistola de Ar Feminino | Baku 2024 | 2024 | Sim | 563 | 49 | 1 | 574 | 577 | https://www.issf-sports.org/competitions/3203/results/3b3b303b4150573b303b513b493b313b303b30 |  | 
+15: PISTOL_04 | Pistola de Ar Feminino | Munich 2024 | 2024 | Sim | 563 | 64, 65, 66, 67 | 4 | 576 | 580 | https://www.issf-sports.org/competitions/results?catId=1&compId=3201&ec=APW&view=rsList |  | 
+16: PISTOL_05 | Pistola de Ar Feminino | Buenos Aires 2025 | 2025 | Sim | 563 | Não houve | 0 | 573 | 575 | https://www.issf-sports.org/competitions/results?catId=1&compId=3268&ec=APW&view=rsList&y=2025 |  | 
+17: PISTOL_06 | Pistola de Ar Feminino | Lima 2025 | 2025 | Sim | 563 | 21 | 1 | 571 | 572 | https://www.issf-sports.org/competitions/results?catId=1&compId=3274&ec=APW&view=rsList&y=2025 |  | 
+18: PISTOL_07 | Pistola de Ar Feminino | Munich 2025 | 2025 | Sim | 563 | 77, 78 | 2 | 576 | 581 | https://www.issf-sports.org/competitions/results?catId=1&compId=3271&ec=APW&view=rsList&y=2025 |  | 
+19: PISTOL_08 | Pistola de Ar Feminino | Ningbo 2025 | 2025 | Sim | 563 | 35 | 1 | 574 | 579 | https://www.issf-sports.org/competitions/results?catId=1&compId=3273&ctId=1&ec=APW&view=rsList |  | 
+20: PISTOL_09 | Pistola de Ar Feminino | Granada 2026 | 2026 | Sim | 563 | 61 | 1 | 575 | 577 | https://www.issf-sports.org/competitions/3280/results/3b3b303b4150573b303b513b493b313b303b30 |  | 
+
+SHEET TB_HCI_CHARTS_BUFFER rows=400 cols=41
+1: ATLETA | EVENTO | PROVA | ID_BLOCO | STATUS_EVENTO | HCI_EVENT_KIND | SERIE | TOTAL_SERIE | RESULTADO_EVENTO | T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9
+2:  |  |  |  |  | NAO_CLASSIFICADO |  |  |  |  |  |  |  |  |  |  |  | 
+3: PEREIRA, BRENDA | EV1 | RIFLE | PEREIRA, BRENDA_EV1_SIMULADO | PARCIAL | SIMULADO | SR1 | 102.89999999999999 |  | 10.8 | 10.3 | 10.3 | 10.1 | 9.9 | 10.5 | 10.5 | 10.3 | 10.1
+4: PEREIRA, BRENDA | EV1 | RIFLE | PEREIRA, BRENDA_EV1_SIMULADO | PARCIAL | SIMULADO | SR2 | 102.30000000000001 |  | 10.6 | 10.5 | 10.2 | 9.9 | 9.6 | 10.6 | 10.5 | 10.3 | 10.2
+5: PEREIRA, BRENDA | EV1 | RIFLE | PEREIRA, BRENDA_EV1_SIMULADO | PARCIAL | SIMULADO | SR3 | 102.8 |  | 10.5 | 10.4 | 10.2 | 10.1 | 10 | 10.6 | 10.4 | 10.4 | 10.1
+6: PEREIRA, BRENDA | EV1 | RIFLE | PEREIRA, BRENDA_EV1_SIMULADO | PARCIAL | SIMULADO | SR4 | 103.1 |  | 10.6 | 10.5 | 10.2 | 10.1 | 10.1 | 10.6 | 10.4 | 10.4 | 10.1
+7: PEREIRA, BRENDA | EV1 | RIFLE | PEREIRA, BRENDA_EV1_SIMULADO | PARCIAL | SIMULADO | SR5 | 101.60000000000001 |  | 10.7 | 10.7 | 10.4 | 10 | 9.4 | 10.4 | 10.4 | 10.2 | 10
+8: PEREIRA, BRENDA | EV1 | RIFLE | PEREIRA, BRENDA_EV1_SIMULADO | FINAL | SIMULADO | SR6 | 102 | 614.7 | 10.6 | 10.6 | 10.6 | 10.3 | 9.2 | 10.4 | 10.3 | 10.3 | 10.2
+9: PEREIRA, BRENDA | EV1 | RIFLE | PEREIRA, BRENDA_EV1_TREINO | PARCIAL | TREINO | SR7 | 102.19999999999999 |  | 10.5 | 10.4 | 10.1 | 10 | 9.9 | 10.6 | 10.3 | 10.2 | 10.1
+10: PEREIRA, BRENDA | EV1 | RIFLE | PEREIRA, BRENDA_EV1_TREINO | PARCIAL | TREINO | SR8 | 102.20000000000002 |  | 10.4 | 10.3 | 10.3 | 9.8 | 9.5 | 10.9 | 10.7 | 10.4 | 10.4
+11: PEREIRA, BRENDA | EV2 | RIFLE | PEREIRA, BRENDA_EV2_COMPETICAO | PARCIAL | COMPETICAO | SR1 | 99.99999999999999 |  | 10.1 | 9.8 | 10.1 | 9.8 | 10.2 | 9.8 | 10.1 | 9.8 | 10.1
+12: PEREIRA, BRENDA | EV2 | RIFLE | PEREIRA, BRENDA_EV2_COMPETICAO | PARCIAL | COMPETICAO | SR2 | 102.7 |  | 10.2 | 9.8 | 10.5 | 10.6 | 10.5 | 10 | 10.3 | 10.1 | 10.5
+13: PEREIRA, BRENDA | EV2 | RIFLE | PEREIRA, BRENDA_EV2_COMPETICAO | PARCIAL | COMPETICAO | SR3 | 98.30000000000001 |  | 10.1 | 10 | 9.9 | 9.4 | 9.3 | 9.3 | 10.5 | 10.5 | 8.9
+14: PEREIRA, BRENDA | EV2 | RIFLE | PEREIRA, BRENDA_EV2_COMPETICAO | PARCIAL | COMPETICAO | SR4 | 103 |  | 9.6 | 10.2 | 10.4 | 10.7 | 10 | 10.7 | 10 | 10.7 | 10.4
+15: PEREIRA, BRENDA | EV2 | RIFLE | PEREIRA, BRENDA_EV2_COMPETICAO | PARCIAL | COMPETICAO | SR5 | 101.4 |  | 9.9 | 10.3 | 10 | 9.8 | 10.5 | 10.1 | 10.3 | 10.7 | 10.1
+16: PEREIRA, BRENDA | EV2 | RIFLE | PEREIRA, BRENDA_EV2_COMPETICAO | FINAL | COMPETICAO | SR6 | 100.1 | 605.5 | 10 | 9.9 | 10.2 | 9.1 | 10.8 | 10.6 | 9.2 | 10.7 | 8.8
+17: OLIVEIRA, RAPHAEL L. | EV1 | PISTOL | OLIVEIRA, RAPHAEL L._EV1_SIMULADO | PARCIAL | SIMULADO | SR1 | 90 |  | 8 | 8 | 10 | 9 | 10 | 9 | 9 | 9 | 9
+18: OLIVEIRA, RAPHAEL L. | EV1 | PISTOL | OLIVEIRA, RAPHAEL L._EV1_SIMULADO | PARCIAL | SIMULADO | SR2 | 92 |  | 10 | 9 | 9 | 9 | 9 | 10 | 9 | 9 | 9
+19: OLIVEIRA, RAPHAEL L. | EV1 | PISTOL | OLIVEIRA, RAPHAEL L._EV1_SIMULADO | PARCIAL | SIMULADO | SR3 | 94 |  | 9 | 9 | 10 | 10 | 9 | 10 | 9 | 9 | 10
+20: OLIVEIRA, RAPHAEL L. | EV1 | PISTOL | OLIVEIRA, RAPHAEL L._EV1_SIMULADO | PARCIAL | SIMULADO | SR4 | 91 |  | 8 | 9 | 10 | 8 | 9 | 9 | 9 | 10 | 10
+
+SHEET OUTPUT_VISUAL rows=200 cols=11
+2:  | ⚡ H.A.P.P.Y. CONSISTENCY INDEX |  |  |  |  |  |  |  |  | 
+5:  | 👤 ATHLETE PROFILE |  |  |  |  |  |  |  |  | 
+6:  | =OUTPUT!B7 |  |  |  |  |  |  |  |  | 
+8:  | EVENT | =OUTPUT!G7 | ENVIRONMENT | =OUTPUT!H7 | PHASE | =OUTPUT!K7 |  |  |  | 
+10:  |  |  |  |  |  |  |  |  |  | #VALUE!
+11:  | 📊 PERFORMANCE METRICS |  |  |  |  |  |  |  |  | 
+13:  | OUTCOME |  | MEDIAN |  | HCI INDEX |  | LEVEL |  |  | 
+14:  | =OUTPUT!B11 |  | =OUTPUT!D11 |  | =OUTPUT!G11 |  | =OUTPUT!H11 |  |  | 
+19:  | 🧠 QUALITATIVE HCI INTELLIGENCE |  |  |  |  |  |  |  |  | 
+FORMULAS:
+B6==OUTPUT!B7
+C8==OUTPUT!G7
+E8==OUTPUT!H7
+G8==OUTPUT!K7
+B14==OUTPUT!B11
+D14==OUTPUT!D11
+F14==OUTPUT!G11
+H14==OUTPUT!H11
+B22==OUTPUT!B19
+E22==OUTPUT!C19
+B25==OUTPUT!D19
+E25==OUTPUT!F19
+B28==OUTPUT!H19
+E28==OUTPUT!I19
+
+SHEET HCI_SELECTED_CONTEXT rows=13 cols=9
+1: ATLETA | PROVA | EVENTO | ENVIRONMENT |  | ATHLETE_LIST |  | EVENT_LIST | EVENT_TYPE_LIST
+2: =OUTPUT!B7 | =IFERROR(_xlfn.XLOOKUP(TB_HCI_SELECTED_CONTEXT[[#This Row],[ATLETA]],TB_HCI[ATLETA],TB_HCI[PROVA]),"") | =HCI_DV_SELECTED_EVENT | =OUTPUT!H7 |  | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998D00EA50> |  | <openpyxl.worksheet.formula.ArrayFormula object at 0x000001998D00DD90> | SIMULADO
+3:  |  |  |  |  | 0 |  | 0 | TREINO
+4:  |  |  |  |  | PEREIRA, BRENDA |  | EV1 | COMPETICAO
+5:  |  |  |  |  | OLIVEIRA, RAPHAEL L. |  | EV2 | 
+6:  |  |  |  |  | CHATEAUBRIAND |  | EV3 | 
+7:  |  |  |  |  | LIMA, ELIANA B DE S.L. |  | EV4 | 
+8:  |  |  |  |  | CAMPOS, FÁBIO LUCIANO DE |  | EV5 | 
+9:  |  |  |  |  | PADILHA, JOSENILDO B. |  | EV6 | 
+10:  |  |  |  |  | AISHA, MARIJA BAHRAIN |  | EV7 | 
+11:  |  |  |  |  | DOURADO_MARINA |  | EV8 | 
+12:  |  |  |  |  | LUCI_MARIA |  |  | 
+13:  |  |  |  |  | SILVA, IVIANE S.A. |  |  | 
+FORMULAS:
+A2==OUTPUT!B7
+B2==IFERROR(_xlfn.XLOOKUP(TB_HCI_SELECTED_CONTEXT[[#This Row],[ATLETA]],TB_HCI[ATLETA],TB_HCI[PROVA]),"")
+C2==HCI_DV_SELECTED_EVENT
+D2==OUTPUT!H7
+
+SHEET TRAINING_PLAN rows=48 cols=35
+2:  | MESOCYCLE - COMPETITIVE - MAI-JUN 2026 - AIR PISTOL - PHILLIPE CHATEAUBRIAND |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+5:  |  |  |  | KEY COMPETITION SKILLS |  |  |  |  |  |  |  |  |  | VOLUME |  | KEY FUNDAMENTAL SKILLS | 
+6:  |  |  |  |  |  |  |  |  |  |  |  |  |  | TOTAL |  |  | 
+7:  |  |  |  |  |  |  |  |  |  |  |  |  |  | # | % |  | 
+8:  |  |  |  | R | REST/ EQUIPMENT ADJUST |  |  |  |  |  |  |  |  | =COUNTIF(D18:AH38,"D") | =O8/124 | AT | AIMING&TRIGGERING
+9:  |  |  |  | COM | COMPETITION (TEST EVENTS) |  |  |  |  |  |  |  |  | =COUNTIF(D18:AH38,"COM") | =O9/124 | PT | POSITION&TRIGGERING
+10:  |  |  |  | RT | RHYTHM |  |  |  |  |  |  |  |  | =COUNTIF(D18:AH38,"RT") | =O10/124 | P | PRECISON
+11:  |  |  |  | D | DEEPENING |  |  |  |  |  |  |  |  | =COUNTIF(D18:AH38,"D") | =O11/124 | Q | QUALITY
+12:  |  |  |  | SC | SIMULATED COMPETITION/ CONTINGENCY |  |  |  |  |  |  |  |  | =COUNTIF(D18:AH38,"SC") | =O12/124 | W | WRIST
+13:  |  |  |  | COMPET - COMPETITION DAY |  |  |  |  | COMPETITION SKILLS |  |  |  |  |  | =SUM(P9:P12) | Y | YES
+14:  | Objectives & Goals / - Objectives / Strategic Training: Routine and competition contingency implementation / Technical Training: Quiet Eye and Position & triggering efforts / Mental training: perform mindfulness to increase breath and HR control / Aerobic Training: aerobic resistance maintainance;  / Neuromuscular Training: CORE ans balance maintainance. / - Goals / OUTCOME goals: 1st place 54th NNE competition and quota place to next ODESUR 2026 (competition SET 26); / RESULT goal: + 582 / PROCESS goals: + 2 sequences +3 ten per serie, + 5X per serie, + 1 sequence +7 ten per competition, and -2% under 9 points |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+16:  | MONTH/ ACTIVITY | SCHEDULE | COMPETITIVE MESOCYCLE |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+17:  | MAI_26 |  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
+18:  | NATIONAL COMPETITION |  |  |  |  | PRE COMPETITIVE  MICROCYCLE |  |  |  |  |  |  | 53th CENBRA COMPETITIVE MICROCYCLE |  |  |  | 
+19:  | PHYSICAL - AEROBIC | Early Morning |  |  |  | Y | R | R | Y | R | R | R | Y | R | R | R | R
+20:  | ROUTINE | Early Morning |  |  |  | Y | Y | Y | Y | Y | R | R | Y | Y | Y | Y | Y
+FORMULAS:
+O8==COUNTIF(D18:AH38,"D")
+P8==O8/124
+O9==COUNTIF(D18:AH38,"COM")
+P9==O9/124
+O10==COUNTIF(D18:AH38,"RT")
+P10==O10/124
+O11==COUNTIF(D18:AH38,"D")
+P11==O11/124
+O12==COUNTIF(D18:AH38,"SC")
+P12==O12/124
+P13==SUM(P9:P12)
