@@ -26,3 +26,26 @@ Para funcionar como formulário no iPhone, use GitHub Pages, Netlify ou Cloudfla
 O formulário gera JSON compatível com:
 
 `HCI_HAPPY_IMPORT_ENGINE`
+
+## HCI TAURUS Mobile
+
+O app mobile TAURUS fica em `REACT_WEB_TAURUS`.
+
+Link previsto apos GitHub Pages:
+
+`https://clynson-png.github.io/Clynson_HCI/?mobile=1`
+
+Fluxo inicial:
+
+- `Entrada`: portal do atleta.
+- `Target Taurus`: entrada de dados do alvo, salva como `PENDING`.
+- `JSON para envio`: exporta somente entradas pendentes do atleta para WhatsApp/Admin.
+- `Smart Chart`: recurso premium.
+- `Library`: recurso premium.
+- `Admin`: nao fica disponivel no mobile.
+
+Publicacao:
+
+- O workflow `.github/workflows/deploy-taurus-mobile.yml` compila `REACT_WEB_TAURUS`.
+- O comando usado no Pages e `npm run build:pages`.
+- O bundle publicado usa base `/Clynson_HCI/`.
