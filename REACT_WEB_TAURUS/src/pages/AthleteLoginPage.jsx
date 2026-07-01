@@ -16,11 +16,6 @@ function AthleteLoginPage({ onLogin, leadOptions = [] }) {
     }
   }
 
-  function fillLead(nextAthleteName) {
-    setAthleteName(nextAthleteName)
-    setError('')
-  }
-
   return (
     <main className="taurus-login-page">
       <section className="taurus-login-panel">
@@ -52,18 +47,6 @@ function AthleteLoginPage({ onLogin, leadOptions = [] }) {
           <button type="submit">Entrar</button>
         </form>
 
-        {leadOptions.length > 0 && (
-          <div className="taurus-login-leads">
-            <span>Leads cadastrados</span>
-            <div>
-              {leadOptions.slice(0, 9).map((name) => (
-                <button key={name} type="button" onClick={() => fillLead(name)}>
-                  {name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </section>
     </main>
   )
